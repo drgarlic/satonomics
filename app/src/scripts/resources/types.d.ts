@@ -1,0 +1,3 @@
+interface Resources {
+  ws: ResourcesWS;
+}

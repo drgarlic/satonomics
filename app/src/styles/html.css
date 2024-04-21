@@ -1,0 +1,29 @@
+/* Remove details marker */
+details > summary {
+  list-style: none;
+}
+
+::marker,
+::-webkit-details-marker {
+  display: none;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+mark {
+  /* background: rgba(249, 115, 22, 0.5) !important; */
+  /* color: white; */
+  @apply text-orange-500;
+  background-color: transparent;
+  padding: 0;
+  /* padding-left: 0.1rem;
+  padding-right: 0.1rem; */
+  /* padding: 1rem 1rem; */
+}
