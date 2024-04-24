@@ -4,9 +4,7 @@ import { createVisibilityObserver } from "@solid-primitives/intersection-observe
 import { scrollIntoView } from "/src/scripts";
 import { createASS } from "/src/solid";
 
-import { Counter } from "../counter";
-import { ScrollableFrame } from "../scrollable";
-import { Button } from "../tree";
+import { Box, Button } from "..";
 import { Line } from "../tree/components";
 
 const PER_PAGE = 100;
@@ -120,38 +118,23 @@ export function SearchFrame({
 
   return (
     <div
-      class="flex max-h-full min-h-0 flex-1 flex-col border-b border-white"
+      class="relative flex size-full flex-1 flex-col"
       style={{
         display: selectedFrame() !== "Search" ? "none" : undefined,
       }}
     >
-      <div
-        class="border-b border-dashed border-white bg-black"
-        style={{
-          "border-bottom": !search() ? "none" : undefined,
-        }}
-      >
-        <div
-          class="relative flex cursor-text items-center space-x-0.5 px-3 py-2 hover:bg-white/20"
-          onClick={() => inputRef()?.focus()}
-        >
-          <IconTablerSearch />
-          <input
-            id={INPUT_PRESET_SEARCH_ID}
-            ref={inputRef.set}
-            class="w-full bg-transparent p-1  caret-orange-500 placeholder:text-white/50 focus:outline-none"
-            placeholder="Type here"
-            value={search()}
-            onInput={(event) => search.set(event.target.value)}
-          />
-          <span class="-mx-1 flex size-5 flex-none items-center justify-center rounded-md border border-white text-xs font-bold">
-            <IconTablerSlash />
-          </span>
-        </div>
-      </div>
-      <ScrollableFrame>
+      <div class="flex-1 space-y-1 overflow-y-auto p-4 pt-16">
         <Show when={search()}>
-          <Counter setRef={counterRef.set} count={resultCount} name="results" />
+          <p class="py-2 text-orange-100/75">
+            Found{" "}
+            <span class="font-medium text-orange-400/75">
+              {resultCount().toLocaleString("en-us")}
+            </span>{" "}
+            presets.
+          </p>
+
+          <div class="-mx-4 border-t border-orange-200/10" />
+
           <div
             class="py-1"
             style={{
@@ -175,17 +158,38 @@ export function SearchFrame({
             })()}
           </div>
         </Show>
-      </ScrollableFrame>
-      <div class="border-t border-dashed border-white bg-black">
+      </div>
+
+      <Box absolute="top" padded={false}>
+        <div
+          class="relative flex w-full cursor-text items-center space-x-0.5 px-3 py-2 hover:bg-orange-200/5"
+          onClick={() => inputRef()?.focus()}
+        >
+          <IconTablerSearch />
+          <input
+            id={INPUT_PRESET_SEARCH_ID}
+            ref={inputRef.set}
+            class="w-full bg-transparent p-1 caret-orange-500 placeholder:text-orange-200/50 focus:outline-none"
+            placeholder="Search by name or path"
+            value={search()}
+            onInput={(event) => search.set(event.target.value)}
+          />
+          <span class="-mx-1 flex size-5 flex-none items-center justify-center rounded-md border border-white text-xs font-bold">
+            <IconTablerSlash />
+          </span>
+        </div>
+      </Box>
+
+      <Box absolute="bottom">
         <Button
           onClick={() => {
             search.set("");
             inputRef()?.focus();
           }}
         >
-          Reset search
+          Clear search
         </Button>
-      </div>
+      </Box>
     </div>
   );
 }

@@ -1,8 +1,7 @@
 import { scrollIntoView, sleep, tick } from "/src/scripts";
 import { createASS } from "/src/solid";
 
-import { Counter } from "../counter";
-import { ScrollableFrame } from "../scrollable";
+import { Box, Button, Header, Number } from "..";
 import { Tree } from "./components";
 
 export function TreeFrame({
@@ -20,19 +19,20 @@ export function TreeFrame({
 
   return (
     <div
-      class="flex max-h-full min-h-0 flex-1 flex-col border-b border-white"
+      class="relative flex size-full flex-1 flex-col"
       style={{
         display: selectedFrame() !== "Tree" ? "none" : undefined,
       }}
     >
-      <ScrollableFrame>
-        <Counter
-          setRef={div.set}
-          count={() => presets.list.length}
-          name="presets"
-        />
+      <div class="flex-1 overflow-y-auto">
+        <div class="flex max-h-full min-h-0 flex-1 flex-col gap-4 p-4">
+          <Header title="Hierarchy">
+            <Number number={() => presets.list.length} /> presets organized in a
+            tree like structure.
+          </Header>
 
-        <div class="py-1">
+          <div class="-mx-4 border-t border-orange-200/10" />
+
           <Tree
             tree={presets.tree}
             openedFolders={presets.openedFolders}
@@ -40,35 +40,12 @@ export function TreeFrame({
             selectPreset={presets.select}
             favorites={presets.favorites}
           />
+
+          <div class="h-[90dvh] flex-none" />
         </div>
-        <div class="border-t border-dashed border-white" />
-        <Anchor href="/routes" primary="API" secondary="Satonomics" />
-        <div class="border-t border-dashed border-white/25" />
-        <Anchor
-          href="https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44"
-          primary="Social"
-          secondary="NOSTR"
-        />
-        <div class="border-t border-dashed border-white/25" />
-        <Anchor
-          href="https://github.com/satonomics-org"
-          primary="Repository"
-          secondary="Github"
-        />
-        <div class="border-t border-dashed border-white/25" />
-        <Anchor
-          href="mailto:contact@satonomics.xyz"
-          primary="Contact"
-          secondary="Email"
-        />
-        <div class="border-t border-dashed border-white/25" />
-        <Anchor
-          href="https://counter.dev/dashboard.html?user=wjfpwo2032fk&token=GAP9y3FM4o0%3D"
-          primary="Analytics"
-          secondary="Counter.dev"
-        />
-      </ScrollableFrame>
-      <div class="flex w-full border-t border-dashed border-white bg-black">
+      </div>
+
+      <Box absolute="bottom">
         <Button
           onClick={() => {
             presets.openedFolders.set((s) => {
@@ -83,24 +60,9 @@ export function TreeFrame({
         >
           Close all folders
         </Button>
-        <div class="border-r border-dashed border-white" />
         <Button onClick={() => goToSelected(presets)}>Go to selected</Button>
-      </div>
+      </Box>
     </div>
-  );
-}
-
-export function Button({
-  onClick,
-  children,
-}: { onClick: VoidFunction } & ParentProps) {
-  return (
-    <button
-      class="group flex w-full flex-1 items-center justify-center bg-black p-3 hover:bg-white/20"
-      onClick={onClick}
-    >
-      <span class="group-active:scale-95">{children}</span>
-    </button>
   );
 }
 
@@ -117,26 +79,4 @@ async function goToSelected(presets: Presets) {
   await tick();
 
   scrollIntoView(document.getElementById(presets.selected().id), "center");
-}
-
-function Anchor({
-  href,
-  primary,
-  secondary,
-}: {
-  href: string;
-  primary: string;
-  secondary: string;
-}) {
-  return (
-    <a
-      href={href}
-      target={
-        href.startsWith("/") || href.startsWith("http") ? "_blank" : undefined
-      }
-      class="block w-full px-3 py-1.5 text-left hover:underline"
-    >
-      {primary} <span class="opacity-50"> - {secondary}</span>
-    </a>
-  );
 }

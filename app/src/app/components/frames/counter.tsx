@@ -10,12 +10,15 @@ export function Counter({
   return (
     <div
       ref={setRef}
-      class="border-b border-white px-3 py-1.5"
+      class="text-orange-100/75"
       style={{
         "border-style": count() ? "dashed" : "none",
       }}
     >
-      Counted <span class="font-bold">{count().toLocaleString("en-us")}</span>{" "}
+      Counted{" "}
+      <span class="font-medium text-orange-400/75">
+        {count().toLocaleString("en-us")}
+      </span>{" "}
       {name}
     </div>
   );

@@ -10,6 +10,7 @@ export function Line({
   onClick,
   path,
   absolute,
+  classes: classes,
 }: {
   id: string;
   name: string;
@@ -19,6 +20,7 @@ export function Line({
   path?: string;
   icon?: () => JSXElement;
   absolute?: () => JSXElement;
+  classes?: () => string;
 } & ParentProps) {
   const ref = createASS<HTMLButtonElement | undefined>(undefined);
 
@@ -26,14 +28,18 @@ export function Line({
     <button
       id={id}
       class={classPropToString([
-        active?.() ? "bg-white/20 hover:bg-white/30" : "hover:bg-white/20",
-        "relative flex w-full items-center whitespace-nowrap py-1 pl-3",
+        active?.()
+          ? "bg-orange-500/30 backdrop-blur-sm hover:bg-orange-500/50"
+          : "hover:bg-orange-500/15",
+        "relative -mx-2 flex w-[calc(100%+1rem)] items-center whitespace-nowrap rounded-lg px-2 py-1 hover:backdrop-blur-sm",
+        classes?.(),
       ])}
       ref={ref.set}
       onClick={() => {
         onClick();
         scrollIntoView(ref(), "nearest", "instant");
       }}
+      title={name}
     >
       <Show when={icon}>
         {(icon) => (
@@ -47,17 +53,18 @@ export function Line({
           </span>
         )}
       </Show>
-      <span class="inline-flex flex-col -space-y-1 overflow-hidden text-left">
+      <span class="inline-flex w-full flex-col -space-y-1 truncate text-left">
         <Show when={path}>
-          <span class="text-xs text-white text-opacity-50" innerHTML={path} />
+          <span
+            class="truncate text-xs text-white text-opacity-50"
+            innerHTML={path}
+          />
         </Show>
-        <span innerHTML={name} />
+        <span innerHTML={name} class="truncate" />
       </span>
       <Show when={absolute}>
         {(absolute) => (
-          <span class="absolute inset-y-0 right-0 mr-2 flex items-center">
-            {absolute()()}
-          </span>
+          <span class="ml-0.5 flex items-center">{absolute()()}</span>
         )}
       </Show>
     </button>

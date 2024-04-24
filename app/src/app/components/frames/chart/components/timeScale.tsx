@@ -1,16 +1,15 @@
 import { chartState, GENESIS_DAY, ONE_DAY_IN_MS } from "/src/scripts";
 
+import { Box } from "../../box";
+
 export function TimeScale() {
   return (
-    <div class="flex overflow-y-auto border-t border-white bg-black">
+    // <div class="m-2 flex space-x-2 overflow-y-auto rounded-xl border border-orange-200/10 bg-orange-100/5 p-2 backdrop-blur">
+    <Box dark padded overflowY>
       <Button onClick={() => setTimeScale()}>All Time</Button>
-      <Gap />
       <Button onClick={() => setTimeScale(7)}>1 Week</Button>
-      <Gap />
       <Button onClick={() => setTimeScale(30)}>1 Month</Button>
-      <Gap />
       <Button onClick={() => setTimeScale(30 * 6)}>6 Months</Button>
-      <Gap />
       <Button
         onClick={() =>
           setTimeScale(
@@ -24,31 +23,23 @@ export function TimeScale() {
       >
         Year To Date
       </Button>
-      <Gap />
       <Button onClick={() => setTimeScale(365)}>1 Year</Button>
-      <Gap />
       <Button onClick={() => setTimeScale(2 * 365)}>2 Years</Button>
-      <Gap />
       <Button onClick={() => setTimeScale(4 * 365)}>4 Years</Button>
-      <Gap />
       <Button onClick={() => setTimeScale(8 * 365)}>8 Years</Button>
-    </div>
+    </Box>
   );
 }
 
 function Button(props: ParentProps & { onClick: VoidFunction }) {
   return (
     <button
-      class="min-w-20 flex-shrink-0 flex-grow whitespace-nowrap px-3 py-1 first:border-none active:scale-95"
+      class="min-w-20 flex-shrink-0 flex-grow whitespace-nowrap rounded-lg px-2 py-1.5 hover:bg-white/20 active:scale-95"
       onClick={props.onClick}
     >
       {props.children}
     </button>
   );
-}
-
-function Gap() {
-  return <div class="border-l border-dashed border-white" />;
 }
 
 function setTimeScale(days?: number) {

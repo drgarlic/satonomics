@@ -15,7 +15,7 @@ export function Network({
 
   return (
     <span class="flex flex-none items-center space-x-1 bg-black">
-      <span
+      {/* <span
         class={classPropToString([
           // fetching()
           //   ? "text-yellow-500"
@@ -25,7 +25,7 @@ export function Network({
         ])}
       >
         Live
-      </span>
+      </span> */}
       <span class="relative flex h-3 w-3">
         {/* <Show
           when={fetching()}

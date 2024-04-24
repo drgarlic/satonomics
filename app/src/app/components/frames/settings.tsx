@@ -1,5 +1,3 @@
-import { ScrollableFrame } from "./scrollable";
-
 export function SettingsFrame({
   marquee,
   selectedFrame,
@@ -10,7 +8,7 @@ export function SettingsFrame({
   const value = marquee();
 
   return (
-    <ScrollableFrame hidden={() => selectedFrame() !== "Settings"}>
+    <div class="flex-1 overflow-y-auto" hidden={selectedFrame() !== "Settings"}>
       <div class="space-y-4 p-3">
         <div class="space-y-2">
           <p>Explorer</p>
@@ -39,6 +37,6 @@ export function SettingsFrame({
           </label>
         </div>
       </div>
-    </ScrollableFrame>
+    </div>
   );
 }

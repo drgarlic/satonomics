@@ -15,7 +15,6 @@ import {
   ChartFrame,
   FavoritesFrame,
   Head,
-  Header,
   INPUT_PRESET_SEARCH_ID,
   LOCAL_STORAGE_MARQUEE_KEY,
   Qrcode,
@@ -149,10 +148,17 @@ export function App({ datasets }: { datasets: Datasets }) {
       >
         <Qrcode qrcode={qrcode} />
 
-        <div class="h-full border-white md:border">
-          <div class="flex h-full w-full flex-col md:flex-row">
+        <div class="flex size-full flex-col p-3 md:flex-row">
+          <div class="flex overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-orange-500/10 to-orange-950/10">
+            <div class="flex flex-col space-y-3 bg-black/30 p-3 backdrop-blur-sm">
+              <Selector
+                selected={selectedFrame}
+                setSelected={_selectedFrame.set}
+              />
+            </div>
+            <div class="border-l border-white/10" />
             <div
-              class="flex h-full w-full flex-none flex-col md:min-w-[384px] md:max-w-[75%]"
+              class="flex md:min-w-[384px]"
               style={{
                 ...(windowSizeIsAtLeastMedium()
                   ? {
@@ -161,63 +167,52 @@ export function App({ datasets }: { datasets: Datasets }) {
                   : {}),
               }}
             >
-              <div class="flex min-h-0 flex-1 flex-col border border-b-0 border-white md:border-0">
-                <Header
+              {/* <div class="flex min-h-0 flex-1 flex-col md:border-0"> */}
+              {/* <Header
                   needsRefresh={needRefresh[0]}
                   onClick={async () => {
                     await updateServiceWorker();
 
                     document.location.reload();
                   }}
-                />
+                /> */}
 
-                <ChartFrame
-                  presets={presets}
-                  liveCandle={liveCandle}
-                  resources={resources}
-                  show={() =>
-                    !windowSizeIsAtLeastMedium() && selectedFrame() === "Chart"
-                  }
-                  legend={legend}
-                  datasets={datasets}
-                  qrcode={qrcode}
-                />
-                <TreeFrame presets={presets} selectedFrame={selectedFrame} />
-                <FavoritesFrame
-                  presets={presets}
-                  selectedFrame={selectedFrame}
-                />
-                <SearchFrame presets={presets} selectedFrame={selectedFrame} />
-                <SettingsFrame
-                  marquee={marquee}
-                  selectedFrame={selectedFrame}
-                />
-              </div>
-
-              <Selector
-                selected={selectedFrame}
-                setSelected={_selectedFrame.set}
-              />
-            </div>
-
-            <div
-              class="hidden w-1 cursor-col-resize items-center justify-center bg-white md:block"
-              onMouseDown={() => resizingBar.set(true)}
-              onTouchStart={() => resizingBar.set(true)}
-              onDblClick={() => barWidth.set(0)}
-            />
-
-            <div class="hidden h-full w-full min-w-0 flex-1 md:flex">
               <ChartFrame
                 presets={presets}
                 liveCandle={liveCandle}
                 resources={resources}
-                show={windowSizeIsAtLeastMedium}
+                show={() =>
+                  !windowSizeIsAtLeastMedium() && selectedFrame() === "Chart"
+                }
                 legend={legend}
                 datasets={datasets}
                 qrcode={qrcode}
               />
+              <TreeFrame presets={presets} selectedFrame={selectedFrame} />
+              <FavoritesFrame presets={presets} selectedFrame={selectedFrame} />
+              <SearchFrame presets={presets} selectedFrame={selectedFrame} />
+              <SettingsFrame marquee={marquee} selectedFrame={selectedFrame} />
+              {/* </div> */}
             </div>
+          </div>
+
+          <div
+            class="mx-1 my-8 hidden w-1 cursor-col-resize items-center justify-center rounded-full bg-orange-100 opacity-0 hover:opacity-50 md:block"
+            onMouseDown={() => resizingBar.set(true)}
+            onTouchStart={() => resizingBar.set(true)}
+            onDblClick={() => barWidth.set(0)}
+          />
+
+          <div class="hidden min-w-0 flex-1 md:flex">
+            <ChartFrame
+              presets={presets}
+              liveCandle={liveCandle}
+              resources={resources}
+              show={windowSizeIsAtLeastMedium}
+              legend={legend}
+              datasets={datasets}
+              qrcode={qrcode}
+            />
           </div>
         </div>
       </div>

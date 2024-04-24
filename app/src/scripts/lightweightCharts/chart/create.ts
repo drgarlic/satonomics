@@ -20,6 +20,7 @@ export const createChart = (scale: ResourceScale) => {
         .getComputedStyle(document.body)
         .getPropertyValue("font-family"),
       background: { color: "transparent" },
+      fontSize: 14,
       textColor: white,
     },
     grid: {
@@ -27,16 +28,17 @@ export const createChart = (scale: ResourceScale) => {
       horzLines: { visible: false },
     },
     leftPriceScale: {
-      borderColor: white,
+      // borderColor: white,
     },
     rightPriceScale: {
       scaleMargins: { bottom: 0.1, top: 0.1 },
-      borderColor: white,
+      // borderColor: white,
     },
     timeScale: {
       minBarSpacing: scale === "date" ? 0.05 : 0.005,
       shiftVisibleRangeOnNewBar: true,
-      borderColor: white,
+      // borderColor:
+      // borderColor: white,
     },
     crosshair: {
       mode: CrosshairMode.Normal,

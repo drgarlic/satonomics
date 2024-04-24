@@ -9,9 +9,8 @@ pub fn find_first_unsafe_height(
     databases: &mut Databases,
     datasets: &AllDatasets,
 ) -> usize {
-    let min_initial_last_address_date = datasets.address.get_min_initial_state().last_date;
-
-    let min_initial_last_address_height = datasets.address.get_min_initial_state().last_height;
+    let _min_initial_last_address_date = datasets.address.get_min_initial_state().last_date;
+    let _min_initial_last_address_height = datasets.address.get_min_initial_state().last_height;
 
     states
         .date_data_vec

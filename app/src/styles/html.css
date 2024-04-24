@@ -20,7 +20,7 @@ details > summary {
 mark {
   /* background: rgba(249, 115, 22, 0.5) !important; */
   /* color: white; */
-  @apply text-orange-500;
+  @apply text-orange-400;
   background-color: transparent;
   padding: 0;
   /* padding-left: 0.1rem;

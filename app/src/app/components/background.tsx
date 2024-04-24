@@ -45,7 +45,7 @@ export function Background({
 
   return (
     <>
-      <div class="absolute z-[-20] h-full w-full">
+      <div class="absolute h-full w-full opacity-[0.025]">
         <div class="-m-[2rem] -space-y-1 overflow-hidden md:-m-[1rem]">
           <Line on={on} focused={focused} />
           <Line on={on} focused={focused} />
@@ -72,12 +72,12 @@ export function Background({
           <Line on={on} focused={focused} />
         </div>
       </div>
-      {/* <div class="absolute z-[-10] h-full w-full opacity-80 mix-blend-multiply">
+      <div class="absolute h-full w-full opacity-10 mix-blend-multiply">
         <Noise />
       </div>
-      <div class="absolute z-[-9] h-full w-full opacity-40 mix-blend-hard-light">
+      <div class="absolute h-full w-full opacity-10 mix-blend-hard-light">
         <Noise />
-      </div> */}
+      </div>
     </>
   );
 }

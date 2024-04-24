@@ -1,3 +1,4 @@
+import { Box } from "../box";
 import { Chart, Network, Title } from "./components";
 import { Actions } from "./components/actions";
 import { Legend } from "./components/legend";
@@ -20,34 +21,44 @@ export function ChartFrame({
   datasets: Datasets;
   qrcode: ASS<string>;
 }) {
-  const sortedSources = createMemo(() =>
-    [...presets.sources()].sort(([a], [b]) => a.localeCompare(b)),
-  );
+  // const sortedSources = createMemo(() =>
+  //   [...presets.sources()].sort(([a], [b]) => a.localeCompare(b)),
+  // );
 
   return (
     <div
-      class="flex h-full min-h-0 w-full flex-1 flex-col border-b border-white bg-black/95 md:border-none"
+      class="flex size-full min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-orange-200/15 bg-gradient-to-b from-orange-100/5 to-black/10 to-80%"
       style={{
         display: show() ? undefined : "none",
       }}
     >
-      <div class="flex border-b border-dashed border-white backdrop-blur">
+      {/* <div class="m-2 space-y-1 rounded-xl border border-orange-200/15 bg-orange-100/5 p-2 backdrop-blur-sm"> */}
+      <Box flex={false} dark>
         <Title presets={presets} qrcode={qrcode} />
-      </div>
-      <div class="flex border-b border-white backdrop-blur">
-        <Legend legend={legend} />
-        <div class="border-l border-dashed border-white" />
-        <Actions presets={presets} />
-      </div>
+
+        <div class="-mx-2 border-t border-orange-200/15" />
+
+        <div class="flex pt-1.5">
+          <Legend legend={legend} />
+
+          <div class="-my-1.5 border-l border-orange-200/15 pr-1.5" />
+
+          <Actions presets={presets} />
+        </div>
+      </Box>
+      {/* </div> */}
+
       <Show when={show()}>
         <div class="min-h-0 flex-1">
           <Chart visible={() => !!datasets.date.price.values()?.length} />
         </div>
       </Show>
 
-      <TimeScale />
+      <div class="-mt-8 border-t border-orange-200/10 bg-orange-200/5 pt-8">
+        <TimeScale />
+      </div>
 
-      <div class="flex items-center space-x-3 border-t border-white bg-black px-3 backdrop-blur">
+      {/* <div class="flex items-center space-x-3 bg-black p-3 backdrop-blur">
         <div class="flex flex-1 items-center space-x-1 overflow-y-auto py-1">
           <div>Sources:</div>
           <For each={sortedSources()}>
@@ -65,12 +76,8 @@ export function ChartFrame({
             )}
           </For>
         </div>
-        <div class="h-full flex-none border-l border-dashed border-white" />
-        <Network
-          live={liveCandle.live}
-          // resources={resources.http}
-        />
-      </div>
+        <Network live={liveCandle.live} />
+      </div> */}
     </div>
   );
 }

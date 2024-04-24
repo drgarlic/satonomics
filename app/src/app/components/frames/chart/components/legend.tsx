@@ -1,13 +1,13 @@
 export function Legend({ legend }: { legend: Accessor<PresetLegend> }) {
   return (
-    <div class="flex flex-1 items-center gap-1 overflow-y-auto px-1.5">
+    <div class="flex flex-1 items-center gap-1 overflow-y-auto">
       <For each={legend()}>
         {({ color, hovering, title, visible }) => (
           <button
             onMouseEnter={() => hovering.set(true)}
             onMouseLeave={() => hovering.set(false)}
             onClick={() => visible.set((visible) => !visible)}
-            class="flex flex-none items-center space-x-1 rounded-full p-1 pl-1.5 pr-2.5 hover:bg-white/20 active:scale-[0.975]"
+            class="flex flex-none items-center space-x-1.5 rounded-full py-1.5 pl-2 pr-2.5 hover:bg-orange-200/20 active:scale-[0.975]"
           >
             <span
               class="flex size-4 flex-col overflow-hidden rounded-full"

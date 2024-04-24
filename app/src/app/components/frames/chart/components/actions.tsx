@@ -7,19 +7,16 @@ export function Actions({ presets }: { presets: Presets }) {
         icon={() => IconTablerArrowsShuffle2}
         onClick={presets.selectRandom}
       />
-      <span class="border-r border-dashed border-white" />
       <Button
         disabled={() => !presets.undoPossible()}
         icon={() => IconTablerArrowBack}
         onClick={presets.undo}
       />
-      <span class="border-r border-dashed border-white" />
       <Button
         disabled={() => !presets.redoPossible()}
         icon={() => IconTablerArrowForward}
         onClick={presets.redo}
       />
-      <span class="border-r border-dashed border-white" />
       <Button
         colors={() =>
           presets.selected().isFavorite()
@@ -52,9 +49,9 @@ function Button({
     <button
       disabled={disabled?.()}
       class={classPropToString([
-        colors?.() || (disabled?.() ? "" : "hover:bg-white/20"),
+        colors?.() || (disabled?.() ? "" : "hover:bg-orange-200/15"),
         !disabled?.() && "group",
-        "flex-none p-2.5 disabled:opacity-25",
+        "flex-none rounded-lg p-2 disabled:opacity-75",
       ])}
       onClick={onClick}
     >

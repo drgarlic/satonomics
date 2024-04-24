@@ -26,6 +26,7 @@ export function Folder({
       name={name}
       icon={icon}
       onClick={onClick}
+      classes={() => (open() ? "text-orange-100/75" : "")}
       absolute={() => (
         <Show when={!open()}>
           <span class="rounded-full bg-white bg-opacity-[0.075] px-2 py-0.5 text-xs text-neutral-400">
