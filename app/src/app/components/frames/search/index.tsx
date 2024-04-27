@@ -124,15 +124,17 @@ export function SearchFrame({
       }}
     >
       <div class="flex-1 space-y-1 overflow-y-auto p-4 pt-16">
-        <Show when={search()}>
-          <p class="py-2 text-orange-100/75">
+        <p class="py-2 text-orange-100/75">
+          <Show when={search()} fallback={"Write in the top bar to search."}>
             Found{" "}
             <span class="font-medium text-orange-400/75">
               {resultCount().toLocaleString("en-us")}
             </span>{" "}
             presets.
-          </p>
+          </Show>
+        </p>
 
+        <Show when={search()}>
           <div class="-mx-4 border-t border-orange-200/10" />
 
           <div

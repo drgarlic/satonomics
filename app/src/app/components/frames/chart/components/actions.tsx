@@ -20,7 +20,7 @@ export function Actions({ presets }: { presets: Presets }) {
       <Button
         colors={() =>
           presets.selected().isFavorite()
-            ? "bg-amber-950/50 text-amber-500 hover:bg-amber-950"
+            ? "text-amber-500 bg-amber-500/15 hover:bg-amber-500/30"
             : ""
         }
         icon={() =>
@@ -51,7 +51,7 @@ function Button({
       class={classPropToString([
         colors?.() || (disabled?.() ? "" : "hover:bg-orange-200/15"),
         !disabled?.() && "group",
-        "flex-none rounded-lg p-2 disabled:opacity-75",
+        "flex-none rounded-lg p-2 disabled:opacity-50",
       ])}
       onClick={onClick}
     >

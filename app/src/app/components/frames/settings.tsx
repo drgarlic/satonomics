@@ -1,3 +1,5 @@
+import { Header } from "./header";
+
 export function SettingsFrame({
   marquee,
   selectedFrame,
@@ -9,32 +11,25 @@ export function SettingsFrame({
 
   return (
     <div class="flex-1 overflow-y-auto" hidden={selectedFrame() !== "Settings"}>
-      <div class="space-y-4 p-3">
-        <div class="space-y-2">
-          <p>Explorer</p>
-          <div>Preset right side</div>
-          <div>Opened group right side</div>
-          <div>Closed group right side</div>
-        </div>
+      <div class="space-y-4 p-4">
+        <Header title="Settings" />
+
+        <div class="-mx-4 border-t border-orange-200/10" />
+
         <div class="space-y-2">
           <p>Background</p>
           <div>Opacity</div>
-          <div>Scroll</div>
-        </div>
-        <div class="space-y-2">
-          <p>Chart</p>
-          <div>Right scale</div>
-        </div>
-        <div>
-          <label class="switch">
-            Marquee
-            <input
-              type="checkbox"
-              checked={value}
-              onChange={(event) => marquee.set(event.target.checked || false)}
-            />
-            <span class="slider"></span>
-          </label>
+          <div>
+            <label class="switch">
+              Scroll
+              <input
+                type="checkbox"
+                checked={value}
+                onChange={(event) => marquee.set(event.target.checked || false)}
+              />
+              <span class="slider"></span>
+            </label>
+          </div>
         </div>
       </div>
     </div>

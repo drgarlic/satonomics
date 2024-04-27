@@ -19,7 +19,7 @@ export function File({
   favorite: Accessor<boolean>;
   visited: Accessor<boolean>;
 }) {
-  const absolute = createMemo(() =>
+  const tail = createMemo(() =>
     favorite() ? (
       <span class="rounded-full bg-yellow-950 p-1">
         <IconTablerStarFilled class="size-3 text-amber-500" />
@@ -92,7 +92,7 @@ export function File({
       name={name}
       icon={() => icon}
       onClick={onClick}
-      absolute={absolute}
+      tail={tail}
     />
   );
 }

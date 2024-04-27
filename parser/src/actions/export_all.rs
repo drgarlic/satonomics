@@ -17,6 +17,8 @@ pub fn export_all(
         databases,
         datasets,
         states,
+        height,
+        date,
         ..
     }: ExportedData,
 ) -> color_eyre::Result<()> {
@@ -26,7 +28,7 @@ pub fn export_all(
         time("Datasets saved", || datasets.export())?;
 
         thread::scope(|s| {
-            s.spawn(|| time("Databases saved", || databases.export()));
+            s.spawn(|| time("Databases saved", || databases.export(height, date)));
             s.spawn(|| time("States saved", || states.export()));
         });
 

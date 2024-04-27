@@ -40,8 +40,8 @@ pub struct DateMap<T> {
 
     serialization: Serialization,
 
-    initial_last_date: Option<NaiveDate>,
-    initial_first_unsafe_date: Option<NaiveDate>,
+    pub initial_last_date: Option<NaiveDate>,
+    pub initial_first_unsafe_date: Option<NaiveDate>,
 
     imported: BTreeMap<usize, SerializedDateMap<T>>,
     to_insert: BTreeMap<usize, BTreeMap<WNaiveDate, T>>,
@@ -175,10 +175,12 @@ where
         self.insert(date, T::default())
     }
 
+    /// Same as _get but with NaiveDate instead of &WNaiveDate
     pub fn get(&self, date: NaiveDate) -> Option<T> {
         self._get(&WNaiveDate::wrap(date))
     }
 
+    /// Same as get but with &WNaiveDate instead of NaiveDate
     pub fn _get(&self, date: &WNaiveDate) -> Option<T> {
         let year = date.year() as usize;
 
@@ -323,7 +325,10 @@ where
 
         keys.into_iter()
             .enumerate()
-            .filter(|(index, _)| index + self.chunks_in_memory < len)
+            .filter(|(index, _)| {
+                let v = self.chunks_in_memory;
+                v.checked_add(*index).unwrap_or(v) < len
+            })
             .for_each(|(_, key)| {
                 self.imported.remove(&key);
             });

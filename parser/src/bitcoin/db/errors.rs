@@ -98,18 +98,6 @@ impl From<bitcoin::consensus::encode::Error> for OpError {
     }
 }
 
-// impl From<bitcoin::hashes::hex::Error> for OpError {
-//     fn from(_: Error) -> Self {
-//         Self::from("not a valid hash")
-//     }
-// }
-
-// impl From<bitcoin::hashes::Error> for OpError {
-//     fn from(_: bitcoin::hashes::Error) -> Self {
-//         Self::from("bitcoin_hash error")
-//     }
-// }
-
 impl convert::From<i32> for OpError {
     fn from(err_code: i32) -> Self {
         Self::from(io::Error::from_raw_os_error(err_code))

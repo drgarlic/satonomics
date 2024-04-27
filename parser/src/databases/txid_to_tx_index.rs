@@ -5,6 +5,7 @@ use std::{
 };
 
 use bitcoin::Txid;
+use chrono::NaiveDate;
 use rayon::prelude::*;
 
 use crate::parse::{SizedDatabase, U8x31};
@@ -36,6 +37,8 @@ impl DerefMut for TxidToTxIndex {
 
 impl TxidToTxIndex {
     pub fn insert(&mut self, txid: &Txid, tx_index: Value) -> Option<Value> {
+        self.metadata.called_insert();
+
         let txid_key = Self::txid_to_key(txid);
         self.open_db(txid).insert(txid_key, tx_index)
     }
@@ -60,6 +63,8 @@ impl TxidToTxIndex {
     }
 
     pub fn remove(&mut self, txid: &Txid) {
+        self.metadata.called_remove();
+
         let txid_key = Self::txid_to_key(txid);
         self.open_db(txid).remove(&txid_key);
     }
@@ -89,12 +94,12 @@ impl AnyDatabaseGroup for TxidToTxIndex {
         }
     }
 
-    fn export(&mut self) -> color_eyre::Result<()> {
+    fn export(&mut self, height: usize, date: NaiveDate) -> color_eyre::Result<()> {
         mem::take(&mut self.map)
             .into_par_iter()
             .try_for_each(|(_, db)| db.export())?;
 
-        self.metadata.export()?;
+        self.metadata.export(height, date)?;
 
         Ok(())
     }

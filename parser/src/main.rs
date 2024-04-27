@@ -1,20 +1,22 @@
-use std::path::Path;
+use std::{env::args, path::Path};
 
+use itertools::Itertools;
 use parser::{iter_blocks, BitcoinDB, BitcoinDaemon};
 
-const BITCOIN_DATADIR_RAW_PATH: &str = "/Users/k/Developer/bitcoin";
-
 fn main() -> color_eyre::Result<()> {
+    let args = args().collect_vec();
+    let bitcoin_dir_path = args.get(1).unwrap();
+
     color_eyre::install()?;
 
-    let deamon = BitcoinDaemon::new(BITCOIN_DATADIR_RAW_PATH);
+    let deamon = BitcoinDaemon::new(bitcoin_dir_path);
 
     loop {
         deamon.stop();
 
         // Scoped to free bitcoin's lock
         let block_count = {
-            let bitcoin_db = BitcoinDB::new(Path::new(BITCOIN_DATADIR_RAW_PATH), true)?;
+            let bitcoin_db = BitcoinDB::new(Path::new(bitcoin_dir_path), true)?;
 
             let block_count = bitcoin_db.get_block_count();
             println!("{block_count} blocks found.");

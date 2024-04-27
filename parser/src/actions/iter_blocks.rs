@@ -8,7 +8,7 @@ use crate::{
     actions::{export_all, find_first_unsafe_height, parse_block},
     bitcoin::{check_if_height_safe, BitcoinDB, NUMBER_OF_UNSAFE_BLOCKS},
     databases::Databases,
-    datasets::{AllDatasets, AnyDatasets},
+    datasets::AllDatasets,
     parse::DateData,
     states::States,
     utils::timestamp_to_naive_date,
@@ -21,20 +21,6 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
     println!("{:?} - Starting aged", Local::now());
 
     let mut datasets = AllDatasets::import()?;
-
-    let min_initial_first_unsafe_address_date = datasets
-        .address
-        .get_min_initial_state()
-        .first_unsafe_date
-        .as_ref()
-        .cloned();
-
-    let min_initial_first_unsafe_address_height = datasets
-        .address
-        .get_min_initial_state()
-        .first_unsafe_height
-        .as_ref()
-        .cloned();
 
     println!("{:?} - Imported datasets", Local::now());
 
@@ -111,23 +97,15 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
                         // Do NOT change `blocks_loop_date` to `current_block_date` !!!
                         .map_or(true, |next_block_date| blocks_loop_date < next_block_date);
 
-                    let compute_addresses = min_initial_first_unsafe_address_date
-                        .map_or(true, |min_initial_unsafe_date| {
-                            current_block_date >= min_initial_unsafe_date
-                        })
-                        || min_initial_first_unsafe_address_height.map_or(
-                            true,
-                            |min_initial_unsafe_height| {
-                                current_block_height >= min_initial_unsafe_height
-                            },
-                        );
-
                     if insert {
                         parse_block(ParseData {
                             bitcoin_db,
                             block: current_block,
                             block_index: blocks_loop_i,
-                            compute_addresses,
+                            compute_addresses: databases.check_if_needs_to_compute_addresses(
+                                current_block_height,
+                                current_block_date,
+                            ),
                             databases: &mut databases,
                             datasets: &mut datasets,
                             date: current_block_date,

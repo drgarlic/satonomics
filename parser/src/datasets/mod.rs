@@ -84,7 +84,7 @@ pub struct AllDatasets {
 
 impl AllDatasets {
     pub fn import() -> color_eyre::Result<Self> {
-        let path = "./datasets";
+        let path = "../datasets";
 
         thread::scope(|scope| {
             let date_metadata_handle = scope.spawn(|| DateMetadataDataset::import(path));
@@ -191,7 +191,7 @@ impl AllDatasets {
             })
             .collect();
 
-        Json::export("./datasets/paths.json", &path_to_type)
+        Json::export("../datasets/paths.json", &path_to_type)
     }
 
     pub fn export(&mut self) -> color_eyre::Result<()> {

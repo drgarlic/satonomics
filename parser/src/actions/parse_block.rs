@@ -175,9 +175,7 @@ pub fn parse_block(
 
     block.txdata.into_iter().try_for_each(|tx| {
         let txid = tx.txid();
-        let txs_counter = &mut databases.txid_to_tx_index.metadata.len;
-        let tx_index = txs_counter.inner();
-        txs_counter.increment();
+        let tx_index = databases.txid_to_tx_index.metadata.serial as u32;
 
         transaction_count += 1;
 
@@ -250,7 +248,7 @@ pub fn parse_block(
 
                                         databases
                                             .address_index_to_empty_address_data
-                                            .remove_from_puts(&address_index)
+                                            .undo_insert(&address_index)
                                     })
                                     .unwrap_or_else(|| {
                                         dbg!(address_index);
@@ -265,12 +263,6 @@ pub fn parse_block(
                                     panic!("Shouldn't be anything there");
                                 }
 
-                                databases
-                                    .address_index_to_empty_address_data
-                                    .metadata
-                                    .len
-                                    .decrement();
-
                                 let address_data = states
                                     .address_index_to_address_data
                                     .entry(address_index)
@@ -280,12 +272,8 @@ pub fn parse_block(
                                 (address_data, address_index)
                             }
                         } else {
-                            let addresses_counters =
-                                &mut databases.address_to_address_index.metadata.len;
-
-                            let address_index = addresses_counters.inner();
-
-                            addresses_counters.increment();
+                            let address_index =
+                                databases.address_to_address_index.metadata.serial as u32;
 
                             let address_type = address.to_type();
 
@@ -498,12 +486,6 @@ pub fn parse_block(
 
                             address_index_to_removed_address_data
                                 .insert(input_address_index, input_address_data);
-
-                            databases
-                                .address_index_to_empty_address_data
-                                .metadata
-                                .len
-                                .increment();
                         }
                     }
 

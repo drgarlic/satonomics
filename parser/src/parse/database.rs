@@ -82,13 +82,6 @@ where
         self.cached_puts.get(key)
     }
 
-    #[inline(always)]
-    pub fn remove(&mut self, key: &KeyTree) {
-        if self.cached_puts.remove(key).is_none() {
-            self.cached_dels.insert(key.clone());
-        }
-    }
-
     #[allow(unused)]
     pub fn take(&mut self, key: &KeyTree) -> Option<Value> {
         if self.cached_dels.get(key).is_none() {
@@ -100,6 +93,13 @@ where
         } else {
             dbg!(key);
             panic!("Can't take twice");
+        }
+    }
+
+    #[inline(always)]
+    pub fn remove(&mut self, key: &KeyTree) {
+        if self.remove_from_puts(key).is_none() {
+            self.cached_dels.insert(key.clone());
         }
     }
 

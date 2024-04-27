@@ -1,17 +1,14 @@
 use axum::{serve, Router};
 use reqwest::Client;
+use tokio::net::TcpListener;
+use tower_http::compression::CompressionLayer;
 
-mod btctools;
 mod kraken;
-mod lookintobitcoin;
 mod satonomics;
 mod utils;
 
-use btctools::*;
 use kraken::*;
-use lookintobitcoin::*;
 use satonomics::*;
-use tower_http::compression::CompressionLayer;
 use utils::*;
 
 #[derive(Clone)]
@@ -36,9 +33,7 @@ async fn main() -> color_eyre::Result<()> {
     };
 
     let router = Router::new();
-    let router = add_btctools_routes(router);
     let router = add_kraken_routes(router);
-    let router = add_lookintobitcoin_routes(router);
     let router = add_satonomics_routes(router);
 
     let router = router
@@ -46,8 +41,7 @@ async fn main() -> color_eyre::Result<()> {
         .layer(compression_layer)
         .with_state(app_state.clone());
 
-    // run our app with hyper, listening globally on port 3110
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3111").await?;
+    let listener = TcpListener::bind("0.0.0.0:3111").await?;
 
     serve(listener, router).await?;
 

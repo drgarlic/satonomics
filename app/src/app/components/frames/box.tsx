@@ -28,7 +28,7 @@ export function Box({
     >
       <div
         class={classPropToString([
-          "rounded-xl border border-orange-200/10 shadow-md",
+          "pointer-events-auto rounded-xl border border-orange-200/10 shadow-md",
           flex && "flex w-full space-x-2",
           overflowY ? "overflow-y-auto" : "overflow-hidden",
           dark

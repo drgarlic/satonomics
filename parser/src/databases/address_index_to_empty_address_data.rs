@@ -4,6 +4,7 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
+use chrono::NaiveDate;
 use rayon::prelude::*;
 
 use crate::parse::{EmptyAddressData, SizedDatabase};
@@ -37,14 +38,20 @@ const DB_MAX_SIZE: usize = 1_000_000;
 
 impl AddressIndexToEmptyAddressData {
     pub fn insert(&mut self, key: Key, value: Value) -> Option<Value> {
+        self.metadata.called_insert();
+
         self.open_db(&key).insert(key, value)
     }
 
-    pub fn remove_from_puts(&mut self, key: &Key) -> Option<Value> {
+    pub fn undo_insert(&mut self, key: &Key) -> Option<Value> {
+        self.metadata.called_remove();
+
         self.open_db(key).remove_from_puts(key)
     }
 
     pub fn remove(&mut self, key: &Key) {
+        self.metadata.called_remove();
+
         self.open_db(key).remove(key)
     }
 
@@ -83,12 +90,12 @@ impl AnyDatabaseGroup for AddressIndexToEmptyAddressData {
         }
     }
 
-    fn export(&mut self) -> color_eyre::Result<()> {
+    fn export(&mut self, height: usize, date: NaiveDate) -> color_eyre::Result<()> {
         mem::take(&mut self.map)
             .into_par_iter()
             .try_for_each(|(_, db)| db.export())?;
 
-        self.metadata.export()?;
+        self.metadata.export(height, date)?;
 
         Ok(())
     }

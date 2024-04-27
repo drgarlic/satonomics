@@ -152,7 +152,7 @@ fn _file_handler(
         let saved_path = format!("./{}", dataset_path);
 
         let path_to_type: BTreeMap<String, String> =
-            Json::import("../parser/datasets/paths.json").unwrap();
+            Json::import("../datasets/paths.json").unwrap();
 
         type_name = Some(
             path_to_type
@@ -183,7 +183,7 @@ fn format_dataset_path(query_path: &str) -> String {
 }
 
 fn format_relative_path(dataset_path: &str) -> String {
-    format!("../parser/{}", dataset_path)
+    format!("../{}", dataset_path)
 }
 
 fn typed_value_to_response<T>(
@@ -228,8 +228,7 @@ fn import_map<T>(relative_path: &str) -> color_eyre::Result<SerializedDateMap<T>
 where
     T: Serialize + Debug + DeserializeOwned + savefile::Deserialize + savefile::ReprC,
 {
-    Serialization::from_extension(relative_path.split('.').last().unwrap())
-        .import(relative_path)
+    Serialization::from_extension(relative_path.split('.').last().unwrap()).import(relative_path)
 }
 
 fn import_vec<T>(relative_path: &str) -> color_eyre::Result<SerializedHeightMap<T>>

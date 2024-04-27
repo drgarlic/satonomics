@@ -1,5 +1,7 @@
 use std::{fs, io};
 
+use chrono::NaiveDate;
+
 use crate::parse::databases_folder_path;
 
 pub trait AnyDatabaseGroup
@@ -8,7 +10,7 @@ where
 {
     fn import() -> Self;
 
-    fn export(&mut self) -> color_eyre::Result<()>;
+    fn export(&mut self, height: usize, date: NaiveDate) -> color_eyre::Result<()>;
 
     fn folder<'a>() -> &'a str;
 

@@ -1,5 +1,4 @@
 .DS_Store
-/datasets
 /target
 /.vscode
 /.zed
@@ -7,7 +6,6 @@
 *flamegraph*
 /profile.json
 
-/price
 /inputs*/
 /outputs*/
 /snapshots*/

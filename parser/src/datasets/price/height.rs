@@ -114,4 +114,8 @@ impl AnyDataset for HeightDataset {
     fn to_any_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
         vec![&self.closes]
     }
+
+    fn to_any_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
+        vec![&mut self.closes]
+    }
 }

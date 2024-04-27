@@ -9,7 +9,7 @@ export function Line({
   depth = 0,
   onClick,
   path,
-  absolute,
+  tail,
   classes: classes,
 }: {
   id: string;
@@ -19,7 +19,7 @@ export function Line({
   depth?: number;
   path?: string;
   icon?: () => JSXElement;
-  absolute?: () => JSXElement;
+  tail?: () => JSXElement;
   classes?: () => string;
 } & ParentProps) {
   const ref = createASS<HTMLButtonElement | undefined>(undefined);
@@ -53,7 +53,12 @@ export function Line({
           </span>
         )}
       </Show>
-      <span class="inline-flex w-full flex-col -space-y-1 truncate text-left">
+      <span
+        class={classPropToString([
+          !icon && "px-1",
+          "inline-flex w-full flex-col -space-y-1 truncate text-left",
+        ])}
+      >
         <Show when={path}>
           <span
             class="truncate text-xs text-white text-opacity-50"
@@ -62,7 +67,7 @@ export function Line({
         </Show>
         <span innerHTML={name} class="truncate" />
       </span>
-      <Show when={absolute}>
+      <Show when={tail}>
         {(absolute) => (
           <span class="ml-0.5 flex items-center">{absolute()()}</span>
         )}

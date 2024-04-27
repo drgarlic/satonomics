@@ -19,8 +19,8 @@ impl DateMetadataDataset {
         let mut s = Self {
             min_initial_state: MinInitialState::default(),
 
-            first_height: DateMap::new_bin(1, &f("first_height")),
-            last_height: DateMap::new_bin(1, &f("last_height")),
+            first_height: DateMap::_new_bin(1, &f("first_height"), usize::MAX, true),
+            last_height: DateMap::_new_bin(1, &f("last_height"), usize::MAX, true),
         };
 
         s.min_initial_state

@@ -49,14 +49,12 @@ export function ChartFrame({
       {/* </div> */}
 
       <Show when={show()}>
-        <div class="min-h-0 flex-1">
+        <div class="-mt-2 min-h-0 flex-1">
           <Chart visible={() => !!datasets.date.price.values()?.length} />
         </div>
       </Show>
 
-      <div class="-mt-8 border-t border-orange-200/10 bg-orange-200/5 pt-8">
-        <TimeScale />
-      </div>
+      <TimeScale />
 
       {/* <div class="flex items-center space-x-3 bg-black p-3 backdrop-blur">
         <div class="flex flex-1 items-center space-x-1 overflow-y-auto py-1">

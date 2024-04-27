@@ -32,4 +32,4 @@ if [ "$(uname)" == "Darwin" ]; then
     tmutil thinlocalsnapshots / &>/dev/null
 fi
 
-cargo run -r
+cargo run -r -- "$HOME/Developer/bitcoin"

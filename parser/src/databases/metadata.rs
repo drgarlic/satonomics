@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use savefile_derive::Savefile;
 use std::{
     fmt::Debug,
@@ -38,19 +39,32 @@ impl Metadata {
         }
     }
 
-    pub fn export(&self) -> color_eyre::Result<()> {
+    pub fn export(&mut self, height: usize, date: NaiveDate) -> color_eyre::Result<()> {
+        self.last_height.replace(height);
+        self.last_date.replace(WNaiveDate::wrap(date));
+
         self.data.export(&self.path)
     }
 
     pub fn reset(&mut self) {
         let _ = self.data.reset(&self.path);
     }
+
+    pub fn called_insert(&mut self) {
+        self.serial += 1;
+        self.len.increment();
+    }
+
+    pub fn called_remove(&mut self) {
+        self.len.decrement();
+    }
 }
 
 #[derive(Savefile, Default, Debug)]
 pub struct MetadataData {
+    pub serial: usize,
     pub len: Counter,
-    pub last_block: Option<u64>,
+    pub last_height: Option<usize>,
     pub last_date: Option<WNaiveDate>,
 }
 
@@ -81,8 +95,9 @@ impl MetadataData {
     }
 
     fn clear(&mut self) {
+        self.serial = 0;
         self.len.reset();
-        self.last_block = None;
+        self.last_height = None;
         self.last_date = None;
     }
 }

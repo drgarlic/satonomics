@@ -69,4 +69,14 @@ impl AnyDataset for DateDataset {
     fn to_any_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
         vec![&self.closes]
     }
+
+    fn to_any_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
+        vec![&mut self.closes]
+    }
+
+    fn export(&self) -> color_eyre::Result<()> {
+        self.to_any_map_vec()
+            .into_iter()
+            .try_for_each(|map| -> color_eyre::Result<()> { map.export() })
+    }
 }

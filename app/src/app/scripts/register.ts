@@ -1,6 +1,6 @@
 import { useRegisterSW } from "virtual:pwa-register/solid";
 
-const intervalMS = 10 * 60 * 1000;
+const intervalMS = 5 * 60 * 1000;
 
 export function registerServiceWorker() {
   return useRegisterSW({
@@ -34,3 +34,29 @@ export function registerServiceWorker() {
     },
   });
 }
+
+// From update.tsx
+//   onMount(async () => {
+//     if ('serviceWorker' in navigator) {
+//       try {
+//         const registration = await navigator.serviceWorker.register('/sw.js')
+
+//         registration.addEventListener('updatefound', () => {
+//           const worker = registration.installing
+
+//           worker?.addEventListener('statechange', () => {
+//             if (
+//               worker.state === 'activated' &&
+//               navigator.serviceWorker.controller
+//             ) {
+//               ;(Object.entries(props.resources) as Entries<ResourcesHTTP>)
+//                 .map(([_, value]) => value.fetch)
+//                 .forEach((fetch) => fetch())
+
+//               setTimeout(() => updateAvailable.set(true), FIVE_SECOND_IN_MS)
+//             }
+//           })
+//         })
+//       } catch {}
+//     }
+//   })

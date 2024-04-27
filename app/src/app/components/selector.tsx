@@ -3,9 +3,11 @@ import { classPropToString } from "/src/solid";
 export function Selector({
   selected,
   setSelected,
+  needsRefresh,
 }: {
   selected: Accessor<FrameName>;
   setSelected: Setter<FrameName>;
+  needsRefresh: Accessor<boolean>;
 }) {
   return (
     // <div
@@ -16,8 +18,8 @@ export function Selector({
     // >
     <>
       <a
-        class="inline-flex justify-center rounded-lg bg-orange-600 p-4"
-        href="https://satonomics.xyz"
+        class="inline-flex justify-center rounded-lg bg-gradient-to-br from-orange-500 to-orange-800 p-4"
+        href="https://app.satonomics.xyz"
       >
         <svg
           class="-m-1.5 size-7"
@@ -85,13 +87,6 @@ export function Selector({
           selected() === "Search" ? IconTablerZoomFilled : IconTablerSearch
         }
       />
-
-      <div class="h-full" />
-
-      {/* <Button
-        icon={() => IconTablerChevronRight}
-      /> */}
-
       <Button
         selected={() => selected() === "Settings"}
         onClick={() => {
@@ -104,11 +99,24 @@ export function Selector({
         }
       />
 
-      {/* <Button icon={() => IconTablerApi} /> */}
-      {/* <Button icon={() => IconTablerFeather} /> */}
-      {/* <Button icon={() => IconTablerGitMerge} /> */}
-      {/* <Button icon={() => IconTablerAnalyze} /> */}
-      {/* <Button icon={() => IconTablerHome2} /> */}
+      <div class="h-full" />
+
+      {/* <Button
+        icon={() => IconTablerChevronRight}
+      /> */}
+
+      <Show when={needsRefresh()}>
+        <Button onClick={() => document.location.reload()}>
+          <IconTablerRefreshAlert class="absolute size-5 animate-ping text-orange-400" />
+          <IconTablerRefreshAlert class="relative size-5 text-orange-300" />
+        </Button>
+      </Show>
+
+      <Button icon={() => IconTablerApi} />
+      <Button icon={() => IconTablerFeather} />
+      <Button icon={() => IconTablerGitMerge} />
+      <Button icon={() => IconTablerAnalyze} />
+      <Button icon={() => IconTablerHome2} />
 
       {/* <div class="border-t border-dashed border-white" />
       <Anchor href="/routes" primary="API" secondary="Satonomics" />
@@ -146,12 +154,13 @@ function Button({
   onClick,
   icon,
   hideOnDesktop,
+  children,
 }: {
   selected?: Accessor<boolean>;
   onClick?: VoidFunction;
-  icon: () => ValidComponent;
+  icon?: () => ValidComponent;
   hideOnDesktop?: boolean;
-}) {
+} & ParentProps) {
   return (
     <button
       class={classPropToString([
@@ -161,7 +170,9 @@ function Button({
       ])}
       onClick={onClick}
     >
-      <Dynamic component={icon()} class={classPropToString(["size-5"])} />
+      <Show when={icon} fallback={children}>
+        {(icon) => <Dynamic component={icon()()} class="size-5" />}
+      </Show>
     </button>
   );
 }

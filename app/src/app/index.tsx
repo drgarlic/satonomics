@@ -60,7 +60,7 @@ export function App({ datasets }: { datasets: Datasets }) {
 
   const marquee = createASS(!!localStorage.getItem(LOCAL_STORAGE_MARQUEE_KEY));
 
-  const resizingBar = createASS(false);
+  const resizingBarStart = createASS<number | undefined>(undefined);
 
   const resources = createResources();
 
@@ -138,13 +138,19 @@ export function App({ datasets }: { datasets: Datasets }) {
       <div
         class="relative h-dvh selection:bg-orange-800"
         style={{
-          "user-select": resizingBar() ? "none" : undefined,
+          "user-select": resizingBarStart() !== undefined ? "none" : undefined,
         }}
-        onMouseMove={(event) => resizingBar() && barWidth.set(event.x + 1)}
-        onMouseUp={() => resizingBar.set(false)}
-        onMouseLeave={() => resizingBar.set(false)}
-        onTouchEnd={() => resizingBar.set(false)}
-        onTouchCancel={() => resizingBar.set(false)}
+        onMouseMove={(event) => {
+          const start = resizingBarStart();
+
+          if (start !== undefined) {
+            barWidth.set(event.x - start + 384);
+          }
+        }}
+        onMouseUp={() => resizingBarStart.set(undefined)}
+        onMouseLeave={() => resizingBarStart.set(undefined)}
+        onTouchEnd={() => resizingBarStart.set(undefined)}
+        onTouchCancel={() => resizingBarStart.set(undefined)}
       >
         <Qrcode qrcode={qrcode} />
 
@@ -154,6 +160,7 @@ export function App({ datasets }: { datasets: Datasets }) {
               <Selector
                 selected={selectedFrame}
                 setSelected={_selectedFrame.set}
+                needsRefresh={needRefresh[0]}
               />
             </div>
             <div class="border-l border-white/10" />
@@ -167,7 +174,6 @@ export function App({ datasets }: { datasets: Datasets }) {
                   : {}),
               }}
             >
-              {/* <div class="flex min-h-0 flex-1 flex-col md:border-0"> */}
               {/* <Header
                   needsRefresh={needRefresh[0]}
                   onClick={async () => {
@@ -192,14 +198,20 @@ export function App({ datasets }: { datasets: Datasets }) {
               <FavoritesFrame presets={presets} selectedFrame={selectedFrame} />
               <SearchFrame presets={presets} selectedFrame={selectedFrame} />
               <SettingsFrame marquee={marquee} selectedFrame={selectedFrame} />
-              {/* </div> */}
             </div>
           </div>
 
           <div
-            class="mx-1 my-8 hidden w-1 cursor-col-resize items-center justify-center rounded-full bg-orange-100 opacity-0 hover:opacity-50 md:block"
-            onMouseDown={() => resizingBar.set(true)}
-            onTouchStart={() => resizingBar.set(true)}
+            class="mx-[3px] my-8 hidden w-[6px] cursor-col-resize items-center justify-center rounded-full bg-orange-100 opacity-0 hover:opacity-50 md:block"
+            onMouseDown={(event) =>
+              resizingBarStart() === undefined &&
+              // TODO: set size of bar instead
+              resizingBarStart.set(event.clientX)
+            }
+            onTouchStart={(event) =>
+              resizingBarStart() === undefined &&
+              resizingBarStart.set(event.touches[0].clientX)
+            }
             onDblClick={() => barWidth.set(0)}
           />
 

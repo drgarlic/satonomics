@@ -9,8 +9,28 @@ pub fn find_first_unsafe_height(
     databases: &mut Databases,
     datasets: &AllDatasets,
 ) -> usize {
-    let _min_initial_last_address_date = datasets.address.get_min_initial_state().last_date;
-    let _min_initial_last_address_height = datasets.address.get_min_initial_state().last_height;
+    let min_initial_last_address_height = datasets
+        .address
+        .get_min_initial_state()
+        .last_height
+        .as_ref()
+        .cloned();
+
+    let min_initial_last_address_date = datasets
+        .address
+        .get_min_initial_state()
+        .last_date
+        .as_ref()
+        .cloned();
+
+    // TODO: Check states consistency
+    // And then states with databases consistency
+    // states should've same last date/height as the txindex database and lower or equal to address databases
+    //
+    let usable_databases = databases.check_if_usable(
+        min_initial_last_address_height,
+        min_initial_last_address_date,
+    );
 
     states
         .date_data_vec
@@ -18,6 +38,12 @@ pub fn find_first_unsafe_height(
         .last()
         .map(|date_data| date_data.date)
         .and_then(|last_safe_date| {
+            if !usable_databases {
+                println!("Unusable databases");
+
+                return None;
+            }
+
             let min_datasets_last_height = datasets.get_min_initial_state().last_height;
             let min_datasets_last_date = datasets.get_min_initial_state().last_date;
 
@@ -25,6 +51,7 @@ pub fn find_first_unsafe_height(
             println!("min_datasets_last_date: {:?}", min_datasets_last_date);
 
             if min_datasets_last_date.map_or(true, |min_datasets_last_date| min_datasets_last_date < *last_safe_date) {
+                dbg!(min_datasets_last_date , *last_safe_date);
                 return None;
             }
 
@@ -48,10 +75,7 @@ pub fn find_first_unsafe_height(
 
             states.reset();
 
-
-            databases.reset(true);
-            // Doesn't always work as intended
-            // databases.reset(min_initial_last_address_date.is_none() || min_initial_last_address_height.is_none());
+            databases.reset(!usable_databases || min_initial_last_address_date.is_none() || min_initial_last_address_height.is_none());
 
             0
         })

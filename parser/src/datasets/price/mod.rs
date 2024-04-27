@@ -16,7 +16,7 @@ pub struct PriceDatasets {
 
 impl PriceDatasets {
     pub fn import() -> color_eyre::Result<Self> {
-        let path = "./price";
+        let path = "../price";
 
         let mut s = Self {
             min_initial_state: MinInitialState::default(),

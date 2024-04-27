@@ -1,5 +1,6 @@
 use std::{collections::BTreeMap, mem, thread};
 
+use chrono::NaiveDate;
 use rayon::prelude::*;
 
 use crate::parse::{
@@ -117,6 +118,8 @@ impl AddressToAddressIndex {
     }
 
     pub fn insert(&mut self, address: Address, value: Value) -> Option<Value> {
+        self.metadata.called_insert();
+
         match address {
             Address::Empty(key) => self.open_empty().insert(key, value),
             Address::Unknown(key) => self.open_unknown().insert(key, value),
@@ -229,7 +232,7 @@ impl AnyDatabaseGroup for AddressToAddressIndex {
         }
     }
 
-    fn export(&mut self) -> color_eyre::Result<()> {
+    fn export(&mut self, height: usize, date: NaiveDate) -> color_eyre::Result<()> {
         thread::scope(|s| {
             s.spawn(|| {
                 mem::take(&mut self.p2pk)
@@ -267,7 +270,7 @@ impl AnyDatabaseGroup for AddressToAddressIndex {
             s.spawn(|| self.multisig.take().map(|db| db.export()));
         });
 
-        self.metadata.export()?;
+        self.metadata.export(height, date)?;
 
         Ok(())
     }

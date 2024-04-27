@@ -17,6 +17,7 @@ impl BlockIter {
         <T as IntoIterator>::IntoIter: Send + 'static,
     {
         let db_ref = db.clone();
+
         BlockIter(
             heights.into_par_iter_sync(move |h| match db_ref.get_block(h) {
                 Ok(blk) => Ok(blk),
