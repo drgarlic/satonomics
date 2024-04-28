@@ -1,53 +1,28 @@
-use std::{collections::BTreeMap, fmt::Debug};
+use std::collections::BTreeMap;
 
 use axum::{
     extract::{Path, Query},
     http::HeaderMap,
     response::Response,
-    routing::get,
-    Router,
 };
 use color_eyre::eyre::eyre;
 use itertools::Itertools;
-use parser::{
-    DateMap, HeightMap, Json, Serialization, SerializedDateMap, SerializedHeightMap,
-    HEIGHT_MAP_CHUNK_SIZE,
-};
 use reqwest::header::HOST;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::Deserialize;
 
-use crate::{generic_to_reponse, AppState, Chunk, Source};
+use parser::{DateMap, HeightMap, Json, Serialization, HEIGHT_MAP_CHUNK_SIZE, OHLC};
 
-enum Kind {
-    Date,
-    Height,
-    Last,
-}
+use crate::{chunk::Chunk, kind::Kind, response::typed_value_to_response};
 
 #[derive(Deserialize)]
-pub struct SatonomicsQuery {
+pub struct Params {
     chunk: Option<usize>,
 }
 
-impl Kind {
-    pub fn from_str(string: &str) -> Self {
-        match string {
-            "date" => Self::Date,
-            "height" => Self::Height,
-            "value" | "last" | "" => Self::Last,
-            _ => panic!(),
-        }
-    }
-}
-
-pub fn add_satonomics_routes(router: Router<AppState>) -> Router<AppState> {
-    router.route("/*path", get(file_handler))
-}
-
-async fn file_handler(
+pub async fn file_handler(
     headers: HeaderMap,
     path: Path<String>,
-    query: Query<SatonomicsQuery>,
+    query: Query<Params>,
 ) -> Response {
     _file_handler(headers, path, query).unwrap_or_default()
 }
@@ -55,7 +30,7 @@ async fn file_handler(
 fn _file_handler(
     headers: HeaderMap,
     Path(path): Path<String>,
-    query: Query<SatonomicsQuery>,
+    query: Query<Params>,
 ) -> color_eyre::Result<Response> {
     if path.contains("favicon") {
         return Err(eyre!("Don't support favicon"));
@@ -84,10 +59,10 @@ fn _file_handler(
 
         let joined_split = format!("{}/{}", split.join("/"), kind_str);
 
-        let is_price_folder = joined_split.starts_with("close/");
+        let is_price_folder = joined_split.starts_with("ohlc/");
 
         if is_price_folder {
-            type_name = Some("f32".to_string());
+            type_name = Some("ohlc".to_string());
 
             dataset_path = format!("price/{joined_split}");
         } else {
@@ -149,17 +124,15 @@ fn _file_handler(
     }
 
     if type_name.is_none() {
-        let saved_path = format!("./{}", dataset_path);
+        let saved_path = format!("../{}", dataset_path);
 
         let path_to_type: BTreeMap<String, String> =
             Json::import("../datasets/paths.json").unwrap();
 
-        type_name = Some(
-            path_to_type
-                .get(&saved_path)
-                .cloned()
-                .unwrap_or_else(|| panic!("Fail for {saved_path}")),
-        );
+        type_name = Some(path_to_type.get(&saved_path).cloned().unwrap_or_else(|| {
+            dbg!(&path_to_type);
+            panic!("Fail for {saved_path}")
+        }));
     }
 
     dbg!(&relative_path);
@@ -172,6 +145,7 @@ fn _file_handler(
         "usize" => typed_value_to_response::<usize>(kind, &relative_path, chunk)?,
         "f32" => typed_value_to_response::<f32>(kind, &relative_path, chunk)?,
         "f64" => typed_value_to_response::<f64>(kind, &relative_path, chunk)?,
+        "ohlc" => typed_value_to_response::<OHLC>(kind, &relative_path, chunk)?,
         _ => panic!("Incompatible type: {type_name}"),
     };
 
@@ -184,64 +158,4 @@ fn format_dataset_path(query_path: &str) -> String {
 
 fn format_relative_path(dataset_path: &str) -> String {
     format!("../{}", dataset_path)
-}
-
-fn typed_value_to_response<T>(
-    kind: Kind,
-    relative_path: &str,
-    chunk: Option<Chunk>,
-) -> color_eyre::Result<Response>
-where
-    T: Serialize + Debug + DeserializeOwned + savefile::Deserialize + savefile::ReprC,
-{
-    Ok(match kind {
-        Kind::Date => dataset_to_response(import_map::<T>(relative_path)?, chunk.unwrap()),
-        Kind::Height => dataset_to_response(import_vec::<T>(relative_path)?, chunk.unwrap()),
-        Kind::Last => value_to_response(import_value::<T>(relative_path)?),
-    })
-}
-
-fn value_to_response<T>(value: T) -> Response
-where
-    T: Serialize,
-{
-    generic_to_reponse(value, None, None, Some(5))
-}
-
-fn dataset_to_response<T>(dataset: T, chunk: Chunk) -> Response
-where
-    T: Serialize,
-{
-    generic_to_reponse(
-        dataset,
-        Some(Source {
-            name: "Satonomics".to_owned(),
-            url: "https://satonomics.xyz".to_owned(),
-            color: "#ffffff".to_owned(),
-        }),
-        Some(chunk),
-        Some(10),
-    )
-}
-
-fn import_map<T>(relative_path: &str) -> color_eyre::Result<SerializedDateMap<T>>
-where
-    T: Serialize + Debug + DeserializeOwned + savefile::Deserialize + savefile::ReprC,
-{
-    Serialization::from_extension(relative_path.split('.').last().unwrap()).import(relative_path)
-}
-
-fn import_vec<T>(relative_path: &str) -> color_eyre::Result<SerializedHeightMap<T>>
-where
-    T: Serialize + Debug + DeserializeOwned + savefile::Deserialize + savefile::ReprC,
-{
-    Serialization::from_extension(relative_path.split('.').last().unwrap()).import(relative_path)
-}
-
-fn import_value<T>(relative_path: &str) -> color_eyre::Result<T>
-where
-    T: Serialize + Debug + DeserializeOwned + savefile::Deserialize + savefile::ReprC,
-{
-    Serialization::from_extension(relative_path.split('.').last().unwrap())
-        .import::<T>(relative_path)
 }

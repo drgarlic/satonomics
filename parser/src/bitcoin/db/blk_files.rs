@@ -75,6 +75,7 @@ impl BlkFiles {
     ///
     fn scan_path(path: &Path) -> OpResult<HashMap<i32, PathBuf>> {
         let mut collected = HashMap::with_capacity(4000);
+
         for entry in fs::read_dir(path)? {
             match entry {
                 Ok(de) => {
@@ -95,7 +96,9 @@ impl BlkFiles {
                 }
             }
         }
+
         collected.shrink_to_fit();
+
         if collected.is_empty() {
             Err(OpError::new(OpErrorKind::RuntimeError).join_msg("No blk files found!"))
         } else {

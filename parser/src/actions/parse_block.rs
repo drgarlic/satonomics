@@ -90,15 +90,29 @@ pub fn parse_block(
         block_index: block_index as u16,
     };
 
+    let previous_timestamp = if height > 0 {
+        Some(
+            datasets
+                .block_metadata
+                .timestamp
+                .get(&(height - 1))
+                .unwrap(),
+        )
+    } else {
+        None
+    };
+
     let block_price = datasets
         .price
-        .height_to_close(height, timestamp)
-        .unwrap_or_else(|_| panic!("Expect {height} to have a price"));
+        .height_to_ohlc(height, timestamp, previous_timestamp)
+        .unwrap_or_else(|_| panic!("Expect {height} to have a price"))
+        .close;
 
     let date_price = datasets
         .price
-        .date_to_close(date)
-        .unwrap_or_else(|_| panic!("Expect {date} to have a price"));
+        .date_to_ohlc(date)
+        .unwrap_or_else(|_| panic!("Expect {date} to have a price"))
+        .close;
 
     states
         .date_data_vec
@@ -138,8 +152,8 @@ pub fn parse_block(
             let mut txouts_parsing_results = parse_txouts(
                 &block,
                 compute_addresses,
-                &mut states.counters.unknown_addresses,
-                &mut states.counters.empty_addresses,
+                &mut states.address_counters.unknown_addresses,
+                &mut states.address_counters.empty_addresses,
                 &mut databases.address_to_address_index,
             );
 

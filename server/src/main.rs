@@ -1,21 +1,14 @@
-use axum::{serve, Router};
-use reqwest::Client;
+use axum::{routing::get, serve, Router};
 use tokio::net::TcpListener;
 use tower_http::compression::CompressionLayer;
 
-mod kraken;
-mod satonomics;
-mod utils;
+mod chunk;
+mod handler;
+mod imports;
+mod kind;
+mod response;
 
-use kraken::*;
-use satonomics::*;
-use utils::*;
-
-#[derive(Clone)]
-pub struct AppState {
-    client: Client,
-    cache: Cache,
-}
+use handler::file_handler;
 
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
@@ -27,19 +20,10 @@ async fn main() -> color_eyre::Result<()> {
         .gzip(true)
         .zstd(true);
 
-    let app_state = AppState {
-        client: Client::new(),
-        cache: Default::default(),
-    };
-
-    let router = Router::new();
-    let router = add_kraken_routes(router);
-    let router = add_satonomics_routes(router);
-
-    let router = router
+    let router = Router::new()
+        .route("/*path", get(file_handler))
         .fallback(|| async { "Route not found" })
-        .layer(compression_layer)
-        .with_state(app_state.clone());
+        .layer(compression_layer);
 
     let listener = TcpListener::bind("0.0.0.0:3111").await?;
 

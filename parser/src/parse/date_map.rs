@@ -55,7 +55,6 @@ where
         + Debug
         + Serialize
         + DeserializeOwned
-        + Sum
         + savefile::Serialize
         + savefile::Deserialize
         + savefile::ReprC,
@@ -248,7 +247,6 @@ where
         + Debug
         + Serialize
         + DeserializeOwned
-        + Sum
         + savefile::Serialize
         + savefile::Deserialize
         + savefile::ReprC,
@@ -355,7 +353,6 @@ where
         + Debug
         + Serialize
         + DeserializeOwned
-        + Sum
         + Sync
         + Send
         + savefile::Serialize
@@ -389,7 +386,6 @@ where
         + Debug
         + Serialize
         + DeserializeOwned
-        + Sum
         + savefile::Serialize
         + savefile::Deserialize
         + savefile::ReprC,

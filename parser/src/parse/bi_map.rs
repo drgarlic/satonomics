@@ -13,7 +13,6 @@ where
         + Debug
         + Serialize
         + DeserializeOwned
-        + Sum
         + savefile::Serialize
         + savefile::Deserialize
         + savefile::ReprC,
@@ -30,7 +29,6 @@ where
         + Debug
         + Serialize
         + DeserializeOwned
-        + Sum
         + savefile::Serialize
         + savefile::Deserialize
         + savefile::ReprC,
@@ -60,7 +58,9 @@ where
         &mut self,
         date: NaiveDate,
         date_blocks_range: &RangeInclusive<usize>,
-    ) {
+    ) where
+        T: Sum,
+    {
         self.date
             .insert(date, self.height.sum_range(date_blocks_range));
     }
@@ -86,7 +86,6 @@ where
         + Debug
         + Serialize
         + DeserializeOwned
-        + Sum
         + savefile::Serialize
         + savefile::Deserialize
         + savefile::ReprC

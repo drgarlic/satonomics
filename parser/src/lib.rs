@@ -11,6 +11,7 @@ mod utils;
 pub use crate::{
     actions::iter_blocks,
     bitcoin::{BitcoinDB, BitcoinDaemon},
+    datasets::OHLC,
     io::{Binary, Json, Serialization},
     parse::{DateMap, HeightMap, SerializedDateMap, SerializedHeightMap, HEIGHT_MAP_CHUNK_SIZE},
     utils::timestamp_to_naive_date,

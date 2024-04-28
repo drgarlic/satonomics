@@ -2,21 +2,6 @@
 
 # https://stackoverflow.com/questions/31389483/find-and-delete-file-or-folder-older-than-x-days
 
-# Trap ctrl-c and call ctrl_c()
-# trap ctrl_c INT
-
-# function ctrl_c() {
-    # echo "** Trapped CTRL-C"
-
-    # For Mac OS users
-    # if [ "$(uname)" == "Darwin" ]; then
-    #     if mdutil -s / | grep "disabled"; then
-    #         echo "Re-enabling spotlight indexing..."
-    #         sudo mdutil -a -i on
-    #     fi
-    # fi
-# }
-
 # For Mac OS users
 if [ "$(uname)" == "Darwin" ]; then
     echo "Increasing limit of opened files..."
@@ -32,4 +17,5 @@ if [ "$(uname)" == "Darwin" ]; then
     tmutil thinlocalsnapshots / &>/dev/null
 fi
 
+# Update path
 cargo run -r -- "$HOME/Developer/bitcoin"

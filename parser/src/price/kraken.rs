@@ -1,16 +1,15 @@
-#![allow(dead_code)]
+use std::collections::BTreeMap;
 
-use std::collections::{BTreeMap, HashMap};
-
+use chrono::NaiveDate;
 use color_eyre::eyre::ContextCompat;
 use serde_json::Value;
 
-use crate::utils::timestamp_to_naive_date;
+use crate::{datasets::OHLC, utils::timestamp_to_naive_date};
 
 pub struct Kraken;
 
 impl Kraken {
-    pub fn fetch_1mn_prices() -> color_eyre::Result<BTreeMap<u32, f32>> {
+    pub fn fetch_1mn_prices() -> color_eyre::Result<BTreeMap<u32, OHLC>> {
         println!("kraken: fetch 1mn");
 
         let body: Value =
@@ -34,20 +33,30 @@ impl Kraken {
 
                 let timestamp = array.first().unwrap().as_u64().unwrap() as u32;
 
-                let price = array
-                    .get(4)
-                    .unwrap()
-                    .as_str()
-                    .unwrap()
-                    .parse::<f32>()
-                    .unwrap();
+                let get_f32 = |index: usize| {
+                    array
+                        .get(index)
+                        .unwrap()
+                        .as_str()
+                        .unwrap()
+                        .parse::<f32>()
+                        .unwrap()
+                };
 
-                (timestamp, price)
+                (
+                    timestamp,
+                    OHLC {
+                        open: get_f32(1),
+                        high: get_f32(2),
+                        low: get_f32(3),
+                        close: get_f32(4),
+                    },
+                )
             })
             .collect::<BTreeMap<_, _>>())
     }
 
-    pub fn fetch_daily_prices() -> color_eyre::Result<HashMap<String, f32>> {
+    pub fn fetch_daily_prices() -> color_eyre::Result<BTreeMap<NaiveDate, OHLC>> {
         println!("fetch kraken daily");
 
         let body: Value = reqwest::blocking::get(
@@ -70,19 +79,28 @@ impl Kraken {
             .map(|value| {
                 let array = value.as_array().unwrap();
 
-                let date = timestamp_to_naive_date(array.first().unwrap().as_u64().unwrap() as u32)
-                    .to_string();
+                let date = timestamp_to_naive_date(array.first().unwrap().as_u64().unwrap() as u32);
 
-                let price = array
-                    .get(4)
-                    .unwrap()
-                    .as_str()
-                    .unwrap()
-                    .parse::<f32>()
-                    .unwrap();
+                let get_f32 = |index: usize| {
+                    array
+                        .get(index)
+                        .unwrap()
+                        .as_str()
+                        .unwrap()
+                        .parse::<f32>()
+                        .unwrap()
+                };
 
-                (date, price)
+                (
+                    date,
+                    OHLC {
+                        open: get_f32(1),
+                        high: get_f32(2),
+                        low: get_f32(3),
+                        close: get_f32(4),
+                    },
+                )
             })
-            .collect::<HashMap<_, _>>())
+            .collect::<BTreeMap<_, _>>())
     }
 }

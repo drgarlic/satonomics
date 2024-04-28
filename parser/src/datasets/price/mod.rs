@@ -1,9 +1,11 @@
 mod date;
 mod height;
+mod ohlc;
 
 use chrono::NaiveDate;
 use date::*;
 use height::*;
+pub use ohlc::*;
 
 use super::{AnyDataset, AnyDatasets, MinInitialState};
 
@@ -16,7 +18,7 @@ pub struct PriceDatasets {
 
 impl PriceDatasets {
     pub fn import() -> color_eyre::Result<Self> {
-        let path = "../price";
+        let path = "../price/ohlc";
 
         let mut s = Self {
             min_initial_state: MinInitialState::default(),
@@ -31,12 +33,17 @@ impl PriceDatasets {
         Ok(s)
     }
 
-    pub fn date_to_close(&mut self, date: NaiveDate) -> color_eyre::Result<f32> {
+    pub fn date_to_ohlc(&mut self, date: NaiveDate) -> color_eyre::Result<OHLC> {
         self.date.get(date)
     }
 
-    pub fn height_to_close(&mut self, height: usize, timestamp: u32) -> color_eyre::Result<f32> {
-        self.height.get(height, timestamp)
+    pub fn height_to_ohlc(
+        &mut self,
+        height: usize,
+        timestamp: u32,
+        previous_timestamp: Option<u32>,
+    ) -> color_eyre::Result<OHLC> {
+        self.height.get(height, timestamp, previous_timestamp)
     }
 }
 

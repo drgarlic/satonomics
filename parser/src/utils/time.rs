@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use super::MILLISECONDS_IN_DAY;
+use super::ONE_DAY_IN_MS;
 
 pub fn time<F, T>(name: &str, function: F) -> T
 where
@@ -16,5 +16,5 @@ where
 }
 
 pub fn difference_in_days_between_timestamps(older: u32, younger: u32) -> u32 {
-    (younger - older) / MILLISECONDS_IN_DAY as u32
+    (younger - older) / ONE_DAY_IN_MS as u32
 }

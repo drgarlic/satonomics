@@ -2,16 +2,21 @@
 
 use std::{collections::BTreeMap, path::Path};
 
+use chrono::NaiveDate;
 use color_eyre::eyre::ContextCompat;
 use itertools::Itertools;
 use serde_json::Value;
 
-use crate::io::{Json, IMPORTS_FOLDER_PATH};
+use crate::{
+    datasets::OHLC,
+    io::{Json, IMPORTS_FOLDER_PATH},
+    timestamp_to_naive_date,
+};
 
 pub struct Binance;
 
 impl Binance {
-    pub fn read_har_file() -> color_eyre::Result<BTreeMap<u32, f32>> {
+    pub fn read_har_file() -> color_eyre::Result<BTreeMap<u32, OHLC>> {
         println!("binance: read har file");
 
         let path_binance_har = Path::new(IMPORTS_FOLDER_PATH).join("binance.har");
@@ -73,22 +78,32 @@ impl Binance {
 
                         let timestamp = (array.first().unwrap().as_u64().unwrap() / 1000) as u32;
 
-                        let price = array
-                            .get(4)
-                            .unwrap()
-                            .as_str()
-                            .unwrap()
-                            .parse::<f32>()
-                            .unwrap();
+                        let get_f32 = |index: usize| {
+                            array
+                                .get(index)
+                                .unwrap()
+                                .as_str()
+                                .unwrap()
+                                .parse::<f32>()
+                                .unwrap()
+                        };
 
-                        (timestamp, price)
+                        (
+                            timestamp,
+                            OHLC {
+                                open: get_f32(1),
+                                high: get_f32(2),
+                                low: get_f32(3),
+                                close: get_f32(4),
+                            },
+                        )
                     })
                     .collect_vec()
             })
             .collect::<BTreeMap<_, _>>())
     }
 
-    pub fn fetch_1mn_prices() -> color_eyre::Result<BTreeMap<u32, f32>> {
+    pub fn fetch_1mn_prices() -> color_eyre::Result<BTreeMap<u32, OHLC>> {
         println!("binance: fetch 1mn");
 
         let body: Value = reqwest::blocking::get(
@@ -106,15 +121,67 @@ impl Binance {
 
                 let timestamp = array.first().unwrap().as_u64().unwrap() as u32;
 
-                let price = array
-                    .get(4)
-                    .unwrap()
-                    .as_str()
-                    .unwrap()
-                    .parse::<f32>()
-                    .unwrap();
+                let get_f32 = |index: usize| {
+                    array
+                        .get(index)
+                        .unwrap()
+                        .as_str()
+                        .unwrap()
+                        .parse::<f32>()
+                        .unwrap()
+                };
 
-                (timestamp, price)
+                (
+                    timestamp,
+                    OHLC {
+                        open: get_f32(1),
+                        high: get_f32(2),
+                        low: get_f32(3),
+                        close: get_f32(4),
+                    },
+                )
+            })
+            .collect::<BTreeMap<_, _>>())
+    }
+
+    pub fn fetch_daily_prices() -> color_eyre::Result<BTreeMap<NaiveDate, OHLC>> {
+        println!("binance: fetch 1d");
+
+        let body: Value = reqwest::blocking::get(
+            "https://api.binance.com/api/v3/uiKlines?symbol=BTCUSDT&interval=1d",
+        )?
+        .json()?;
+
+        Ok(body
+            .as_array()
+            .context("Expect to be an array")?
+            .iter()
+            .map(|value| {
+                // [timestamp, open, high, low, close, volume, ...]
+                let array = value.as_array().unwrap();
+
+                let date =
+                    timestamp_to_naive_date(array.first().unwrap().as_u64().unwrap() as u32 / 1000);
+
+                let get_f32 = |index: usize| {
+                    array
+                        .get(index)
+                        .unwrap()
+                        .as_str()
+                        .unwrap()
+                        .parse::<f32>()
+                        .unwrap()
+                };
+
+                (
+                    date,
+                    OHLC {
+                        open: get_f32(1),
+                        high: get_f32(2),
+                        low: get_f32(3),
+                        close: get_f32(4),
+                    },
+                )
             })
             .collect::<BTreeMap<_, _>>())
     }
