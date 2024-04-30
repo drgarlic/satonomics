@@ -1,9 +1,11 @@
 use std::{
     cmp::Ordering,
     fmt::Debug,
-    iter::Sum,
-    ops::{Add, AddAssign, Sub, SubAssign},
+    ops::{Add, AddAssign, Deref, Sub, SubAssign},
 };
+
+use savefile_derive::Savefile;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq)]
 enum Mutation<V> {
@@ -11,19 +13,21 @@ enum Mutation<V> {
     Remove,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct SparsedVec<K, V>
 where
     K: Into<usize>
         + From<usize>
         + Ord
-        + Sum
         + Copy
         + Add<Output = K>
         + Sub<Output = K>
         + Default
         + AddAssign
-        + SubAssign,
+        + SubAssign
+        + savefile::Serialize
+        + savefile::Deserialize,
+    V: savefile::Serialize + savefile::Deserialize,
 {
     last_index: Option<K>,
     holes: Vec<(K, K)>,
@@ -33,26 +37,102 @@ where
 impl<K, V> SparsedVec<K, V>
 where
     K: Into<usize>
+        + Debug
         + From<usize>
         + Ord
-        + Sum
         + Copy
+        + Clone
         + Add<Output = K>
         + Sub<Output = K>
         + Default
         + AddAssign
         + SubAssign
-        + Debug,
-    V: PartialEq,
+        + savefile::Serialize
+        + savefile::Deserialize,
+    V: PartialEq + savefile::Serialize + savefile::Deserialize + Debug + Copy + Clone,
 {
     pub fn get(&self, index: K) -> Option<&V> {
-        self.fix_index(index)
+        self.get_real_index(index)
             .and_then(|index| self.values.get(index.into()))
     }
 
     pub fn get_mut(&mut self, index: K) -> Option<&mut V> {
-        self.fix_index(index)
+        self.get_real_index(index)
             .and_then(|index| self.values.get_mut(index.into()))
+    }
+
+    fn should_be_reversed(&self, index: K) -> bool {
+        if self.holes.is_empty() {
+            false
+        } else {
+            let median_hole_index = self.holes.get(self.holes.len() / 2).unwrap().0;
+
+            median_hole_index < index
+        }
+    }
+
+    fn get_real_index(&self, index: K) -> Option<K> {
+        let values_len = self.values.len();
+
+        if values_len == 0 || self.last_index.is_some_and(|last_index| last_index < index) {
+            return None;
+        }
+
+        let holes_len = self.holes.len();
+
+        if holes_len == 0 {
+            return Some(index);
+        }
+
+        let mut offset = K::default();
+
+        let one = K::from(1);
+
+        let reversed = self.should_be_reversed(index);
+
+        let iter: Box<dyn Iterator<Item = &(K, K)>> = if reversed {
+            Box::new(self.holes.iter().rev())
+        } else {
+            Box::new(self.holes.iter())
+        };
+
+        for &(hole_index, hole_size) in iter {
+            if hole_size == K::default() {
+                panic!("Shouldn't ve an empty hole");
+            }
+
+            match hole_index.cmp(&index) {
+                Ordering::Less => {
+                    if hole_index + hole_size - one >= index {
+                        return None;
+                    }
+
+                    if !reversed {
+                        offset += hole_size;
+                    } else {
+                        break;
+                    }
+                }
+                Ordering::Greater => {
+                    if !reversed {
+                        break;
+                    } else {
+                        offset += hole_size;
+                    }
+                }
+                Ordering::Equal => return None,
+            }
+        }
+
+        if reversed {
+            self.last_index.map(|last_index| {
+                let reverse_fixed_index = last_index - index - offset;
+
+                K::from(values_len) - one - reverse_fixed_index
+            })
+        } else {
+            Some(index - offset)
+        }
     }
 
     pub fn to_vec(&self) -> Vec<(usize, &V)> {
@@ -60,7 +140,7 @@ where
 
         let mut offset: usize = 0;
 
-        // TODO: Fix terrible double for_each (it was for tests)
+        // TODO: Fix terrible double for_each
         self.holes.iter().for_each(|(hole_index, hole_size)| {
             let start = (*hole_index).into() - offset;
             tuples[start..].iter_mut().for_each(|tuple| {
@@ -71,30 +151,6 @@ where
         });
 
         tuples
-    }
-
-    fn fix_index(&self, index: K) -> Option<K> {
-        let mut offset = K::default();
-
-        for &(hole_index, hole_size) in &self.holes {
-            if hole_size == K::default() {
-                panic!("Shouldn't ve an empty hole");
-            }
-
-            match hole_index.cmp(&index) {
-                Ordering::Less => {
-                    if hole_index + hole_size > index {
-                        return None;
-                    }
-
-                    offset += hole_size;
-                }
-                Ordering::Greater => break,
-                Ordering::Equal => return None,
-            }
-        }
-
-        Some(index - offset)
     }
 
     pub fn insert(&mut self, index: K, value: V) -> Option<V> {
@@ -126,7 +182,16 @@ where
 
         let mut processed_holes = 0;
 
-        for (hole_index, (hole_start, hole_size)) in self.holes.iter_mut().enumerate() {
+        let reversed = self.should_be_reversed(index);
+
+        let iter: Box<dyn Iterator<Item = (usize, &mut (K, K))>> = if reversed {
+            Box::new(self.holes.iter_mut().enumerate())
+            // Box::new(self.holes.iter_mut().enumerate().rev())
+        } else {
+            Box::new(self.holes.iter_mut().enumerate())
+        };
+
+        for (hole_index, (hole_start, hole_size)) in iter {
             let hole_end = *hole_start + *hole_size - one;
 
             match (*hole_start).cmp(&index) {
@@ -137,7 +202,8 @@ where
                     match hole_end.cmp(&index) {
                         // Hole is before requested index
                         Ordering::Less => {
-                            dbg!("< <");
+                            // dbg!("< <");
+
                             real_index -= (*hole_size).into();
 
                             if mutation == Mutation::Remove && hole_end + one == index {
@@ -151,7 +217,7 @@ where
                         }
                         // Requested index is inside the hole
                         Ordering::Greater => {
-                            dbg!("< >");
+                            // dbg!("< >");
 
                             ends_in_hole = true;
 
@@ -173,7 +239,7 @@ where
                         }
                         // Requested index is the end of the hole
                         Ordering::Equal => {
-                            dbg!("< ==");
+                            // dbg!("< ==");
 
                             ends_in_hole = true;
 
@@ -191,7 +257,7 @@ where
                 }
                 // Requested index is before hole
                 Ordering::Greater => {
-                    dbg!(">");
+                    // dbg!(">");
 
                     if mutation == Mutation::Remove
                         && *hole_start > K::default()
@@ -211,7 +277,7 @@ where
                 }
                 // Requested index is start of hole
                 Ordering::Equal => {
-                    dbg!("==");
+                    // dbg!("==")s;
 
                     ends_in_hole = true;
 
@@ -232,13 +298,20 @@ where
             }
         }
 
+        let mut deleted_hole_size = None;
+
         if let Some(hole_index_to_delete) = hole_to_delete {
             if hole_to_insert.is_some() || hole_to_be_consumed.is_some() {
                 panic!("Shoudln't be possible");
             }
 
-            self.holes
-                .splice(hole_index_to_delete..=hole_index_to_delete, []);
+            deleted_hole_size.replace(
+                self.holes
+                    .splice(hole_index_to_delete..=hole_index_to_delete, [])
+                    .next()
+                    .unwrap()
+                    .1,
+            );
         } else if let Some((hole_index_to_insert, hole)) = hole_to_insert {
             if hole_to_be_consumed.is_some() {
                 panic!("Shoudln't be possible");
@@ -268,6 +341,8 @@ where
                     }
                 }
                 ordering => {
+                    self.last_index.replace(index);
+
                     self.values.push(value);
 
                     if ordering == Ordering::Greater {
@@ -284,6 +359,18 @@ where
             Mutation::Remove => {
                 if real_index < len {
                     let is_last = real_index == len - 1;
+
+                    if is_last {
+                        if len > 1 {
+                            self.last_index.replace(
+                                self.last_index.unwrap()
+                                    - one
+                                    - deleted_hole_size.unwrap_or_default(),
+                            );
+                        } else {
+                            self.last_index.take();
+                        }
+                    }
 
                     let needs_new_hole = !is_last && !extended_previous_hole && !extended_next_hole;
 
@@ -316,27 +403,31 @@ mod tests {
         );
 
         assert_eq!(v.to_vec(), vec![(0, &0)]);
+        assert_eq!(v.last_index, Some(0));
+        assert_eq!(v.get(0), Some(&0));
+        assert_eq!(v.get(100000000), None);
 
         assert_eq!(
             v.insert(0, 1),
             Some(0),
             "Inserting to occupied spot should replace previous value and return it"
         );
-
         assert_eq!(v.to_vec(), vec![(0, &1)]);
+        assert_eq!(v.last_index, Some(0));
 
         assert_eq!(v.insert(1, 2), None);
         assert_eq!(v.insert(2, 3), None);
 
         assert_eq!(v.to_vec(), vec![(0, &1), (1, &2), (2, &3)]);
+        assert_eq!(v.last_index, Some(2));
 
         assert_eq!(v.get(1), Some(&2));
 
         assert_eq!(v.remove(1), Some(2));
-
         assert_eq!(v.to_vec(), vec![(0, &1), (2, &3)]);
         assert_eq!(v.holes, vec![(1, 1)]);
         assert_eq!(v.values, vec![1, 3]);
+        assert_eq!(v.last_index, Some(2));
 
         assert_eq!(v.insert(6, 4), None);
         assert_eq!(v.get(5), None);
@@ -350,9 +441,11 @@ mod tests {
             "Adding value far away should create a hole at the end"
         );
         assert_eq!(v.values, vec![1, 3, 4]);
+        assert_eq!(v.last_index, Some(6));
 
         assert_eq!(v.insert(6, 5), Some(4));
         assert_eq!(v.to_vec(), vec![(0, &1), (2, &3), (6, &5)]);
+        assert_eq!(v.last_index, Some(6));
 
         assert_eq!(v.insert(7, 6), None);
         assert_eq!(v.insert(8, 7), None);
@@ -377,6 +470,7 @@ mod tests {
         assert_eq!(v.get(7), Some(&6));
         assert_eq!(v.get(8), Some(&7));
         assert_eq!(v.values, vec![1, 3, 8, 5, 6, 7]);
+        assert_eq!(v.last_index, Some(8));
 
         assert_eq!(v.insert(1, 9), None);
 
@@ -394,6 +488,7 @@ mod tests {
         );
         assert_eq!(v.holes, vec![(3, 2)], "Should've remove the first hole");
         assert_eq!(v.values, vec![1, 9, 3, 8, 5, 6, 7]);
+        assert_eq!(v.last_index, Some(8));
 
         assert_eq!(v.remove(2), Some(3));
         assert_eq!(
@@ -401,6 +496,7 @@ mod tests {
             vec![(2, 3)],
             "Should expanded by one on the left side"
         );
+        assert_eq!(v.last_index, Some(8));
 
         assert_eq!(v.remove(5), Some(8));
         assert_eq!(
@@ -408,14 +504,17 @@ mod tests {
             vec![(2, 4)],
             "Should expanded by one on the right side"
         );
+        assert_eq!(v.last_index, Some(8));
 
         assert_eq!(v.remove(0), Some(1));
         assert_eq!(v.holes, vec![(0, 1), (2, 4)], "Should've added a new hole");
+        assert_eq!(v.last_index, Some(8));
 
         assert_eq!(v.remove(1), Some(9));
         assert_eq!(v.to_vec(), vec![(6, &5), (7, &6), (8, &7)]);
         assert_eq!(v.holes, vec![(0, 6)], "Should've merged the two holes");
         assert_eq!(v.values, vec![5, 6, 7]);
+        assert_eq!(v.last_index, Some(8));
 
         assert_eq!(v.insert(0, 10), None);
         assert_eq!(v.remove(8), Some(7));
@@ -423,28 +522,33 @@ mod tests {
         assert_eq!(v.to_vec(), vec![(6, &5), (7, &6)]);
         assert_eq!(v.holes, vec![(0, 6)]);
         assert_eq!(v.values, vec![5, 6]);
+        assert_eq!(v.last_index, Some(7));
 
         assert_eq!(v.remove(7), Some(6));
         assert_eq!(v.remove(6), Some(5));
         assert_eq!(v.to_vec(), vec![]);
         assert_eq!(v.holes, vec![]);
         assert_eq!(v.values, vec![] as Vec<usize>);
+        assert_eq!(v.last_index, None);
 
         assert_eq!(v.insert(2, 3), None);
         assert_eq!(v.to_vec(), vec![(2, &3)]);
         assert_eq!(v.holes, vec![(0, 2)]);
         assert_eq!(v.values, vec![3]);
+        assert_eq!(v.last_index, Some(2));
 
         assert_eq!(v.insert(0, 1), None);
         assert_eq!(v.insert(1, 2), None);
         assert_eq!(v.to_vec(), vec![(0, &1), (1, &2), (2, &3)]);
         assert_eq!(v.holes, vec![]);
         assert_eq!(v.values, vec![1, 2, 3]);
+        assert_eq!(v.last_index, Some(2));
 
         assert_eq!(v.insert(10, 4), None);
         assert_eq!(v.to_vec(), vec![(0, &1), (1, &2), (2, &3), (10, &4)]);
         assert_eq!(v.holes, vec![(3, 7)]);
         assert_eq!(v.values, vec![1, 2, 3, 4]);
+        assert_eq!(v.last_index, Some(10));
 
         assert_eq!(v.insert(20, 5), None);
         assert_eq!(
@@ -453,6 +557,7 @@ mod tests {
         );
         assert_eq!(v.holes, vec![(3, 7), (11, 9)]);
         assert_eq!(v.values, vec![1, 2, 3, 4, 5]);
+        assert_eq!(v.last_index, Some(20));
 
         dbg!(v.insert(17, 6));
         assert_eq!(
@@ -461,6 +566,7 @@ mod tests {
         );
         assert_eq!(v.holes, vec![(3, 7), (11, 6), (18, 2)]);
         assert_eq!(v.values, vec![1, 2, 3, 4, 6, 5]);
+        assert_eq!(v.last_index, Some(20));
 
         assert_eq!(v.insert(18, 7), None);
         assert_eq!(v.get(18), Some(&7));
@@ -478,6 +584,7 @@ mod tests {
         );
         assert_eq!(v.holes, vec![(3, 7), (11, 6), (19, 1)]);
         assert_eq!(v.values, vec![1, 2, 3, 4, 6, 7, 5]);
+        assert_eq!(v.last_index, Some(20));
 
         assert_eq!(v.remove(17), Some(6));
         assert_eq!(v.get(17), None);
@@ -487,6 +594,7 @@ mod tests {
         );
         assert_eq!(v.holes, vec![(3, 7), (11, 7), (19, 1)]);
         assert_eq!(v.values, vec![1, 2, 3, 4, 7, 5]);
+        assert_eq!(v.last_index, Some(20));
 
         assert_eq!(v.insert(17, 6), None);
         assert_eq!(v.get(17), Some(&6));
@@ -504,6 +612,7 @@ mod tests {
         );
         assert_eq!(v.holes, vec![(3, 7), (11, 6), (19, 1)]);
         assert_eq!(v.values, vec![1, 2, 3, 4, 6, 7, 5]);
+        assert_eq!(v.last_index, Some(20));
 
         assert_eq!(v.remove(20), Some(5));
         assert_eq!(
@@ -512,6 +621,7 @@ mod tests {
         );
         assert_eq!(v.holes, vec![(3, 7), (11, 6)]);
         assert_eq!(v.values, vec![1, 2, 3, 4, 6, 7]);
+        assert_eq!(v.last_index, Some(18));
 
         assert_eq!(v.insert(100, 100), None);
         assert_eq!(
@@ -528,6 +638,7 @@ mod tests {
         );
         assert_eq!(v.holes, vec![(3, 7), (11, 6), (19, 81)]);
         assert_eq!(v.values, vec![1, 2, 3, 4, 6, 7, 100]);
+        assert_eq!(v.last_index, Some(100));
 
         assert_eq!(v.insert(50, 50), None);
         assert_eq!(
