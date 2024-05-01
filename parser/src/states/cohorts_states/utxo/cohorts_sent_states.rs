@@ -1,5 +1,6 @@
+use std::collections::BTreeMap;
+
 use derive_deref::{Deref, DerefMut};
-use nohash::IntMap;
 
 use crate::{
     actions::SpentData,
@@ -24,7 +25,7 @@ impl UTXOCohortsSentStates {
     pub fn compute(
         &mut self,
         date_data_vec: &DateDataVec,
-        block_path_to_spent_data: IntMap<BlockPath, SpentData>,
+        block_path_to_spent_data: BTreeMap<BlockPath, SpentData>,
         current_price: f32,
     ) {
         if let Some(last_date_data) = date_data_vec.last() {

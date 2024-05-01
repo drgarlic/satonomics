@@ -23,7 +23,6 @@ itertools = "0.12.1"
 leveldb = "0.8.6"
 map_vec = { version = "0.5", features = ["serde"] }
 memory-stats = "1.1.0"
-nohash = "0.2.0"
 ordered-float = "4.2.0"
 par-iter-sync = "0.1.11"
 rayon = "1.10.0"

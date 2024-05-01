@@ -1,5 +1,7 @@
+use std::collections::BTreeMap;
+
 use derive_deref::{Deref, DerefMut};
-use nohash::IntMap;
+
 use savefile_derive::Savefile;
 
 use crate::parse::TxoutIndex;
@@ -7,7 +9,7 @@ use crate::parse::TxoutIndex;
 use super::AnyState;
 
 #[derive(Default, Deref, DerefMut, Debug, Savefile)]
-pub struct TxoutIndexToAddressIndex(IntMap<TxoutIndex, u32>);
+pub struct TxoutIndexToAddressIndex(BTreeMap<TxoutIndex, u32>);
 
 impl AnyState for TxoutIndexToAddressIndex {
     fn name<'a>() -> &'a str {

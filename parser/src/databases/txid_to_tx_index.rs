@@ -1,11 +1,11 @@
 use std::{
+    collections::BTreeMap,
     mem,
     ops::{Deref, DerefMut},
 };
 
 use bitcoin::Txid;
 use chrono::NaiveDate;
-use nohash::IntMap;
 use rayon::prelude::*;
 
 use crate::parse::{SizedDatabase, U8x31};
@@ -17,12 +17,12 @@ type Value = u32;
 type Database = SizedDatabase<Key, Value>;
 
 pub struct TxidToTxIndex {
-    map: IntMap<u8, Database>,
+    map: BTreeMap<u8, Database>,
     pub metadata: Metadata,
 }
 
 impl Deref for TxidToTxIndex {
-    type Target = IntMap<u8, Database>;
+    type Target = BTreeMap<u8, Database>;
 
     fn deref(&self) -> &Self::Target {
         &self.map
@@ -78,18 +78,20 @@ impl TxidToTxIndex {
     }
 
     fn txid_to_key(txid: &Txid) -> U8x31 {
+        // U8x31::from(&txid[..])
         U8x31::from(&txid[1..])
     }
 
     fn db_index(txid: &Txid) -> u8 {
         txid[0]
+        // 1
     }
 }
 
 impl AnyDatabaseGroup for TxidToTxIndex {
     fn import() -> Self {
         Self {
-            map: IntMap::default(),
+            map: BTreeMap::default(),
             metadata: Metadata::import(&Self::full_path()),
         }
     }

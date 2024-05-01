@@ -199,6 +199,17 @@ impl From<&[u8]> for U8x31 {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Default, Copy)]
+pub struct U8x32([u8; 32]);
+direct_repr!(U8x32);
+impl From<&[u8]> for U8x32 {
+    fn from(slice: &[u8]) -> Self {
+        let mut arr = Self::default();
+        arr.copy_from_slice(slice);
+        arr
+    }
+}
+
 pub fn databases_folder_path(folder: &str) -> String {
     format!("{OUTPUTS_FOLDER_PATH}/databases/{folder}")
 }

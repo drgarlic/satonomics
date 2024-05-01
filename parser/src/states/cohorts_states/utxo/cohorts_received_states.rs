@@ -1,5 +1,6 @@
+use std::collections::BTreeMap;
+
 use derive_deref::{Deref, DerefMut};
-use nohash::IntMap;
 
 use crate::{
     actions::ReceivedData,
@@ -18,7 +19,7 @@ impl UTXOCohortsReceivedStates {
     pub fn compute(
         &mut self,
         date_data_vec: &DateDataVec,
-        block_path_to_received_data: IntMap<BlockPath, ReceivedData>,
+        block_path_to_received_data: BTreeMap<BlockPath, ReceivedData>,
     ) {
         if let Some(last_date_data) = date_data_vec.last() {
             let last_block_data = last_date_data.blocks.last().unwrap();

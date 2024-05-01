@@ -1,9 +1,12 @@
-use std::{ops::ControlFlow, thread};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    ops::ControlFlow,
+    thread,
+};
 
 use bitcoin::Block;
 use chrono::NaiveDate;
 use itertools::Itertools;
-use nohash::{IntMap, IntSet};
 use rayon::prelude::*;
 
 use crate::{
@@ -120,13 +123,13 @@ pub fn parse_block(
         .blocks
         .push(BlockData::new(height as u32, block_price, timestamp));
 
-    let mut block_path_to_spent_data: IntMap<BlockPath, SpentData> = IntMap::default();
-    let mut block_path_to_received_data: IntMap<BlockPath, ReceivedData> = IntMap::default();
-    let mut address_index_to_address_realized_data: IntMap<u32, AddressRealizedData> =
-        IntMap::default();
-    let mut address_index_to_removed_address_data: IntMap<u32, AddressData> = IntMap::default();
+    let mut block_path_to_spent_data: BTreeMap<BlockPath, SpentData> = BTreeMap::default();
+    let mut block_path_to_received_data: BTreeMap<BlockPath, ReceivedData> = BTreeMap::default();
+    let mut address_index_to_address_realized_data: BTreeMap<u32, AddressRealizedData> =
+        BTreeMap::default();
+    let mut address_index_to_removed_address_data: BTreeMap<u32, AddressData> = BTreeMap::default();
 
-    let mut address_index_at_least_once_removed: IntSet<u32> = IntSet::default();
+    let mut address_index_at_least_once_removed: BTreeSet<u32> = BTreeSet::default();
 
     let mut coinbase = 0;
     let mut satblocks_destroyed = 0;
@@ -756,9 +759,9 @@ fn take_empty_address_index_to_empty_address_data(
     address_index_to_empty_address_data: &mut AddressIndexToEmptyAddressData,
     partial_txout_data_vec: &[Option<PartialTxoutData>],
     compute_addresses: bool,
-) -> IntMap<u32, EmptyAddressData> {
+) -> BTreeMap<u32, EmptyAddressData> {
     if !compute_addresses {
-        return IntMap::default();
+        return BTreeMap::default();
     }
 
     let address_index_to_address_data = &mut states.address_index_to_address_data;
@@ -776,7 +779,7 @@ fn take_empty_address_index_to_empty_address_data(
                 Some((address_index, EmptyAddressData::default()))
             }
         })
-        .collect::<IntMap<_, _>>();
+        .collect::<BTreeMap<_, _>>();
 
     empty_address_index_to_empty_address_data
         .par_iter_mut()

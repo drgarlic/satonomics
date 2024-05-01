@@ -1,10 +1,11 @@
 use std::{
+    collections::BTreeMap,
     mem,
     ops::{Deref, DerefMut},
 };
 
 use chrono::NaiveDate;
-use nohash::IntMap;
+
 use rayon::prelude::*;
 
 use crate::parse::{EmptyAddressData, SizedDatabase};
@@ -16,12 +17,12 @@ type Value = EmptyAddressData;
 type Database = SizedDatabase<Key, Value>;
 
 pub struct AddressIndexToEmptyAddressData {
-    map: IntMap<usize, Database>,
+    map: BTreeMap<usize, Database>,
     pub metadata: Metadata,
 }
 
 impl Deref for AddressIndexToEmptyAddressData {
-    type Target = IntMap<usize, Database>;
+    type Target = BTreeMap<usize, Database>;
 
     fn deref(&self) -> &Self::Target {
         &self.map
@@ -85,7 +86,7 @@ impl AddressIndexToEmptyAddressData {
 impl AnyDatabaseGroup for AddressIndexToEmptyAddressData {
     fn import() -> Self {
         Self {
-            map: IntMap::default(),
+            map: BTreeMap::default(),
             metadata: Metadata::import(&Self::full_path()),
         }
     }

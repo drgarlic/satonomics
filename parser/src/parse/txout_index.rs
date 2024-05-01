@@ -18,4 +18,4 @@ impl std::hash::Hash for TxoutIndex {
     }
 }
 
-impl nohash::IsEnabled for TxoutIndex {}
+// impl nohash::IsEnabled for TxoutIndex {}

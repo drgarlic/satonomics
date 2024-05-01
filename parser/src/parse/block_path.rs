@@ -21,4 +21,4 @@ impl std::hash::Hash for BlockPath {
     }
 }
 
-impl nohash::IsEnabled for BlockPath {}
+// impl nohash::IsEnabled for BlockPath {}
