@@ -5,8 +5,8 @@ use color_eyre::eyre::Error;
 
 use crate::{
     datasets::{AnyDataset, MinInitialState},
-    parse::{AnyHeightMap, HeightMap},
     price::{Binance, Kraken},
+    structs::{AnyHeightMap, HeightMap},
 };
 
 use super::OHLC;

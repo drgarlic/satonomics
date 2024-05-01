@@ -1,8 +1,8 @@
 use derive_deref::{Deref, DerefMut};
 
 use crate::{
-    parse::{AddressRealizedData, LiquidityClassification, SplitByLiquidity},
     states::InputState,
+    structs::{AddressRealizedData, LiquidityClassification, SplitByLiquidity},
 };
 
 use super::SplitByAddressCohort;

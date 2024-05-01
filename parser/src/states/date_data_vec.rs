@@ -1,7 +1,7 @@
 use derive_deref::{Deref, DerefMut};
 use savefile_derive::Savefile;
 
-use crate::parse::{BlockData, DateData};
+use crate::structs::{BlockData, DateData};
 
 use super::AnyState;
 

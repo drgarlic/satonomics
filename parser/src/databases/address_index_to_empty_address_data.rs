@@ -8,7 +8,7 @@ use chrono::NaiveDate;
 
 use rayon::prelude::*;
 
-use crate::parse::{EmptyAddressData, SizedDatabase};
+use crate::structs::{EmptyAddressData, SizedDatabase};
 
 use super::{AnyDatabaseGroup, Metadata};
 

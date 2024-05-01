@@ -8,7 +8,7 @@ use bitcoin::Txid;
 use chrono::NaiveDate;
 use rayon::prelude::*;
 
-use crate::parse::{SizedDatabase, U8x31};
+use crate::structs::{SizedDatabase, U8x31};
 
 use super::{AnyDatabaseGroup, Metadata};
 
@@ -78,13 +78,11 @@ impl TxidToTxIndex {
     }
 
     fn txid_to_key(txid: &Txid) -> U8x31 {
-        // U8x31::from(&txid[..])
         U8x31::from(&txid[1..])
     }
 
     fn db_index(txid: &Txid) -> u8 {
         txid[0]
-        // 1
     }
 }
 

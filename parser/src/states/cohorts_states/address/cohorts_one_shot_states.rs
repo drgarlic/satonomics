@@ -1,6 +1,6 @@
 use derive_deref::{Deref, DerefMut};
 
-use crate::{parse::SplitByLiquidity, states::OneShotStates};
+use crate::{states::OneShotStates, structs::SplitByLiquidity};
 
 use super::SplitByAddressCohort;
 

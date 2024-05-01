@@ -1,7 +1,7 @@
 use crate::{
     datasets::{AnyDataset, MinInitialState, ProcessedBlockData},
-    parse::{AnyBiMap, BiMap},
     states::InputState,
+    structs::{AnyBiMap, BiMap},
 };
 
 pub struct InputSubDataset {

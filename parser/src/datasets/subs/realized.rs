@@ -1,7 +1,7 @@
 use crate::{
     datasets::{AnyDataset, MinInitialState, ProcessedBlockData},
-    parse::{AnyBiMap, BiMap},
     states::RealizedState,
+    structs::{AnyBiMap, BiMap},
 };
 
 /// TODO: Fix fees not taken into account ?

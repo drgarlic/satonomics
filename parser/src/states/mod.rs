@@ -7,7 +7,6 @@ mod counters;
 mod date_data_vec;
 mod tx_index_to_tx_data;
 mod txout_index_to_address_index;
-mod txout_index_to_sats;
 
 pub use _trait::*;
 use address_index_to_address_data::*;
@@ -16,7 +15,6 @@ use counters::*;
 use date_data_vec::*;
 use tx_index_to_tx_data::*;
 use txout_index_to_address_index::*;
-use txout_index_to_sats::*;
 
 #[derive(Default)]
 pub struct States {
@@ -27,7 +25,6 @@ pub struct States {
     pub utxo_cohorts_durable_states: UTXOCohortsDurableStates,
     pub tx_index_to_tx_data: TxIndexToTxData,
     pub txout_index_to_address_index: TxoutIndexToAddressIndex,
-    pub txout_index_to_sats: TxoutIndexToSats,
 }
 
 impl States {
@@ -35,8 +32,6 @@ impl States {
         let address_index_to_address_data_handle = thread::spawn(AddressIndexToAddressData::import);
 
         let tx_index_to_tx_data_handle = thread::spawn(TxIndexToTxData::import);
-
-        let txout_index_to_sats_handle = thread::spawn(TxoutIndexToSats::import);
 
         let txout_index_to_address_index_handle = thread::spawn(TxoutIndexToAddressIndex::import);
 
@@ -47,8 +42,6 @@ impl States {
         let date_data_vec = date_data_vec_handle.join().unwrap()?;
 
         let txout_index_to_address_index = txout_index_to_address_index_handle.join().unwrap()?;
-
-        let txout_index_to_sats = txout_index_to_sats_handle.join().unwrap()?;
 
         let tx_index_to_tx_data = tx_index_to_tx_data_handle.join().unwrap()?;
 
@@ -66,7 +59,6 @@ impl States {
             date_data_vec,
             tx_index_to_tx_data,
             txout_index_to_address_index,
-            txout_index_to_sats,
             utxo_cohorts_durable_states,
         })
     }
@@ -76,7 +68,6 @@ impl States {
 
         let _ = self.date_data_vec.reset();
         let _ = self.tx_index_to_tx_data.reset();
-        let _ = self.txout_index_to_sats.reset();
 
         self.utxo_cohorts_durable_states = UTXOCohortsDurableStates::default();
 
@@ -97,7 +88,6 @@ impl States {
             s.spawn(|| self.date_data_vec.export().unwrap());
             s.spawn(|| self.tx_index_to_tx_data.export().unwrap());
             s.spawn(|| self.txout_index_to_address_index.export().unwrap());
-            s.spawn(|| self.txout_index_to_sats.export().unwrap());
         });
 
         Ok(())

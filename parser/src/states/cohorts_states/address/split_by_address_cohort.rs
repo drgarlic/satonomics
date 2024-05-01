@@ -1,4 +1,4 @@
-use crate::parse::{AddressData, AddressSize, AddressSplit, AddressType};
+use crate::structs::{AddressData, AddressSize, AddressSplit, AddressType};
 
 #[derive(Default)]
 pub struct SplitByAddressCohort<T> {

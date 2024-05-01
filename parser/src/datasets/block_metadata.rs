@@ -1,6 +1,6 @@
 use crate::{
     datasets::AnyDataset,
-    parse::{AnyHeightMap, HeightMap, WNaiveDate},
+    structs::{AnyHeightMap, HeightMap, WNaiveDate},
     utils::timestamp_to_naive_date,
 };
 

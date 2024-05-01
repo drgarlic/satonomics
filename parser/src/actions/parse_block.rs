@@ -13,13 +13,13 @@ use crate::{
     bitcoin::BitcoinDB,
     databases::{AddressIndexToEmptyAddressData, AddressToAddressIndex, Databases, TxidToTxIndex},
     datasets::{AllDatasets, ProcessedBlockData},
-    parse::{
-        Address, AddressData, AddressRealizedData, BlockData, BlockPath, Counter, EmptyAddressData,
-        PartialTxoutData, TxData, TxoutIndex,
-    },
     states::{
         AddressCohortsInputStates, AddressCohortsOutputStates, AddressCohortsRealizedStates,
         States, UTXOCohortsOneShotStates, UTXOCohortsReceivedStates, UTXOCohortsSentStates,
+    },
+    structs::{
+        Address, AddressData, AddressRealizedData, BlockData, BlockPath, Counter, EmptyAddressData,
+        PartialTxoutData, TxData, TxoutIndex,
     },
 };
 
@@ -199,7 +199,7 @@ pub fn parse_block(
         // outputs
         // ---
 
-        let mut spendable_outputs = 0;
+        let mut utxos = BTreeMap::new();
         let mut non_zero_amount = 0;
 
         let is_coinbase = tx.is_coinbase();
@@ -223,7 +223,9 @@ pub fn parse_block(
                     .map(|partial_txout_data| (vout, partial_txout_data))
             })
             .for_each(|(vout, partial_txout_data)| {
-                let txout_index = TxoutIndex::new(tx_index, vout as u16);
+                let vout = vout as u16;
+
+                let txout_index = TxoutIndex::new(tx_index, vout);
 
                 let PartialTxoutData {
                     address,
@@ -231,10 +233,9 @@ pub fn parse_block(
                     sats,
                 } = partial_txout_data;
 
-                spendable_outputs += 1;
                 non_zero_amount += sats;
 
-                states.txout_index_to_sats.insert(txout_index, sats);
+                utxos.insert(vout, sats);
 
                 if compute_addresses {
                     let address = address.unwrap();
@@ -341,17 +342,14 @@ pub fn parse_block(
 
         last_block.amount += non_zero_amount;
 
-        if spendable_outputs != 0 {
-            last_block.spendable_outputs += spendable_outputs as u32;
+        if !utxos.is_empty() {
+            last_block.spendable_outputs += utxos.len() as u32;
 
             databases.txid_to_tx_index.insert(&txid, tx_index);
 
             states.tx_index_to_tx_data.insert(
                 tx_index,
-                TxData::new(
-                    BlockPath::new(date_index as u16, block_index as u16),
-                    spendable_outputs,
-                ),
+                TxData::new(BlockPath::new(date_index as u16, block_index as u16), utxos),
             );
         }
 
@@ -375,7 +373,8 @@ pub fn parse_block(
 
                     if input_tx_index.is_none() {
                         if !enable_check_if_txout_value_is_zero_in_db
-                            || bitcoin_db.check_if_txout_value_is_zero(&input_txid, input_vout)
+                            || bitcoin_db
+                                .check_if_txout_value_is_zero(&input_txid, input_vout as usize)
                         {
                             return ControlFlow::Continue::<()>(());
                         }
@@ -386,25 +385,53 @@ pub fn parse_block(
 
                     let input_tx_index = input_tx_index.unwrap();
 
-                    let input_txout_index = TxoutIndex::new(input_tx_index, input_vout as u16);
+                    let input_vout = input_vout as u16;
 
-                    let input_sats = states.txout_index_to_sats.remove(&input_txout_index);
+                    let input_txout_index = TxoutIndex::new(input_tx_index, input_vout);
 
-                    if input_sats.is_none() {
+                    let input_tx_data = states.tx_index_to_tx_data.get_mut(&input_tx_index);
+
+                    if input_tx_data.is_none() {
                         if !enable_check_if_txout_value_is_zero_in_db
-                            || bitcoin_db.check_if_txout_value_is_zero(&input_txid, input_vout)
+                            || bitcoin_db
+                                .check_if_txout_value_is_zero(&input_txid, input_vout as usize)
                         {
                             return ControlFlow::Continue::<()>(());
                         }
 
-                        dbg!((input_txid, tx_index, input_tx_index, input_vout, input_sats,));
+                        dbg!((
+                            input_txid,
+                            tx_index,
+                            input_tx_index,
+                            input_vout,
+                            input_tx_data,
+                        ));
+                        panic!("Txout index to be in txout_index_to_txout_value");
+                    }
+
+                    let input_tx_data = input_tx_data.unwrap();
+
+                    let input_sats = input_tx_data.utxos.remove(&input_vout);
+
+                    if input_sats.is_none() {
+                        if !enable_check_if_txout_value_is_zero_in_db
+                            || bitcoin_db
+                                .check_if_txout_value_is_zero(&input_txid, input_vout as usize)
+                        {
+                            return ControlFlow::Continue::<()>(());
+                        }
+
+                        dbg!((
+                            input_txid,
+                            tx_index,
+                            input_tx_index,
+                            input_vout,
+                            input_tx_data,
+                        ));
                         panic!("Txout index to be in txout_index_to_txout_value");
                     }
 
                     let input_sats = input_sats.unwrap();
-
-                    let input_tx_data =
-                        states.tx_index_to_tx_data.get_mut(&input_tx_index).unwrap();
 
                     let input_block_path = input_tx_data.block_path;
 
@@ -452,8 +479,6 @@ pub fn parse_block(
                     satdays_destroyed +=
                         date.signed_duration_since(*input_date_data.date).num_days() as u64
                             * input_sats;
-
-                    input_tx_data.spendable_outputs -= 1;
 
                     if compute_addresses {
                         let input_address_index = states

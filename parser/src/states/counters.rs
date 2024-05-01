@@ -1,6 +1,6 @@
 use savefile_derive::Savefile;
 
-use crate::parse::Counter;
+use crate::structs::Counter;
 
 use super::AnyState;
 

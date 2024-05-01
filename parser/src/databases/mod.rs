@@ -13,7 +13,7 @@ use chrono::NaiveDate;
 use metadata::*;
 pub use txid_to_tx_index::*;
 
-use crate::{parse::WNaiveDate, utils::time};
+use crate::{structs::WNaiveDate, utils::time};
 
 pub struct Databases {
     pub address_index_to_empty_address_data: AddressIndexToEmptyAddressData,

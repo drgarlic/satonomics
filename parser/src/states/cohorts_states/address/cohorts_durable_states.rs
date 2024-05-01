@@ -3,8 +3,8 @@ use std::thread;
 use derive_deref::{Deref, DerefMut};
 
 use crate::{
-    parse::{AddressData, AddressRealizedData},
     states::AddressIndexToAddressData,
+    structs::{AddressData, AddressRealizedData},
     utils::convert_price_to_significant_cents,
 };
 

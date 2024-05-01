@@ -3,8 +3,8 @@ use itertools::Itertools;
 
 use crate::{
     datasets::{AnyDataset, AnyDatasetGroup, MinInitialState, ProcessedBlockData, SubDataset},
-    parse::{AddressSplit, AnyBiMap, AnyDateMap, AnyHeightMap},
     states::AddressCohortDurableStates,
+    structs::{AddressSplit, AnyBiMap, AnyDateMap, AnyHeightMap},
 };
 
 use super::cohort_metadata::MetadataDataset;

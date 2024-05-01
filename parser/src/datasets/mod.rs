@@ -32,12 +32,12 @@ pub use utxo::*;
 use crate::{
     databases::Databases,
     io::Json,
-    parse::{AddressData, AddressRealizedData},
     states::{
         AddressCohortsInputStates, AddressCohortsOneShotStates, AddressCohortsOutputStates,
         AddressCohortsRealizedStates, States, UTXOCohortsOneShotStates, UTXOCohortsReceivedStates,
         UTXOCohortsSentStates,
     },
+    structs::{AddressData, AddressRealizedData},
 };
 
 pub struct ProcessedBlockData<'a> {

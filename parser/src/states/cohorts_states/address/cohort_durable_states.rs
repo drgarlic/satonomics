@@ -1,8 +1,8 @@
 use std::thread;
 
 use crate::{
-    parse::{LiquiditySplitResult, SplitByLiquidity},
     states::{DurableStates, OneShotStates},
+    structs::{LiquiditySplitResult, SplitByLiquidity},
 };
 
 #[derive(Default)]

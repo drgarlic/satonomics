@@ -158,11 +158,11 @@ impl BitcoinDB {
         BlockIter::from_range(self, start, end)
     }
 
-    pub fn check_if_txout_value_is_zero(&self, txid: &Txid, vout: u32) -> bool {
+    pub fn check_if_txout_value_is_zero(&self, txid: &Txid, vout: usize) -> bool {
         self.get_transaction(txid)
             .unwrap()
             .output
-            .get(vout as usize)
+            .get(vout)
             .unwrap()
             .to_owned()
             .value

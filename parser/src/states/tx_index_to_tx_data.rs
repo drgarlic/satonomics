@@ -4,7 +4,7 @@ use derive_deref::{Deref, DerefMut};
 
 use savefile_derive::Savefile;
 
-use crate::parse::TxData;
+use crate::structs::TxData;
 
 use super::AnyState;
 

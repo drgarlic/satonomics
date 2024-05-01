@@ -1,7 +1,7 @@
 use crate::{
     datasets::{AnyDataset, MinInitialState, ProcessedBlockData},
-    parse::{AnyBiMap, BiMap},
     states::UTXOState,
+    structs::{AnyBiMap, BiMap},
 };
 
 pub struct UTXOSubDataset {

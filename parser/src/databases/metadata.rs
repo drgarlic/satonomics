@@ -8,7 +8,7 @@ use std::{
 
 use crate::{
     io::Binary,
-    parse::{Counter, WNaiveDate},
+    structs::{Counter, WNaiveDate},
 };
 
 #[derive(Savefile, Default, Debug)]

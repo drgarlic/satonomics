@@ -2,8 +2,8 @@ use itertools::Itertools;
 
 use crate::{
     datasets::{AnyDataset, AnyDatasetGroup, MinInitialState, ProcessedBlockData, SubDataset},
-    parse::{AnyBiMap, AnyDateMap, AnyHeightMap},
     states::UTXOCohortId,
+    structs::{AnyBiMap, AnyDateMap, AnyHeightMap},
 };
 
 pub struct UTXODataset {

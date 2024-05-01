@@ -1,8 +1,8 @@
 use crate::{
     bitcoin::sats_to_btc,
     datasets::{AnyDataset, MinInitialState, ProcessedBlockData},
-    parse::{AnyBiMap, BiMap},
     states::UnrealizedState,
+    structs::{AnyBiMap, BiMap},
 };
 
 pub struct UnrealizedSubDataset {

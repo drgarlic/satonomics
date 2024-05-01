@@ -1,7 +1,7 @@
 use crate::{
     bitcoin::sats_to_btc,
     datasets::AnyDataset,
-    parse::{AnyBiMap, BiMap},
+    structs::{AnyBiMap, BiMap},
 };
 
 use super::{MinInitialState, ProcessedBlockData};

@@ -4,7 +4,7 @@ mod cohort_metadata;
 
 use std::thread;
 
-use crate::parse::{AddressSize, AddressSplit, AddressType};
+use crate::structs::{AddressSize, AddressSplit, AddressType};
 
 use self::{all_metadata::AllAddressesMetadataDataset, cohort::CohortDataset};
 

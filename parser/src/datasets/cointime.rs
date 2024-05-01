@@ -2,7 +2,7 @@ use crate::{
     bitcoin::{
         sats_to_btc, ONE_DAY_IN_BLOCK_TIME, THREE_MONTHS_IN_BLOCK_TIME, TWO_WEEKS_IN_BLOCK_TIME,
     },
-    parse::{AnyBiMap, BiMap},
+    structs::{AnyBiMap, BiMap},
     utils::{ONE_DAY_IN_DAYS, ONE_YEAR_IN_DAYS, THREE_MONTHS_IN_DAYS, TWO_WEEK_IN_DAYS},
 };
 

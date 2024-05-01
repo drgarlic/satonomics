@@ -9,8 +9,8 @@ use crate::{
     bitcoin::{check_if_height_safe, BitcoinDB, NUMBER_OF_UNSAFE_BLOCKS},
     databases::Databases,
     datasets::AllDatasets,
-    parse::DateData,
     states::States,
+    structs::DateData,
     utils::timestamp_to_naive_date,
 };
 

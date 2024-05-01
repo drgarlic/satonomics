@@ -1,6 +1,6 @@
 use crate::{
     datasets::AnyDataset,
-    parse::{AnyDateMap, DateMap},
+    structs::{AnyDateMap, DateMap},
 };
 
 use super::{MinInitialState, ProcessedBlockData};

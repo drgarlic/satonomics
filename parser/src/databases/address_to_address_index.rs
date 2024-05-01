@@ -4,7 +4,7 @@ use chrono::NaiveDate;
 
 use rayon::prelude::*;
 
-use crate::parse::{
+use crate::structs::{
     Address, Database, SizedDatabase, U8x19, U8x31, UnsizedDatabase as _UnsizedDatabase,
 };
 

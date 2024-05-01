@@ -3,8 +3,8 @@ use std::thread;
 use derive_deref::{Deref, DerefMut};
 
 use crate::{
-    parse::BlockData,
     states::{DateDataVec, DurableStates},
+    structs::BlockData,
     utils::{
         convert_price_to_significant_cents, difference_in_days_between_timestamps,
         timestamp_to_year,

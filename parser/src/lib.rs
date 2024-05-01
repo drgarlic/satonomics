@@ -3,9 +3,9 @@ mod bitcoin;
 mod databases;
 mod datasets;
 mod io;
-mod parse;
 mod price;
 mod states;
+mod structs;
 mod utils;
 
 pub use crate::{
@@ -13,6 +13,6 @@ pub use crate::{
     bitcoin::{BitcoinDB, BitcoinDaemon},
     datasets::OHLC,
     io::{Binary, Json, Serialization},
-    parse::{DateMap, HeightMap, SerializedDateMap, SerializedHeightMap, HEIGHT_MAP_CHUNK_SIZE},
+    structs::{DateMap, HeightMap, SerializedDateMap, SerializedHeightMap, HEIGHT_MAP_CHUNK_SIZE},
     utils::timestamp_to_naive_date,
 };

@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use itertools::Itertools;
 use rayon::prelude::*;
 
-use crate::parse::{AnyBiMap, AnyDateMap, AnyHeightMap, AnyMap};
+use crate::structs::{AnyBiMap, AnyDateMap, AnyHeightMap, AnyMap};
 
 use super::MinInitialState;
 

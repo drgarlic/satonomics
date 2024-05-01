@@ -12,3 +12,7 @@
 /exports*/
 /imports*/
 benches
+
+
+database2.rs
+sparsed_vec.rs

@@ -5,8 +5,8 @@ use derive_deref::{Deref, DerefMut};
 use crate::{
     actions::ReceivedData,
     bitcoin::sats_to_btc,
-    parse::BlockPath,
     states::{DateDataVec, OutputState},
+    structs::BlockPath,
     utils::{difference_in_days_between_timestamps, timestamp_to_year},
 };
 

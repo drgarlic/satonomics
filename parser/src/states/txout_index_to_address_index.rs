@@ -4,7 +4,7 @@ use derive_deref::{Deref, DerefMut};
 
 use savefile_derive::Savefile;
 
-use crate::parse::TxoutIndex;
+use crate::structs::TxoutIndex;
 
 use super::AnyState;
 

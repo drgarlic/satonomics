@@ -1,6 +1,6 @@
 use crate::{
     datasets::{AnyDataset, MinInitialState, ProcessedBlockData},
-    parse::{AnyBiMap, BiMap},
+    structs::{AnyBiMap, BiMap},
 };
 
 pub struct AllAddressesMetadataDataset {

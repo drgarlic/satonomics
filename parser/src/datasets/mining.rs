@@ -1,7 +1,7 @@
 use crate::{
     bitcoin::{sats_to_btc, ONE_YEAR_IN_BLOCK_TIME},
     datasets::AnyDataset,
-    parse::{AnyBiMap, AnyDateMap, BiMap, DateMap},
+    structs::{AnyBiMap, AnyDateMap, BiMap, DateMap},
     utils::{ONE_MONTH_IN_DAYS, ONE_WEEK_IN_DAYS, ONE_YEAR_IN_DAYS},
 };
 
