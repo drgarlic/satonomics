@@ -1,11 +1,11 @@
 use std::time::Instant;
 
 use chrono::{offset::Local, Datelike};
-use export_all::ExportedData;
+use export::ExportedData;
 use parse_block::ParseData;
 
 use crate::{
-    actions::{export_all, find_first_unsafe_height, parse_block},
+    actions::{export, find_first_unsafe_height, parse_block},
     bitcoin::{check_if_height_safe, BitcoinDB, NUMBER_OF_UNSAFE_BLOCKS},
     databases::Databases,
     datasets::AllDatasets,
@@ -15,20 +15,30 @@ use crate::{
 };
 
 pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Result<()> {
-    let insert = true;
-    let export = true;
+    let should_insert = true;
+    let should_export = true;
 
-    println!("{:?} - Starting aged", Local::now());
+    println!("{:?} - Starting...", Local::now());
 
     let mut datasets = AllDatasets::import()?;
+    // RAM: 200MB at this point
 
     println!("{:?} - Imported datasets", Local::now());
 
     let mut databases = Databases::import();
+    // RAM: 200MB too
 
     println!("{:?} - Imported databases", Local::now());
 
     let mut states = States::import().unwrap_or_default();
+    // ROM: 8GB of bin files
+    // RAM: 17.62GB with everything
+    // ---
+    // Addresses and Utxos states: 10MB
+    // address_index_to_address_data: 4.35GB RAM vs 2GB ROM
+    // txout_index_to_address_index: 4.45GB RAM vs 1.81GB ROM
+    // txout_index_to_sats: 5.89GB RAM vs 2.53GB ROM
+    // tx_index_to_tx_data: 2.73GB RAM vs 1.24GB ROM
 
     println!("{:?} - Imported states", Local::now());
 
@@ -97,7 +107,7 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
                         // Do NOT change `blocks_loop_date` to `current_block_date` !!!
                         .map_or(true, |next_block_date| blocks_loop_date < next_block_date);
 
-                    if insert {
+                    if should_insert {
                         parse_block(ParseData {
                             bitcoin_db,
                             block: current_block,
@@ -140,6 +150,7 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
             }
         }
 
+        // Not sure why -1
         let last_height = height - 1;
 
         println!(
@@ -147,19 +158,26 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
             time.elapsed().as_secs_f32(),
         );
 
-        if export && check_if_height_safe(height, block_count) {
-            export_all(ExportedData {
-                databases: &mut databases,
+        if should_export && check_if_height_safe(height, block_count) {
+            export(ExportedData {
+                databases: Some(&mut databases),
                 datasets: &mut datasets,
                 date: blocks_loop_date.unwrap(),
                 height: last_height,
-                states: &states,
+                states: Some(&states),
             })?;
         }
     }
 
-    if export {
-        datasets.export()?;
+    if should_export {
+        // MUST BE none !!! databases and states aren't safe here
+        export(ExportedData {
+            databases: None,
+            datasets: &mut datasets,
+            date: blocks_loop_date.unwrap(),
+            height,
+            states: None,
+        })?;
     }
 
     Ok(())

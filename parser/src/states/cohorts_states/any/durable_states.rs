@@ -9,7 +9,7 @@ pub struct DurableStates {
 }
 
 impl DurableStates {
-    pub fn increment(&mut self, amount: u64, utxo_count: usize, price_in_cents: u64) {
+    pub fn increment(&mut self, amount: u64, utxo_count: usize, price_in_cents: u32) {
         if amount == 0 {
             if utxo_count != 0 {
                 unreachable!("Shouldn't be possible")
@@ -23,7 +23,7 @@ impl DurableStates {
             .increment(price_in_cents, amount);
     }
 
-    pub fn decrement(&mut self, amount: u64, utxo_count: usize, price_in_cents: u64) {
+    pub fn decrement(&mut self, amount: u64, utxo_count: usize, price_in_cents: u32) {
         if amount == 0 {
             if utxo_count != 0 {
                 unreachable!("Shouldn't be possible")

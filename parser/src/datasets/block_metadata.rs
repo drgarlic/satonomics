@@ -21,7 +21,7 @@ impl BlockMetadataDataset {
             min_initial_state: MinInitialState::default(),
 
             date: HeightMap::new_bin(1, &f("date")),
-            timestamp: HeightMap::new_bin(1, &f("timestamp")),
+            timestamp: HeightMap::_new_bin(1, &f("timestamp"), usize::MAX, true),
         };
 
         s.min_initial_state

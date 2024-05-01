@@ -5,21 +5,20 @@ use chrono::{Local, NaiveDate};
 use crate::{databases::Databases, datasets::AllDatasets, states::States, utils::time};
 
 pub struct ExportedData<'a> {
-    pub databases: &'a mut Databases,
+    pub databases: Option<&'a mut Databases>,
     pub datasets: &'a mut AllDatasets,
     pub date: NaiveDate,
     pub height: usize,
-    pub states: &'a States,
+    pub states: Option<&'a States>,
 }
 
-pub fn export_all(
+pub fn export(
     ExportedData {
         databases,
         datasets,
         states,
         height,
         date,
-        ..
     }: ExportedData,
 ) -> color_eyre::Result<()> {
     println!("{:?} - Saving... (Don't close !!)", Local::now());
@@ -28,8 +27,13 @@ pub fn export_all(
         time("Datasets saved", || datasets.export())?;
 
         thread::scope(|s| {
-            s.spawn(|| time("Databases saved", || databases.export(height, date)));
-            s.spawn(|| time("States saved", || states.export()));
+            if let Some(databases) = databases {
+                s.spawn(|| time("Databases saved", || databases.export(height, date)));
+            }
+
+            if let Some(states) = states {
+                s.spawn(|| time("States saved", || states.export()));
+            }
         });
 
         Ok(())

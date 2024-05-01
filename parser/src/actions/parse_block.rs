@@ -1,12 +1,9 @@
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    ops::ControlFlow,
-    thread,
-};
+use std::{ops::ControlFlow, thread};
 
 use bitcoin::Block;
 use chrono::NaiveDate;
 use itertools::Itertools;
+use nohash::{IntMap, IntSet};
 use rayon::prelude::*;
 
 use crate::{
@@ -104,13 +101,15 @@ pub fn parse_block(
 
     let block_price = datasets
         .price
-        .height_to_ohlc(height, timestamp, previous_timestamp)
+        .height
+        .get(height, timestamp, previous_timestamp)
         .unwrap_or_else(|_| panic!("Expect {height} to have a price"))
         .close;
 
     let date_price = datasets
         .price
-        .date_to_ohlc(date)
+        .date
+        .get(date)
         .unwrap_or_else(|_| panic!("Expect {date} to have a price"))
         .close;
 
@@ -121,13 +120,13 @@ pub fn parse_block(
         .blocks
         .push(BlockData::new(height as u32, block_price, timestamp));
 
-    let mut block_path_to_spent_data: BTreeMap<BlockPath, SpentData> = BTreeMap::new();
-    let mut block_path_to_received_data: BTreeMap<BlockPath, ReceivedData> = BTreeMap::new();
-    let mut address_index_to_address_realized_data: BTreeMap<u32, AddressRealizedData> =
-        BTreeMap::new();
-    let mut address_index_to_removed_address_data: BTreeMap<u32, AddressData> = BTreeMap::new();
+    let mut block_path_to_spent_data: IntMap<BlockPath, SpentData> = IntMap::default();
+    let mut block_path_to_received_data: IntMap<BlockPath, ReceivedData> = IntMap::default();
+    let mut address_index_to_address_realized_data: IntMap<u32, AddressRealizedData> =
+        IntMap::default();
+    let mut address_index_to_removed_address_data: IntMap<u32, AddressData> = IntMap::default();
 
-    let mut address_index_at_least_once_removed: BTreeSet<u32> = BTreeSet::default();
+    let mut address_index_at_least_once_removed: IntSet<u32> = IntSet::default();
 
     let mut coinbase = 0;
     let mut satblocks_destroyed = 0;
@@ -757,9 +756,9 @@ fn take_empty_address_index_to_empty_address_data(
     address_index_to_empty_address_data: &mut AddressIndexToEmptyAddressData,
     partial_txout_data_vec: &[Option<PartialTxoutData>],
     compute_addresses: bool,
-) -> BTreeMap<u32, EmptyAddressData> {
+) -> IntMap<u32, EmptyAddressData> {
     if !compute_addresses {
-        return BTreeMap::default();
+        return IntMap::default();
     }
 
     let address_index_to_address_data = &mut states.address_index_to_address_data;
@@ -777,7 +776,7 @@ fn take_empty_address_index_to_empty_address_data(
                 Some((address_index, EmptyAddressData::default()))
             }
         })
-        .collect::<BTreeMap<_, _>>();
+        .collect::<IntMap<_, _>>();
 
     empty_address_index_to_empty_address_data
         .par_iter_mut()

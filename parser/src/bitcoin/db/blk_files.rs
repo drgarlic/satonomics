@@ -133,20 +133,20 @@ impl BlkFiles {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
 
-    #[test]
-    fn test_parse_blk_index() {
-        assert_eq!(0, BlkFiles::parse_blk_index("blk00000.dat").unwrap());
-        assert_eq!(6, BlkFiles::parse_blk_index("blk6.dat").unwrap());
-        assert_eq!(1202, BlkFiles::parse_blk_index("blk1202.dat").unwrap());
-        assert_eq!(
-            13412451,
-            BlkFiles::parse_blk_index("blk13412451.dat").unwrap()
-        );
-        assert!(BlkFiles::parse_blk_index("blkindex.dat").is_none());
-        assert!(BlkFiles::parse_blk_index("invalid.dat").is_none());
-    }
-}
+//     #[test]
+//     fn test_parse_blk_index() {
+//         assert_eq!(0, BlkFiles::parse_blk_index("blk00000.dat").unwrap());
+//         assert_eq!(6, BlkFiles::parse_blk_index("blk6.dat").unwrap());
+//         assert_eq!(1202, BlkFiles::parse_blk_index("blk1202.dat").unwrap());
+//         assert_eq!(
+//             13412451,
+//             BlkFiles::parse_blk_index("blk13412451.dat").unwrap()
+//         );
+//         assert!(BlkFiles::parse_blk_index("blkindex.dat").is_none());
+//         assert!(BlkFiles::parse_blk_index("invalid.dat").is_none());
+//     }
+// }

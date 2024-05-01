@@ -194,26 +194,10 @@ where
             .get(&chunk_start)
             .and_then(|map| map.get(&(height - chunk_start)).cloned())
             .or_else(|| {
-                let x = self
-                    .imported
+                self.imported
                     .get(&chunk_start)
-                    .and_then(|serialized| {
-                        let x = serialized.map.get(height - chunk_start);
-
-                        if x.is_none() {
-                            dbg!(serialized.map.len(), height - chunk_start);
-                        }
-
-                        x
-                    })
-                    .cloned();
-
-                if x.is_none() {
-                    println!("could not find value");
-                    dbg!(height, chunk_start, &self.imported.keys());
-                }
-
-                x
+                    .and_then(|serialized| serialized.map.get(height - chunk_start))
+                    .cloned()
             })
     }
 

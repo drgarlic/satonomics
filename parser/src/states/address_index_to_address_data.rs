@@ -1,14 +1,13 @@
-use std::collections::BTreeMap;
-
 use crate::parse::AddressData;
 
 use super::AnyState;
 
 use derive_deref::{Deref, DerefMut};
+use nohash::IntMap;
 use savefile_derive::Savefile;
 
 #[derive(Default, Deref, DerefMut, Debug, Savefile)]
-pub struct AddressIndexToAddressData(BTreeMap<u32, AddressData>);
+pub struct AddressIndexToAddressData(IntMap<u32, AddressData>);
 
 impl AnyState for AddressIndexToAddressData {
     fn name<'a>() -> &'a str {

@@ -2,6 +2,7 @@ use std::{collections::BTreeMap, ops::RangeInclusive, thread};
 
 use chrono::NaiveDate;
 use itertools::Itertools;
+use nohash::IntMap;
 use rayon::prelude::*;
 
 mod _traits;
@@ -44,8 +45,8 @@ pub struct ProcessedBlockData<'a> {
     pub address_cohorts_one_shot_states: &'a Option<AddressCohortsOneShotStates>,
     pub address_cohorts_output_states: &'a Option<AddressCohortsOutputStates>,
     pub address_cohorts_realized_states: &'a Option<AddressCohortsRealizedStates>,
-    pub address_index_to_address_realized_data: &'a BTreeMap<u32, AddressRealizedData>,
-    pub address_index_to_removed_address_data: &'a BTreeMap<u32, AddressData>,
+    pub address_index_to_address_realized_data: &'a IntMap<u32, AddressRealizedData>,
+    pub address_index_to_removed_address_data: &'a IntMap<u32, AddressData>,
     pub block_price: f32,
     pub coinbase: u64,
     pub databases: &'a Databases,

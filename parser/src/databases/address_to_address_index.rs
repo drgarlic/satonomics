@@ -1,6 +1,7 @@
-use std::{collections::BTreeMap, mem, thread};
+use std::{mem, thread};
 
 use chrono::NaiveDate;
+use nohash::IntMap;
 use rayon::prelude::*;
 
 use crate::parse::{
@@ -28,12 +29,12 @@ type MultisigDatabase = UnsizedDatabase;
 pub struct AddressToAddressIndex {
     pub metadata: Metadata,
 
-    p2pk: BTreeMap<u16, P2PKDatabase>,
-    p2pkh: BTreeMap<u16, P2PKHDatabase>,
-    p2sh: BTreeMap<u16, P2SHDatabase>,
-    p2wpkh: BTreeMap<u16, P2WPKHDatabase>,
-    p2wsh: BTreeMap<u16, P2WSHDatabase>,
-    p2tr: BTreeMap<u16, P2TRDatabase>,
+    p2pk: IntMap<u16, P2PKDatabase>,
+    p2pkh: IntMap<u16, P2PKHDatabase>,
+    p2sh: IntMap<u16, P2SHDatabase>,
+    p2wpkh: IntMap<u16, P2WPKHDatabase>,
+    p2wsh: IntMap<u16, P2WSHDatabase>,
+    p2tr: IntMap<u16, P2TRDatabase>,
     unknown: Option<UnknownDatabase>,
     empty: Option<EmptyDatabase>,
     multisig: Option<MultisigDatabase>,
@@ -219,12 +220,12 @@ impl AddressToAddressIndex {
 impl AnyDatabaseGroup for AddressToAddressIndex {
     fn import() -> Self {
         Self {
-            p2pk: BTreeMap::default(),
-            p2pkh: BTreeMap::default(),
-            p2sh: BTreeMap::default(),
-            p2wpkh: BTreeMap::default(),
-            p2wsh: BTreeMap::default(),
-            p2tr: BTreeMap::default(),
+            p2pk: IntMap::default(),
+            p2pkh: IntMap::default(),
+            p2sh: IntMap::default(),
+            p2wpkh: IntMap::default(),
+            p2wsh: IntMap::default(),
+            p2tr: IntMap::default(),
             unknown: None,
             empty: None,
             multisig: None,

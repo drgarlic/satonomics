@@ -1,20 +1,19 @@
-use std::collections::BTreeMap;
-
 use derive_deref::{Deref, DerefMut};
+use nohash::IntMap;
 
 use crate::bitcoin::sats_to_btc;
 
 use super::{OneShotStates, UnrealizedState};
 
 #[derive(Deref, DerefMut, Default, Debug)]
-pub struct PriceInCentsToAmount(BTreeMap<u64, u64>);
+pub struct PriceInCentsToAmount(IntMap<u32, u64>);
 
 impl PriceInCentsToAmount {
-    pub fn increment(&mut self, mean_price_paid_in_cents: u64, amount: u64) {
+    pub fn increment(&mut self, mean_price_paid_in_cents: u32, amount: u64) {
         *self.entry(mean_price_paid_in_cents).or_default() += amount;
     }
 
-    pub fn decrement(&mut self, mean_price_paid_in_cents: u64, amount: u64) {
+    pub fn decrement(&mut self, mean_price_paid_in_cents: u32, amount: u64) {
         let delete = {
             let _amount = self.get_mut(&mean_price_paid_in_cents).unwrap_or_else(|| {
                 dbg!(mean_price_paid_in_cents, amount);

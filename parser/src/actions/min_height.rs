@@ -73,9 +73,9 @@ pub fn find_first_unsafe_height(
         .unwrap_or_else(|| {
             println!("Starting over...");
 
-            if true {
-                panic!("");
-            }
+            // if true {
+            //     panic!("");
+            // }
 
             let include_addresses = !usable_databases || min_initial_last_address_date.is_none() || min_initial_last_address_height.is_none();
 

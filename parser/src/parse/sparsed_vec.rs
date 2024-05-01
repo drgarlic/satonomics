@@ -1,3 +1,6 @@
+// Depreciated: 20 times slower with reverse sorted insert than btreemap/hashmap
+// Would be of course better with binary search but don't think it's worth it
+
 use std::{
     cmp::Ordering,
     fmt::Debug,
@@ -49,7 +52,7 @@ where
         + SubAssign
         + savefile::Serialize
         + savefile::Deserialize,
-    V: PartialEq + savefile::Serialize + savefile::Deserialize + Debug + Copy + Clone,
+    V: PartialEq + savefile::Serialize + savefile::Deserialize + Debug + Copy + Clone + Default,
 {
     pub fn get(&self, index: K) -> Option<&V> {
         self.get_real_index(index)
@@ -59,16 +62,6 @@ where
     pub fn get_mut(&mut self, index: K) -> Option<&mut V> {
         self.get_real_index(index)
             .and_then(|index| self.values.get_mut(index.into()))
-    }
-
-    fn should_be_reversed(&self, index: K) -> bool {
-        if self.holes.is_empty() {
-            false
-        } else {
-            let median_hole_index = self.holes.get(self.holes.len() / 2).unwrap().0;
-
-            median_hole_index < index
-        }
     }
 
     fn get_real_index(&self, index: K) -> Option<K> {
@@ -88,15 +81,7 @@ where
 
         let one = K::from(1);
 
-        let reversed = self.should_be_reversed(index);
-
-        let iter: Box<dyn Iterator<Item = &(K, K)>> = if reversed {
-            Box::new(self.holes.iter().rev())
-        } else {
-            Box::new(self.holes.iter())
-        };
-
-        for &(hole_index, hole_size) in iter {
+        for &(hole_index, hole_size) in self.holes.iter() {
             if hole_size == K::default() {
                 panic!("Shouldn't ve an empty hole");
             }
@@ -107,32 +92,14 @@ where
                         return None;
                     }
 
-                    if !reversed {
-                        offset += hole_size;
-                    } else {
-                        break;
-                    }
+                    offset += hole_size;
                 }
-                Ordering::Greater => {
-                    if !reversed {
-                        break;
-                    } else {
-                        offset += hole_size;
-                    }
-                }
+                Ordering::Greater => break,
                 Ordering::Equal => return None,
             }
         }
 
-        if reversed {
-            self.last_index.map(|last_index| {
-                let reverse_fixed_index = last_index - index - offset;
-
-                K::from(values_len) - one - reverse_fixed_index
-            })
-        } else {
-            Some(index - offset)
-        }
+        Some(index - offset)
     }
 
     pub fn to_vec(&self) -> Vec<(usize, &V)> {
@@ -182,16 +149,7 @@ where
 
         let mut processed_holes = 0;
 
-        let reversed = self.should_be_reversed(index);
-
-        let iter: Box<dyn Iterator<Item = (usize, &mut (K, K))>> = if reversed {
-            Box::new(self.holes.iter_mut().enumerate())
-            // Box::new(self.holes.iter_mut().enumerate().rev())
-        } else {
-            Box::new(self.holes.iter_mut().enumerate())
-        };
-
-        for (hole_index, (hole_start, hole_size)) in iter {
+        for (hole_index, (hole_start, hole_size)) in self.holes.iter_mut().enumerate() {
             let hole_end = *hole_start + *hole_size - one;
 
             match (*hole_start).cmp(&index) {
@@ -244,11 +202,11 @@ where
                             ends_in_hole = true;
 
                             match mutation {
-                                Mutation::Remove => return None,
                                 Mutation::Insert(_) => {
                                     *hole_size -= one;
                                     real_index -= (*hole_size).into();
                                 }
+                                Mutation::Remove => return None,
                             };
 
                             break;
@@ -335,9 +293,14 @@ where
             Mutation::Insert(value) => match real_index.cmp(&len) {
                 Ordering::Less => {
                     if ends_in_hole {
-                        self.values.splice(real_index..real_index, [value]).next()
+                        self.values.push(value);
+                        self.values[real_index..].rotate_right(1);
+                        None
+                        // self.values.splice(real_index..real_index, [value]).next()
                     } else {
-                        self.values.splice(real_index..=real_index, [value]).next()
+                        let previous = Some(self.values[real_index]);
+                        self.values[real_index] = value;
+                        previous
                     }
                 }
                 ordering => {

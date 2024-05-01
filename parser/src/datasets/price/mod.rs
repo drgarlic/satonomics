@@ -2,7 +2,6 @@ mod date;
 mod height;
 mod ohlc;
 
-use chrono::NaiveDate;
 use date::*;
 use height::*;
 pub use ohlc::*;
@@ -31,19 +30,6 @@ impl PriceDatasets {
             .consume(MinInitialState::compute_from_datasets(&s));
 
         Ok(s)
-    }
-
-    pub fn date_to_ohlc(&mut self, date: NaiveDate) -> color_eyre::Result<OHLC> {
-        self.date.get(date)
-    }
-
-    pub fn height_to_ohlc(
-        &mut self,
-        height: usize,
-        timestamp: u32,
-        previous_timestamp: Option<u32>,
-    ) -> color_eyre::Result<OHLC> {
-        self.height.get(height, timestamp, previous_timestamp)
     }
 }
 

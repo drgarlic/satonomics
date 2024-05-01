@@ -7,7 +7,6 @@ use crate::{
     datasets::{AnyDataset, MinInitialState},
     parse::{AnyHeightMap, HeightMap},
     price::{Binance, Kraken},
-    utils::ONE_MINUTE_IN_MS,
 };
 
 use super::OHLC;
@@ -63,7 +62,7 @@ impl HeightDataset {
 
         let timestamp = clean_timestamp(timestamp);
 
-        if previous_timestamp.is_none() || height > 0 {
+        if previous_timestamp.is_none() && height > 0 {
             panic!("Shouldn't be possible");
         }
 
@@ -144,25 +143,27 @@ impl HeightDataset {
                 tree.get(&previous_timestamp).cloned()
             });
 
-        let mut first_timestamp = 0;
-
-        let first_ohlc = previous_timestamp.map_or(Some(OHLC::default()), |previous_timestamp| {
-            first_timestamp = previous_timestamp + ONE_MINUTE_IN_MS as u32;
-
-            tree.get(&first_timestamp).cloned()
-        });
-
         let last_ohlc = tree.get(&timestamp);
 
-        if previous_ohlc.is_none() || first_ohlc.is_none() || last_ohlc.is_none() {
+        if previous_ohlc.is_none() || last_ohlc.is_none() {
             return Err(err);
         }
 
-        let mut final_ohlc = first_ohlc.unwrap();
-        final_ohlc.open = last_ohlc.unwrap().close;
+        let previous_ohlc = previous_ohlc.unwrap();
 
-        tree.range(&first_timestamp..=&timestamp)
-            .for_each(|(_, ohlc)| {
+        let mut final_ohlc = OHLC {
+            open: previous_ohlc.close,
+            high: previous_ohlc.close,
+            low: previous_ohlc.close,
+            close: previous_ohlc.close,
+        };
+
+        let start = previous_timestamp.unwrap_or(0);
+        let end = timestamp;
+
+        // Otherwise it's a re-org
+        if start < end {
+            tree.range(&start..=&end).skip(1).for_each(|(_, ohlc)| {
                 if ohlc.high > final_ohlc.high {
                     final_ohlc.high = ohlc.high
                 }
@@ -170,7 +171,10 @@ impl HeightDataset {
                 if ohlc.low < final_ohlc.low {
                     final_ohlc.low = ohlc.low
                 }
+
+                final_ohlc.close = ohlc.close;
             });
+        }
 
         Ok(final_ohlc)
     }

@@ -24,6 +24,9 @@ const texts = [
   "Vote for better money",
   "gradually then suddenly",
   "timechain",
+  "self custody",
+  "be your own bank",
+  "resistance money",
 ];
 
 export const LOCAL_STORAGE_MARQUEE_KEY = "bg-marquee";

@@ -76,13 +76,13 @@ impl States {
 
         let _ = self.date_data_vec.reset();
         let _ = self.tx_index_to_tx_data.reset();
-        let _ = self.txout_index_to_address_index.reset();
         let _ = self.txout_index_to_sats.reset();
 
         self.utxo_cohorts_durable_states = UTXOCohortsDurableStates::default();
 
         // TODO: Check that they are ONLY computed in an `if include_addresses`
         if include_addresses {
+            let _ = self.txout_index_to_address_index.reset();
             let _ = self.address_index_to_address_data.reset();
             let _ = self.address_counters.reset();
 

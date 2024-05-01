@@ -16,7 +16,7 @@ impl AddressCohortDurableStates {
         &mut self,
         amount: u64,
         utxo_count: usize,
-        mean_price_paid_in_cents: u64,
+        mean_price_paid_in_cents: u32,
         split_sat_amount: &LiquiditySplitResult,
         split_utxo_count: &LiquiditySplitResult,
     ) {
@@ -49,7 +49,7 @@ impl AddressCohortDurableStates {
         &mut self,
         amount: u64,
         utxo_count: usize,
-        mean_price_paid_in_cents: u64,
+        mean_price_paid_in_cents: u32,
         split_sat_amount: &LiquiditySplitResult,
         split_utxo_count: &LiquiditySplitResult,
     ) {
