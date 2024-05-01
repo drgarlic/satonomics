@@ -237,6 +237,8 @@ pub fn parse_block(
 
                 utxos.insert(vout, sats);
 
+                states.txout_index_to_sats.insert(txout_index, sats);
+
                 if compute_addresses {
                     let address = address.unwrap();
 
@@ -349,7 +351,10 @@ pub fn parse_block(
 
             states.tx_index_to_tx_data.insert(
                 tx_index,
-                TxData::new(BlockPath::new(date_index as u16, block_index as u16), utxos),
+                TxData::new(
+                    BlockPath::new(date_index as u16, block_index as u16),
+                    utxos.len() as u16,
+                ),
             );
         }
 
@@ -411,7 +416,7 @@ pub fn parse_block(
 
                     let input_tx_data = input_tx_data.unwrap();
 
-                    let input_sats = input_tx_data.utxos.remove(&input_vout);
+                    let input_sats = states.txout_index_to_sats.remove(&input_txout_index);
 
                     if input_sats.is_none() {
                         if !enable_check_if_txout_value_is_zero_in_db
@@ -434,6 +439,11 @@ pub fn parse_block(
                     let input_sats = input_sats.unwrap();
 
                     let input_block_path = input_tx_data.block_path;
+
+                    let input_tx_data =
+                        states.tx_index_to_tx_data.get_mut(&input_tx_index).unwrap();
+
+                    input_tx_data.utxos -= 1;
 
                     let BlockPath {
                         date_index: input_date_index,
@@ -554,6 +564,14 @@ pub fn parse_block(
 
         ControlFlow::Continue(())
     });
+
+    if !partial_txout_data_vec.is_empty() {
+        panic!("partial_txout_data_vec should've been fully consumed");
+    }
+
+    if !txin_ordered_tx_indexes.is_empty() {
+        panic!("txin_ordered_tx_indexes should've been fully consumed");
+    }
 
     let mut utxo_cohorts_sent_states = UTXOCohortsSentStates::default();
     let mut utxo_cohorts_one_shot_states = UTXOCohortsOneShotStates::default();
