@@ -1,20 +1,18 @@
 import { createResourceDataset } from "../base";
 import { createCommonDatasets } from "../common";
 
-export function createHeightDatasets() {
-  // const price = {
-  //   scale: "height" as const,
-  //   values: () => [] as DatasetCandlestickData[],
-  //   sources: dateToFetchedPrice.sources,
-  //   url: new URL(""),
-  // };
-
-  const price = createResourceDataset({
+export function createHeightDatasets({
+  setActiveResources,
+}: {
+  setActiveResources: Setter<Set<ResourceDataset<any, any>>>;
+}) {
+  const price = createResourceDataset<"height", OHLC>({
     scale: "height",
-    path: "/height-to-close",
+    path: "/height-to-ohlc",
+    setActiveResources,
   });
 
-  const common = createCommonDatasets(price);
+  const common = createCommonDatasets({ price, setActiveResources });
 
   return {
     price,
@@ -22,6 +20,7 @@ export function createHeightDatasets() {
     timestamp: createResourceDataset({
       scale: "height",
       path: `/height-to-timestamp`,
+      setActiveResources,
     }),
   };
 }

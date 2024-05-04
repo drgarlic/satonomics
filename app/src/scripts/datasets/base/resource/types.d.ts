@@ -1,40 +1,92 @@
-type ResourceDatasets = ReturnType<
-  typeof import("./index").createResourceDatasets
->;
-
-type DateResourceDatasets = ResourceDatasets["date"];
-type HeightResourceDatasets = ResourceDatasets["height"];
-type AnyResourceDatasets = DateResourceDatasets | HeightResourceDatasets;
-
-type FetchedDateDataset = Record<string, number>;
-type FetchedHeightDataset = number[];
-type FetchedPriceDataset = FetchedCandlestickData[];
-
 interface ResourceDataset<
   Scale extends ResourceScale,
-  Fetched = Scale extends "date" ? FetchedDateDataset : FetchedHeightDataset,
-  T extends SingleValueData = SingleValueData,
-  Value = DatasetValue<T>,
-> extends Dataset<Scale, T, Value> {
-  url: URL;
-  fetch: VoidFunction;
-  fetchedValues: Accessor<Fetched | null>;
-  loading: ASS<boolean>;
-  source: Accessor<Source | null>;
+  Type extends OHLC | number = number,
+  FetchedDataset extends
+    | FetchedDateDataset<Type>
+    | FetchedHeightDataset<Type> = Scale extends "date"
+    ? FetchedDateDataset<Type>
+    : FetchedHeightDataset<Type>,
+  Value extends SingleValueData | CandlestickData = Type extends number
+    ? SingleValueData
+    : CandlestickData,
+  // Scale extends ResourceScale,
+  // T extends SingleValueData = SingleValueData,
+  // Fetched = Scale extends "date" ? FetchedDateDataset : FetchedHeightDataset,
+  // Value = DatasetValue<T>,
+> extends Dataset<Scale, Value> {
+  url: string;
+  fetch: (id: number) => void;
+  fetchedJSONs: FetchedResult<Scale, Type>[];
   drop: VoidFunction;
 }
 
-interface Source {
-  name: string;
-  url: string;
-  color: string;
+// type ResourceDatasets = ReturnType<
+//   typeof import("./index").createResourceDatasets
+// >;
+
+// type DateResourceDatasets = ResourceDatasets["date"];
+// type HeightResourceDatasets = ResourceDatasets["height"];
+// type AnyResourceDatasets = DateResourceDatasets | HeightResourceDatasets;
+
+interface FetchedResult<
+  Scale extends ResourceScale,
+  Type extends number | OHLC,
+  Dataset extends
+    | FetchedDateDataset<Type>
+    | FetchedHeightDataset<Type> = Scale extends "date"
+    ? FetchedDateDataset<Type>
+    : FetchedHeightDataset<Type>,
+  Value extends DatasetValue<SingleValueData | CandlestickData> = DatasetValue<
+    Type extends number ? SingleValueData : CandlestickData
+  >,
+> {
+  at: Date | null;
+  loading: ASS<boolean>;
+  json: ASS<FetchedJSON<Scale, Type, Dataset> | null>;
+  vec: Accessor<Value[] | null>;
 }
 
-interface FetchedCandlestickData {
-  date: string;
+interface FetchedJSON<
+  Scale extends ResourceScale,
+  Type extends number | OHLC,
+  Dataset extends
+    | FetchedDateDataset<Type>
+    | FetchedHeightDataset<Type> = Scale extends "date"
+    ? FetchedDateDataset<Type>
+    : FetchedHeightDataset<Type>,
+> {
+  source: FetchedSource;
+  chunk: FetchedChunk;
+  dataset: FetchedDataset<Scale, Type, Dataset>;
+}
+
+type FetchedSource = string;
+
+interface FetchedChunk {
+  id: number;
+  previous: string | null;
+  next: string | null;
+}
+
+interface FetchedDataset<
+  Scale extends ResourceScale,
+  Type extends number | OHLC,
+  Dataset extends
+    | FetchedDateDataset<Type>
+    | FetchedHeightDataset<Type> = Scale extends "date"
+    ? FetchedDateDataset<Type>
+    : FetchedHeightDataset<Type>,
+> {
+  version: number;
+  map: Dataset;
+}
+
+type FetchedDateDataset<T> = Record<string, T>;
+type FetchedHeightDataset<T> = T[];
+
+interface OHLC {
   open: number;
   high: number;
   low: number;
   close: number;
-  volume: number;
 }

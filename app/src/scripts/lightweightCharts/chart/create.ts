@@ -31,7 +31,6 @@ export const createChart = (scale: ResourceScale) => {
       // borderColor: white,
     },
     rightPriceScale: {
-      scaleMargins: { bottom: 0.1, top: 0.1 },
       // borderColor: white,
     },
     timeScale: {

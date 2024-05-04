@@ -1,6 +1,6 @@
 import { chartState, cleanChart } from "/src/scripts";
 
-export function Chart({ visible }: { visible: () => boolean }) {
+export function Chart() {
   onMount(() => chartState.reset?.());
 
   onCleanup(cleanChart);
@@ -9,9 +9,6 @@ export function Chart({ visible }: { visible: () => boolean }) {
     <div
       id="chart"
       class="h-full w-full cursor-crosshair transition-opacity duration-300 ease-out"
-      style={{
-        opacity: visible() ? 1 : 0,
-      }}
     />
   );
 }

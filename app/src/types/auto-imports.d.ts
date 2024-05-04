@@ -125,6 +125,7 @@ declare global {
   const IconTablerHammer: (typeof import("~icons/tabler/hammer.jsx"))["default"]
   const IconTablerHandThreeFingers: typeof import('~icons/tabler/hand-three-fingers.jsx')['default']
   const IconTablerHeartBolt: typeof import('~icons/tabler/heart-bolt.jsx')['default']
+  const IconTablerHistory: typeof import('~icons/tabler/history.jsx')['default']
   const IconTablerHome: (typeof import("~icons/tabler/home.jsx"))["default"]
   const IconTablerHome2: typeof import('~icons/tabler/home2.jsx')['default']
   const IconTablerHourglassEmpty: (typeof import("~icons/tabler/hourglass-empty.jsx"))["default"]

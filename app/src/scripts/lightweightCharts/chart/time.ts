@@ -3,6 +3,7 @@ import { makeTimer } from "@solid-primitives/timer";
 import {
   chartState,
   debounce,
+  run,
   setMinMaxMarkers,
   writeURLParam,
 } from "/src/scripts";
@@ -26,11 +27,13 @@ export function setTimeScale({
   switchBetweenCandlestickAndLine,
   lowerOpacity,
   candlesticks,
+  activeResources,
 }: {
   scale: ResourceScale;
   switchBetweenCandlestickAndLine: boolean;
   candlesticks: DatasetValue<CandlestickData | SingleValueData>[];
   lowerOpacity: boolean;
+  activeResources: Accessor<Set<ResourceDataset<any, any>>>;
 }) {
   const debouncedCallback = debounce((range: LogicalRange | null) => {
     const { chart, priceSeries: series } = chartState;
@@ -68,11 +71,28 @@ export function setTimeScale({
     chartState.chart?.timeScale().setVisibleLogicalRange(chartState.range);
   }
 
+  chartState.chart?.timeScale().subscribeVisibleTimeRangeChange((range) => {
+    if (!range) return;
+
+    if (typeof range.from === "string" && typeof range.to === "string") {
+      const from = Number(range.from.split("-").shift());
+      const to = Number(range.to.split("-").shift()) || from;
+
+      let ids = Array.from({ length: to - from + 1 }, (_, i) => i + from);
+
+      ids.forEach((id) => {
+        activeResources().forEach((resource) => resource.fetch(id));
+      });
+    } else {
+      console.log(range);
+    }
+  });
+
   makeTimer(
     () =>
       chartState.chart
         ?.timeScale()
-        .subscribeVisibleLogicalRangeChange((range: LogicalRange | null) => {
+        .subscribeVisibleLogicalRangeChange((range) => {
           debouncedUpdateURLParams(range);
           range = range || chartState.range;
           chartState.range = range;

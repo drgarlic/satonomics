@@ -6,10 +6,10 @@ export const computeAverage = (values: number[]) =>
 export const computeMovingAverage = <
   T extends SingleValueData = SingleValueData,
 >(
-  dataset: T[] | null,
+  dataset: T[],
   interval: number,
 ) => {
-  if (!dataset?.length) return null;
+  if (!dataset.length) return [];
 
   return dataset.map((data, index) => ({
     ...data,

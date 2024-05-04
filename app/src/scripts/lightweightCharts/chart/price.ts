@@ -26,15 +26,17 @@ export const applyPriceSeries = <
   preset,
   dataset,
   options,
+  activeResources,
 }: {
   scale: Scale;
   chart: IChartApi;
   datasets: Datasets;
   preset: Preset;
+  activeResources: Accessor<Set<ResourceDataset<any, any>>>;
   liveCandle?: Accessor<DatasetCandlestickData | null>;
   dataset?: Dataset<Scale, T>;
   options?: PriceSeriesOptions;
-}): { sources: Accessor<Sources>; legend: SeriesLegend } => {
+}): { legend: SeriesLegend } => {
   const id = options?.id || "price";
   const title = options?.title || "Price";
 
@@ -129,10 +131,10 @@ export const applyPriceSeries = <
     candlesticks:
       dataset?.values() || datasets[scale].price.values() || ([] as any),
     lowerOpacity,
+    activeResources,
   });
 
   return {
-    sources: dataset?.sources || datasets[scale].price.sources,
     legend: createSeriesLegend({
       id,
       presetId: preset.id,

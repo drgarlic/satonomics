@@ -5,10 +5,7 @@ import { createPresets as createAddressesPresets } from "./addresses";
 import { createPresets as createAveragesPresets } from "./averages";
 import { createPresets as createBlocksPresets } from "./blocks";
 import { createPresets as createCoinblocksPresets } from "./coinblocks";
-import { presets as fiatPresets } from "./fiat";
 import { createPresets as createHodlersPresets } from "./hodlers";
-import { presets as marketcapsPresets } from "./marketcaps";
-import { presets as metalsPresets } from "./metals";
 import { createPresets as createMinersPresets } from "./miners";
 import { createCohortPresetList } from "./templates";
 import { createPresets as createTransactionsPresets } from "./transactions";
@@ -44,9 +41,9 @@ export function createPresets(datasets: Datasets): Presets {
         createHodlersPresets({ scale: "date", datasets }),
         createAddressesPresets({ scale: "date", datasets }),
         createCoinblocksPresets({ scale: "date", datasets }),
-        marketcapsPresets,
-        fiatPresets,
-        metalsPresets,
+        // marketcapsPresets,
+        // fiatPresets,
+        // metalsPresets,
       ],
     },
     {
@@ -148,32 +145,14 @@ export function createPresets(datasets: Datasets): Presets {
     );
   });
 
-  const sourcesList = createASS<Accessor<Sources>[]>([], { equals: false });
-
-  const sources = createMemo(() => {
-    const map = new Map<string, Source>();
-
-    sourcesList().forEach((sources) => {
-      sources().forEach((value, key) => {
-        map.set(key, value);
-      });
-    });
-
-    return map;
-  });
-
   return {
     tree,
     list,
     selected,
     favorites,
-    sources,
     undoPossible: createMemo(() => !!history.undo().length),
     redoPossible: createMemo(() => !!history.redo().length),
     select,
-    setSources(_sourcesList) {
-      sourcesList.set(_sourcesList);
-    },
     selectRandom() {
       const preset = random(list);
 

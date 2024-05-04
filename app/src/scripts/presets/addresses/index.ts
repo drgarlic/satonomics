@@ -171,6 +171,7 @@ function createAddressPresetFolder<Scale extends ResourceScale>({
     tree: [
       createAddressCountPreset({ scale, id, name, datasetKey, color }),
       ...createCohortPresetList({
+        title: name,
         datasets,
         scale,
         color,
@@ -187,6 +188,7 @@ function createAddressPresetFolder<Scale extends ResourceScale>({
             id: _id,
             name: liquidity.name,
             tree: createCohortPresetList({
+              title: name,
               datasets,
               scale,
               color,

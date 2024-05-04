@@ -2,170 +2,177 @@ import { createLazyMemo } from "@solid-primitives/memo";
 import { leading, throttle } from "@solid-primitives/scheduled";
 
 import {
+  FIVE_MINUTES_IN_MS,
   ONE_DAY_IN_MS,
+  ONE_MINUTE_IN_MS,
   ONE_SECOND_IN_MS,
-  TEN_SECOND_IN_MS,
+  run,
 } from "/src/scripts";
 import { createASS } from "/src/solid";
 
-export function createResourceDataset<Scale extends ResourceScale>({
-  scale,
-  path,
-}: {
-  scale: Scale;
-  path: string;
-}) {
-  return _createResourceDataset({
-    scale,
-    path,
-    transform:
-      scale === "date"
-        ? (values) =>
-            Object.entries((values || {}) as Record<string, number>).map(
-              ([date, value]: [string, number]) => ({
-                number: new Date(date).valueOf() / ONE_DAY_IN_MS,
-                time: date,
-                value: value ?? NaN,
-              }),
-            )
-        : (values) =>
-            ((values || []) as number[]).map((value, index) => ({
-              number: index,
-              time: index as Time,
-              value: value ?? NaN,
-            })),
-  });
-}
-
-export function _createResourceDataset<
+export function createResourceDataset<
   Scale extends ResourceScale,
-  T = Scale extends "date" ? FetchedDateDataset : FetchedHeightDataset,
-  K extends SingleValueData = SingleValueData,
+  Type extends OHLC | number = number,
 >({
   scale,
   path,
-  autoFetch = true,
-  transform,
+  setActiveResources,
 }: {
   scale: Scale;
   path: string;
-  transform: (values: T | null) => DatasetValue<K>[];
-  autoFetch?: boolean;
+  setActiveResources: Setter<Set<ResourceDataset<any, any>>>;
 }) {
-  const url = new URL(
-    `${
-      location.protocol === "https:"
-        ? "https://api.satonomics.xyz"
-        : "http://localhost:3110"
-    }${path}`,
-  );
+  const url = `${
+    location.protocol === "https:"
+      ? "https://api.satonomics.xyz"
+      : "http://localhost:3111"
+  }${path}`;
 
-  const fetchedValues = createASS(null as T | null);
-  const loading = createASS(false);
-  const source = createASS<Source | null>(null);
+  type Dataset = Scale extends "date"
+    ? FetchedDateDataset<Type>
+    : FetchedHeightDataset<Type>;
 
-  let lastSuccessfulFetch: Date | null = null;
+  type Value = DatasetValue<
+    Type extends number ? SingleValueData : CandlestickData
+  >;
 
-  const throttledFetch = leading(
-    throttle,
-    async () => {
-      if (
-        lastSuccessfulFetch &&
-        new Date().valueOf() - lastSuccessfulFetch.valueOf() < TEN_SECOND_IN_MS
-      )
-        return;
+  const fetchedJSONs = new Array(
+    (new Date().getFullYear() - new Date("2009-01-01").getFullYear()) *
+      (scale === "date" ? 2 : 8),
+  )
+    .fill(null)
+    .map((): FetchedResult<Scale, Type> => {
+      const json = createASS<FetchedJSON<Scale, Type, Dataset> | null>(null);
 
-      loading.set(true);
+      return {
+        at: null,
+        loading: createASS(false),
+        json,
+        vec: createMemo(() => {
+          const map = json()?.dataset.map || null;
 
-      let cache: Cache | undefined;
-
-      try {
-        cache = await caches.open("resources");
-      } catch {}
-
-      try {
-        const fetchedResponse = await fetch(url);
-
-        const clonedResponse = fetchedResponse.clone();
-
-        const _values = await convertResponseToValues<T>(
-          fetchedResponse,
-          source.set,
-        );
-
-        if (_values) {
-          lastSuccessfulFetch = new Date();
-
-          console.log("values: setting fetched...");
-
-          fetchedValues.set(() => _values);
-
-          if (cache) {
-            cache.put(url, clonedResponse);
+          if (!map) {
+            return null;
           }
-        }
-      } catch {
-        if (!cache) return;
 
-        const cachedResponse = await cache.match(url.toString());
-
-        if (cachedResponse) {
-          const _values = await convertResponseToValues<T>(
-            cachedResponse,
-            source.set,
-          );
-
-          if (_values) {
-            console.log(`values: setting cached...`);
-            fetchedValues.set(() => _values);
+          if (Array.isArray(map)) {
+            return map.map(
+              (value, index) =>
+                ({
+                  number: index,
+                  time: index as Time,
+                  ...(typeof value !== "number"
+                    ? { ...(value as OHLC), value: value.close }
+                    : { value: value as number }),
+                }) as any as Value,
+            );
+          } else {
+            return Object.entries(map).map(
+              ([date, value]) =>
+                ({
+                  number: new Date(date).valueOf() / ONE_DAY_IN_MS,
+                  time: date,
+                  ...(typeof value !== "number"
+                    ? { ...(value as OHLC), value: value.close }
+                    : { value: value as number }),
+                }) as any as Value,
+            );
           }
+        }),
+      };
+    }) as FetchedResult<Scale, Type>[];
+
+  const _fetch = async (id: number) => {
+    const index = scale === "date" ? id - 2009 : Math.floor(id / 13125);
+
+    const fetched = fetchedJSONs[index];
+
+    if (
+      fetched.at &&
+      new Date().valueOf() - fetched.at.valueOf() < ONE_MINUTE_IN_MS
+    )
+      return;
+
+    fetched.at = new Date();
+    fetched.loading.set(true);
+
+    let cache: Cache | undefined;
+
+    try {
+      cache = await caches.open("resources");
+
+      const cachedResponse = await cache.match(url.toString());
+
+      if (cachedResponse) {
+        const json = await convertResponseToJSON<Scale, Type>(cachedResponse);
+
+        if (json) {
+          console.log(`values: from cache...`);
+
+          fetched.json.set(() => json);
         }
       }
+    } catch {}
 
-      loading.set(false);
-    },
-    ONE_SECOND_IN_MS,
-  );
+    try {
+      const fetchedResponse = await fetch(`${url}?chunk=${id}`);
 
-  const sources = createLazyMemo(() => {
-    const _source = source();
-    const map = new Map<string, Source>();
-    if (_source) {
-      map.set(_source.name, _source);
-    }
-    return map;
-  });
+      const clonedResponse = fetchedResponse.clone();
 
-  const values = createLazyMemo(() => {
-    if (autoFetch) {
-      resource.fetch();
-    }
-    return transform(fetchedValues());
-  });
+      const json = await convertResponseToJSON<Scale, Type>(fetchedResponse);
 
-  const resource: ResourceDataset<Scale, T, K> = {
+      if (json) {
+        console.log("values: from fetch...");
+
+        fetched.json.set(() => json);
+
+        if (cache) {
+          cache.put(url, clonedResponse);
+        }
+      }
+    } catch {}
+
+    fetched.loading.set(false);
+  };
+
+  const resource: ResourceDataset<Scale, Type> = {
     scale,
     url,
-    fetch: throttledFetch,
-    fetchedValues,
-    source,
-    sources,
-    values,
-    loading,
+    fetch: _fetch,
+    fetchedJSONs,
+    values: createLazyMemo(() => {
+      setActiveResources((resources) => resources.add(resource));
+
+      onCleanup(() =>
+        setActiveResources((resources) => {
+          resources.delete(resource);
+          return resources;
+        }),
+      );
+
+      const flat = fetchedJSONs.flatMap((fetched) => fetched.vec() || []);
+
+      return flat;
+    }),
     drop() {
-      fetchedValues.set(null);
-      lastSuccessfulFetch = null;
+      fetchedJSONs.forEach((fetched) => {
+        fetched.at = null;
+        fetched.json.set(null);
+        fetched.loading.set(false);
+      });
     },
   };
 
   return resource;
 }
 
-async function convertResponseToValues<T>(
-  response: Response,
-  setSource: Setter<Source | null>,
-) {
-  const json = await response.json();
-  setSource(json.source);
-  return json.dataset as T;
+async function convertResponseToJSON<
+  Scale extends ResourceScale,
+  Type extends number | OHLC,
+>(response: Response) {
+  try {
+    return (await response.json()) as FetchedJSON<Scale, Type>;
+  } catch (_) {
+    return null;
+  }
 }

@@ -25,23 +25,10 @@ export enum Momentum {
 function createLazyDataset<
   Scale extends ResourceScale,
   T extends SingleValueData = SingleValueData,
->(
-  scale: Scale,
-  calc: () => DatasetValue<T>[] | null,
-  sourcesList: Accessor<Sources>[],
-): Dataset<Scale, T> {
+>(scale: Scale, calc: () => DatasetValue<T>[]): Dataset<Scale, T> {
   return {
     scale,
     values: createLazyMemo(calc),
-    sources: createLazyMemo(() => {
-      const map = new Map<string, Source>();
-      sourcesList.forEach((sources) => {
-        sources().forEach((value, key) => {
-          map.set(key, value);
-        });
-      });
-      return map;
-    }),
   };
 }
 
@@ -57,7 +44,6 @@ export function createTransformedLazyDataset<Scale extends ResourceScale>(
         time,
         value: transform(value, index, array),
       })) || null,
-    [dataset.sources],
   );
 }
 
@@ -139,34 +125,28 @@ export function createAddedLazyDataset<Scale extends ResourceScale>(
 ) {
   const offset = createLazyOffset(datasetRef, datasetToAdd);
 
-  return createLazyDataset(
-    datasetRef.scale,
-    () => {
-      let secondValue = 0;
-      let index = offset();
+  return createLazyDataset(datasetRef.scale, () => {
+    let secondValue = 0;
+    let index = offset();
 
-      const adders = datasetToAdd.values();
+    const adders = datasetToAdd.values();
 
-      if (!adders) return null;
+    if (!adders) return [];
 
-      return (
-        datasetRef.values()?.map(({ number, time, value }) => {
-          const data = adders.at(index);
-          if (number === data?.number) {
-            secondValue = data.value;
-            index += 1;
-          }
+    return datasetRef.values()?.map(({ number, time, value }) => {
+      const data = adders.at(index);
+      if (number === data?.number) {
+        secondValue = data.value;
+        index += 1;
+      }
 
-          return {
-            number,
-            time,
-            value: value + secondValue,
-          };
-        }) || null
-      );
-    },
-    [datasetRef.sources, datasetToAdd.sources],
-  );
+      return {
+        number,
+        time,
+        value: value + secondValue,
+      };
+    });
+  });
 }
 
 export function createSubtractedLazyDataset<Scale extends ResourceScale>(
@@ -175,36 +155,30 @@ export function createSubtractedLazyDataset<Scale extends ResourceScale>(
 ) {
   const offset = createLazyOffset(datasetRef, datasetToSubtract);
 
-  return createLazyDataset(
-    datasetRef.scale,
-    () => {
-      let toSubtract = 0;
+  return createLazyDataset(datasetRef.scale, () => {
+    let toSubtract = 0;
 
-      let index = offset();
+    let index = offset();
 
-      const subtracters = datasetToSubtract.values();
+    const subtracters = datasetToSubtract.values();
 
-      if (!subtracters) return null;
+    if (!subtracters) return [];
 
-      return (
-        datasetRef.values()?.map(({ time, value, number }) => {
-          const data = subtracters.at(index);
+    return datasetRef.values()?.map(({ time, value, number }) => {
+      const data = subtracters.at(index);
 
-          if (number === data?.number) {
-            toSubtract = data.value;
-            index += 1;
-          }
+      if (number === data?.number) {
+        toSubtract = data.value;
+        index += 1;
+      }
 
-          return {
-            number,
-            time,
-            value: value - toSubtract,
-          };
-        }) || null
-      );
-    },
-    [datasetRef.sources, datasetToSubtract.sources],
-  );
+      return {
+        number,
+        time,
+        value: value - toSubtract,
+      };
+    });
+  });
 }
 
 export function createMultipliedLazyDataset<Scale extends ResourceScale>(
@@ -216,29 +190,23 @@ export function createMultipliedLazyDataset<Scale extends ResourceScale>(
 
   const offsetMultiplier = createLazyOffset(datasetRef, multiplierDataset);
 
-  return createLazyDataset(
-    datasetRef.scale,
-    () => {
-      const multipliers = multiplierDataset.values();
+  return createLazyDataset(datasetRef.scale, () => {
+    const multipliers = multiplierDataset.values();
 
-      if (!multipliers) return null;
+    if (!multipliers) return [];
 
-      return (
-        datasetRef
-          .values()
-          ?.slice(offsetRef())
-          .map(({ number, time, value }, index) => ({
-            number,
-            time,
-            value:
-              value *
-              (multipliers.at(index + offsetMultiplier())?.value ||
-                defaultMultiplier),
-          })) || null
-      );
-    },
-    [datasetRef.sources, multiplierDataset.sources],
-  );
+    return datasetRef
+      .values()
+      ?.slice(offsetRef())
+      .map(({ number, time, value }, index) => ({
+        number,
+        time,
+        value:
+          value *
+          (multipliers.at(index + offsetMultiplier())?.value ||
+            defaultMultiplier),
+      }));
+  });
 }
 
 export const createDividedLazyDataset = <Scale extends ResourceScale>(
@@ -250,101 +218,83 @@ export const createDividedLazyDataset = <Scale extends ResourceScale>(
 
   const offsetDivider = createLazyOffset(datasetRef, dividerDataset);
 
-  return createLazyDataset(
-    datasetRef.scale,
-    () => {
-      const dividers = dividerDataset.values();
+  return createLazyDataset(datasetRef.scale, () => {
+    const dividers = dividerDataset.values();
 
-      if (!dividers) return null;
+    if (!dividers) return [];
 
-      return (
-        datasetRef
-          .values()
-          ?.slice(offsetRef())
-          .map(({ number, time, value }, index) => ({
-            number,
-            time,
-            value:
-              (value / (dividers.at(index + offsetDivider())?.value || 1)) *
-              (isPercentage ? 100 : 1),
-          })) || null
-      );
-    },
-    [datasetRef.sources, dividerDataset.sources],
-  );
+    return datasetRef
+      .values()
+      ?.slice(offsetRef())
+      .map(({ number, time, value }, index) => ({
+        number,
+        time,
+        value:
+          (value / (dividers.at(index + offsetDivider())?.value || 1)) *
+          (isPercentage ? 100 : 1),
+      }));
+  });
 };
 
 export const createCumulatedLazyDataset = <Scale extends ResourceScale>(
   dataset: Dataset<Scale>,
 ) =>
-  createLazyDataset(
-    dataset.scale,
-    () => {
-      let sum = 0;
+  createLazyDataset(dataset.scale, () => {
+    let sum = 0;
 
-      return (
-        dataset.values()?.map(({ number, time, value }) => {
-          sum += value;
+    return dataset.values()?.map(({ number, time, value }) => {
+      sum += value;
 
-          return {
-            number,
-            time,
-            value: sum,
-          };
-        }) || null
-      );
-    },
-    [dataset.sources],
-  );
+      return {
+        number,
+        time,
+        value: sum,
+      };
+    });
+  });
 
 export function createPercentageMomentumLazyDataset<
   Scale extends ResourceScale,
 >(dataset: Dataset<Scale>) {
-  return createLazyDataset(
-    dataset.scale,
-    () => {
-      let momentum = Momentum.green;
+  return createLazyDataset(dataset.scale, () => {
+    let momentum = Momentum.green;
 
-      return (
-        dataset.values()?.map(({ number, time, value }) => {
-          let _value: Momentum;
+    return dataset.values()?.map(({ number, time, value }) => {
+      let _value: Momentum;
 
-          if (momentum === Momentum.green) {
-            if (value <= 45) {
-              momentum = Momentum.red;
-              _value = momentum;
-            } else if (value < 50) {
-              _value = Momentum.yellow;
-            } else {
-              _value = momentum;
-            }
-          } else {
-            if (value >= 55) {
-              momentum = Momentum.green;
-              _value = momentum;
-            } else if (value > 50) {
-              _value = Momentum.yellow;
-            } else {
-              _value = momentum;
-            }
-          }
+      if (momentum === Momentum.green) {
+        if (value <= 45) {
+          momentum = Momentum.red;
+          _value = momentum;
+        } else if (value < 50) {
+          _value = Momentum.yellow;
+        } else {
+          _value = momentum;
+        }
+      } else {
+        if (value >= 55) {
+          momentum = Momentum.green;
+          _value = momentum;
+        } else if (value > 50) {
+          _value = Momentum.yellow;
+        } else {
+          _value = momentum;
+        }
+      }
 
-          return {
-            number,
-            time,
-            value: _value,
-            color:
-              _value === Momentum.green
-                ? colors.momentumGreen
-                : _value === Momentum.yellow
-                  ? colors.momentumYellow
-                  : colors.momentumRed,
-          };
-        }) || null
-      );
-    },
-    [dataset.sources],
-  );
+      return {
+        number,
+        time,
+        value: _value,
+        color:
+          _value === Momentum.green
+            ? colors.momentumGreen
+            : _value === Momentum.yellow
+              ? colors.momentumYellow
+              : colors.momentumRed,
+      };
+    });
+  });
 }
 
 export function createBLSHBitcoinReturnsLazyDataset<
@@ -356,56 +306,52 @@ export function createBLSHBitcoinReturnsLazyDataset<
   momentumDataset: Dataset<Scale>;
   price: Dataset<Scale>;
 }) {
-  return createLazyDataset(
-    momentumDataset.scale,
-    () => {
-      let fiatAmount = 0;
-      let btcAmount = 0;
-      let dcaAmount = 100;
-      let momentum = Momentum.green;
+  return createLazyDataset(momentumDataset.scale, () => {
+    let fiatAmount = 0;
+    let btcAmount = 0;
+    let dcaAmount = 100;
+    let momentum = Momentum.green;
 
-      const offset = createLazyOffset(price, momentumDataset);
+    const offset = createLazyOffset(price, momentumDataset);
 
-      const momentumValues = momentumDataset.values();
+    const momentumValues = momentumDataset.values();
 
-      if (!momentumValues) return null;
+    if (!momentumValues) return [];
 
-      return (
-        price.values()?.map(({ number, time, value: currentPrice }, index) => {
-          const momentumI =
-            momentumValues.at(index + offset())?.value || Momentum.green;
+    return price
+      .values()
+      ?.map(({ number, time, value: currentPrice }, index) => {
+        const momentumI =
+          momentumValues.at(index + offset())?.value || Momentum.green;
 
-          if (momentum !== momentumI) {
-            if (momentumI === Momentum.green) {
-              momentum = momentumI;
-              btcAmount = (fiatAmount + dcaAmount) / currentPrice;
-              fiatAmount = 0;
-            } else if (momentumI === Momentum.red) {
-              momentum = momentumI;
-              fiatAmount = btcAmount * currentPrice + dcaAmount;
-              btcAmount = 0;
-            }
-          } else {
-            if (momentum === Momentum.green) {
-              btcAmount += dcaAmount / currentPrice;
-            } else if (momentum === Momentum.red) {
-              fiatAmount += dcaAmount;
-            } else {
-              throw Error("Unreachable");
-            }
+        if (momentum !== momentumI) {
+          if (momentumI === Momentum.green) {
+            momentum = momentumI;
+            btcAmount = (fiatAmount + dcaAmount) / currentPrice;
+            fiatAmount = 0;
+          } else if (momentumI === Momentum.red) {
+            momentum = momentumI;
+            fiatAmount = btcAmount * currentPrice + dcaAmount;
+            btcAmount = 0;
           }
+        } else {
+          if (momentum === Momentum.green) {
+            btcAmount += dcaAmount / currentPrice;
+          } else if (momentum === Momentum.red) {
+            fiatAmount += dcaAmount;
+          } else {
+            throw Error("Unreachable");
+          }
+        }
 
-          return {
-            number,
-            time,
-            value: btcAmount + fiatAmount / currentPrice,
-            fiat: fiatAmount + btcAmount * currentPrice,
-          };
-        }) || null
-      );
-    },
-    [momentumDataset.sources, price.sources],
-  );
+        return {
+          number,
+          time,
+          value: btcAmount + fiatAmount / currentPrice,
+          fiat: fiatAmount + btcAmount * currentPrice,
+        };
+      });
+  });
 }
 
 export function createBLSHDollarReturnsLazyDataset<
@@ -415,15 +361,12 @@ export function createBLSHDollarReturnsLazyDataset<
 }: {
   bitcoinReturns: ReturnType<typeof createBLSHBitcoinReturnsLazyDataset<Scale>>;
 }) {
-  return createLazyDataset(
-    bitcoinReturns.scale,
-    () =>
-      bitcoinReturns.values()?.map(({ number, time, fiat: value }) => ({
-        number,
-        time,
-        value,
-      })) || null,
-    [bitcoinReturns.sources],
+  return createLazyDataset(bitcoinReturns.scale, () =>
+    bitcoinReturns.values()?.map(({ number, time, fiat: value }) => ({
+      number,
+      time,
+      value,
+    })),
   );
 }
 
@@ -431,10 +374,8 @@ export function createLazyAverageDataset<Scale extends ResourceScale>(
   dataset: Dataset<Scale>,
   number: number,
 ) {
-  return createLazyDataset(
-    dataset.scale,
-    () => computeMovingAverage(dataset.values(), number),
-    [dataset.sources],
+  return createLazyDataset(dataset.scale, () =>
+    computeMovingAverage(dataset.values(), number),
   );
 }
 
@@ -443,55 +384,51 @@ export function createLazyPercentileDataset<Scale extends ResourceScale>(
   quantile: number,
 ) {
   const { scale } = ratio;
-  return createLazyDataset(
-    scale,
-    () => {
-      const ratioValues = ratio.values();
+  return createLazyDataset(scale, () => {
+    const ratioValues = ratio.values();
 
-      if (!ratioValues?.length) return [];
+    if (!ratioValues?.length) return [];
 
-      let sortedRatios: number[] = [];
+    let sortedRatios: number[] = [];
 
-      const index = ratioValues.findIndex(
-        ({ number }) =>
-          number ===
-          (scale === "date"
-            ? FIRST_USABLE_MEAN_RATIO_DATE_NUMBER
-            : FIRST_USABLE_MEAN_RATIO_HEIGHT_NUMBER),
-      );
+    const index = ratioValues.findIndex(
+      ({ number }) =>
+        number ===
+        (scale === "date"
+          ? FIRST_USABLE_MEAN_RATIO_DATE_NUMBER
+          : FIRST_USABLE_MEAN_RATIO_HEIGHT_NUMBER),
+    );
 
-      if (index === -1) return null;
+    if (index === -1) return [];
 
-      return ratioValues
-        .slice(index)
-        .map(({ number, time, value: ratio }, dataIndex) => {
-          sortedInsert(sortedRatios, ratio);
+    return ratioValues
+      .slice(index)
+      .map(({ number, time, value: ratio }, dataIndex) => {
+        sortedInsert(sortedRatios, ratio);
 
-          const length = dataIndex + 1;
+        const length = dataIndex + 1;
 
-          const quantileValue = quantile / 100;
+        const quantileValue = quantile / 100;
 
-          let value: number;
+        let value: number;
 
-          if (quantileValue !== MEDIAN || length % 2 !== 0) {
-            const sortedIndex = Math.floor(length * quantileValue);
+        if (quantileValue !== MEDIAN || length % 2 !== 0) {
+          const sortedIndex = Math.floor(length * quantileValue);
 
-            value = sortedRatios[sortedIndex];
-          } else {
-            const mid = Math.floor(length / 2);
+          value = sortedRatios[sortedIndex];
+        } else {
+          const mid = Math.floor(length / 2);
 
-            value = (sortedRatios[mid - 1] + sortedRatios[mid]) / 2;
-          }
+          value = (sortedRatios[mid - 1] + sortedRatios[mid]) / 2;
+        }
 
-          return {
-            number,
-            time,
-            value,
-          };
-        });
-    },
-    [ratio.sources],
-  );
+        return {
+          number,
+          time,
+          value,
+        };
+      });
+  });
 }
 
 export function createLazyMomentumDataset<Scale extends ResourceScale>(
@@ -499,32 +436,29 @@ export function createLazyMomentumDataset<Scale extends ResourceScale>(
   smoothed: Dataset<Scale>,
   extraSmoothed: Dataset<Scale>,
 ) {
-  return createLazyDataset(
-    raw.scale,
-    () =>
-      extraSmoothed.values()?.map(({ number, time, value }, index) => {
-        const rawValue = raw.values()?.[index].value || 0;
-        const smoothedValue = smoothed.values()?.[index].value || 0;
+  return createLazyDataset(raw.scale, () =>
+    extraSmoothed.values()?.map(({ number, time, value }, index) => {
+      const rawValue = raw.values()?.[index].value || 0;
+      const smoothedValue = smoothed.values()?.[index].value || 0;
 
-        const momentum =
-          smoothedValue >= value && rawValue >= value
-            ? Momentum.green
-            : smoothedValue < value && rawValue < value
-              ? Momentum.red
-              : Momentum.yellow;
+      const momentum =
+        smoothedValue >= value && rawValue >= value
+          ? Momentum.green
+          : smoothedValue < value && rawValue < value
+            ? Momentum.red
+            : Momentum.yellow;
 
-        return {
-          number,
-          time,
-          value: momentum,
-          color:
-            momentum === Momentum.green
-              ? colors.momentumGreen
-              : momentum === Momentum.red
-                ? colors.momentumRed
-                : colors.momentumYellow,
-        };
-      }) || null,
-    [raw.sources],
+      return {
+        number,
+        time,
+        value: momentum,
+        color:
+          momentum === Momentum.green
+            ? colors.momentumGreen
+            : momentum === Momentum.red
+              ? colors.momentumRed
+              : colors.momentumYellow,
+      };
+    }),
   );
 }

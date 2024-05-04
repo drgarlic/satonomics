@@ -3,6 +3,7 @@ import { useWindowSize } from "@solid-primitives/resize-observer";
 
 import {
   cleanChart,
+  createDatasets,
   createPresets,
   createResources,
   renderChart,
@@ -27,12 +28,20 @@ import { registerServiceWorker } from "./scripts";
 
 const LOCAL_STORAGE_BAR_KEY = "bar-width";
 
-export function App({ datasets }: { datasets: Datasets }) {
+export function App() {
   const { needRefresh, updateServiceWorker } = registerServiceWorker();
 
   const tabFocused = createASS(true);
 
   const qrcode = createASS("");
+
+  const activeResources = createASS<Set<ResourceDataset<any, any>>>(new Set(), {
+    equals: false,
+  });
+
+  const datasets = createDatasets({
+    setActiveResources: activeResources.set,
+  });
 
   const legend = createASS<PresetLegend>([]);
 
@@ -85,17 +94,16 @@ export function App({ datasets }: { datasets: Datasets }) {
   createEffect(() => {
     const preset = presets.selected();
 
-    if (datasets.date.price.values()?.length) {
-      untrack(() =>
-        renderChart({
-          datasets,
-          preset,
-          liveCandle: liveCandle.latest,
-          legendSetter: legend.set,
-          presets,
-        }),
-      );
-    }
+    untrack(() =>
+      renderChart({
+        datasets,
+        preset,
+        liveCandle: liveCandle.latest,
+        legendSetter: legend.set,
+        presets,
+        activeResources,
+      }),
+    );
   });
 
   onCleanup(cleanChart);
@@ -154,18 +162,18 @@ export function App({ datasets }: { datasets: Datasets }) {
       >
         <Qrcode qrcode={qrcode} />
 
-        <div class="flex size-full flex-col p-3 md:flex-row">
-          <div class="flex overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-orange-500/10 to-orange-950/10">
-            <div class="flex flex-col space-y-3 bg-black/30 p-3 backdrop-blur-sm">
+        <div class="flex size-full flex-col p-1 md:flex-row md:p-3">
+          <div class="flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-orange-500/10 to-orange-950/10 md:flex-row">
+            <div class="flex gap-3 border-b border-white/10 bg-black/30 p-2 backdrop-blur-sm md:flex-col md:border-b-0 md:border-r md:p-3">
               <Selector
                 selected={selectedFrame}
                 setSelected={_selectedFrame.set}
                 needsRefresh={needRefresh[0]}
+                position="top"
               />
             </div>
-            <div class="border-l border-white/10" />
             <div
-              class="flex md:min-w-[384px]"
+              class="flex h-full min-h-0 md:min-w-[384px]"
               style={{
                 ...(windowSizeIsAtLeastMedium()
                   ? {
@@ -174,30 +182,28 @@ export function App({ datasets }: { datasets: Datasets }) {
                   : {}),
               }}
             >
-              {/* <Header
-                  needsRefresh={needRefresh[0]}
-                  onClick={async () => {
-                    await updateServiceWorker();
-
-                    document.location.reload();
-                  }}
-                /> */}
-
               <ChartFrame
                 presets={presets}
-                liveCandle={liveCandle}
-                resources={resources}
                 show={() =>
                   !windowSizeIsAtLeastMedium() && selectedFrame() === "Chart"
                 }
                 legend={legend}
-                datasets={datasets}
                 qrcode={qrcode}
+                standalone={false}
               />
               <TreeFrame presets={presets} selectedFrame={selectedFrame} />
               <FavoritesFrame presets={presets} selectedFrame={selectedFrame} />
               <SearchFrame presets={presets} selectedFrame={selectedFrame} />
               <SettingsFrame marquee={marquee} selectedFrame={selectedFrame} />
+            </div>
+
+            <div class="flex justify-between gap-3 border-t border-white/10 bg-black/30 p-2 backdrop-blur-sm md:hidden md:flex-col md:border-b-0 md:border-l md:p-3">
+              <Selector
+                selected={selectedFrame}
+                setSelected={_selectedFrame.set}
+                needsRefresh={needRefresh[0]}
+                position="bottom"
+              />
             </div>
           </div>
 
@@ -217,12 +223,10 @@ export function App({ datasets }: { datasets: Datasets }) {
 
           <div class="hidden min-w-0 flex-1 md:flex">
             <ChartFrame
+              standalone={true}
               presets={presets}
-              liveCandle={liveCandle}
-              resources={resources}
               show={windowSizeIsAtLeastMedium}
               legend={legend}
-              datasets={datasets}
               qrcode={qrcode}
             />
           </div>

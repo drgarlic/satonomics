@@ -21,6 +21,7 @@ export function createCointimeDatasets<Scale extends ResourceScale>({
   cumulatedNetRealizedProfitAndLoss,
   supplyTotalAtMinus1Block,
   transactionVolumeAnnualized,
+  setActiveResources,
 }: {
   price: Dataset<Scale>;
   supplyTotal: Dataset<Scale>;
@@ -32,12 +33,14 @@ export function createCointimeDatasets<Scale extends ResourceScale>({
   transactionVolumeAnnualized: Dataset<Scale>;
   supplyTotalAtMinus1Block: Dataset<Scale>;
   cumulatedNetRealizedProfitAndLoss: Dataset<Scale>;
+  setActiveResources: Setter<Set<ResourceDataset<any, any>>>;
 }) {
   const scale = price.scale;
 
   const coinblocksDestroyed = createResourceDataset({
     scale,
     path: `/${scale}-to-coinblocks-destroyed`,
+    setActiveResources,
   });
 
   const coinblocksCreated = createMultipliedLazyDataset(supplyTotal, newBlocks);

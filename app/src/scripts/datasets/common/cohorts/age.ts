@@ -5,9 +5,11 @@ import { createLazyCommonCohortDatasets } from "./addons";
 export function createAgeCohortDatasets<Scale extends ResourceScale>({
   scale,
   price,
+  setActiveResources,
 }: {
   scale: Scale;
   price: Dataset<Scale>;
+  setActiveResources: Setter<Set<ResourceDataset<any, any>>>;
 }) {
   const ageDatasets = [...anyCohortDatasets];
 
@@ -38,6 +40,7 @@ export function createAgeCohortDatasets<Scale extends ResourceScale>({
       const resource = createResourceDataset({
         scale,
         path: `/${scale}-to-${ageRoute ? ageRoute + "-" : ""}${cohortRoute}`,
+        setActiveResources,
       });
 
       partial[attributeName] = resource;

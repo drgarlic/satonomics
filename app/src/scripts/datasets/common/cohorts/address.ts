@@ -7,11 +7,13 @@ export function createAddressCohortDatasets<Scale extends ResourceScale>({
   price,
   marketCapitalization,
   supplyTotal,
+  setActiveResources,
 }: {
   scale: Scale;
   price: Dataset<Scale>;
   marketCapitalization: Dataset<Scale>;
   supplyTotal: ResourceDataset<Scale>;
+  setActiveResources: Setter<Set<ResourceDataset<any, any>>>;
 }) {
   const addressDatasets = [...anyCohortDatasets, ...addressOnlyDatasets];
 
@@ -43,6 +45,7 @@ export function createAddressCohortDatasets<Scale extends ResourceScale>({
         const resource = createResourceDataset({
           scale,
           path: `/${scale}-to-${addressRoute}-${cohortAttributeRoute}`,
+          setActiveResources,
         });
 
         partial[attributeName] = resource;
@@ -54,6 +57,7 @@ export function createAddressCohortDatasets<Scale extends ResourceScale>({
           const resource = createResourceDataset({
             scale,
             path: `/${scale}-to-${addressRoute}-${liquidity.route}-${cohortAttributeRoute}`,
+            setActiveResources,
           });
 
           partial[attributeName] = resource;

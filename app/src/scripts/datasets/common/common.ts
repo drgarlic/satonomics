@@ -8,14 +8,19 @@ import { createMiningDatasets } from "./mining";
 import { createTransactionsDatasets } from "./transactions";
 import { createValuesDatasets } from "./values";
 
-export function createCommonDatasets<Scale extends ResourceScale>(
-  price: Dataset<Scale>,
-) {
+export function createCommonDatasets<Scale extends ResourceScale>({
+  price,
+  setActiveResources,
+}: {
+  price: Dataset<Scale>;
+  setActiveResources: Setter<Set<ResourceDataset<any, any>>>;
+}) {
   const scale = price.scale;
 
   const ageCohorts = createAgeCohortDatasets({
     scale,
     price,
+    setActiveResources,
   });
 
   const { SupplyTotal: supplyTotal, marketCapitalization } = ageCohorts;
@@ -25,13 +30,22 @@ export function createCommonDatasets<Scale extends ResourceScale>(
     marketCapitalization,
     price,
     supplyTotal,
+    setActiveResources,
   });
 
-  const transactionsDatasets = createTransactionsDatasets(supplyTotal);
+  const transactionsDatasets = createTransactionsDatasets({
+    supplyTotal,
+    setActiveResources,
+  });
 
-  const miningDatasets = createMiningDatasets({ scale, price, supplyTotal });
+  const miningDatasets = createMiningDatasets({
+    scale,
+    price,
+    supplyTotal,
+    setActiveResources,
+  });
 
-  const addresses = createAddressesDatasets(scale);
+  const addresses = createAddressesDatasets({ scale, setActiveResources });
 
   const cointime = createCointimeDatasets({
     cumulatedNetRealizedProfitAndLoss:
@@ -46,6 +60,7 @@ export function createCommonDatasets<Scale extends ResourceScale>(
     transactionVolumeAnnualized:
       transactionsDatasets.transactionVolumeAnnualized,
     yearlyInflationRate: miningDatasets.yearlyInflationRate,
+    setActiveResources,
   });
 
   const values = createValuesDatasets(price);

@@ -6,7 +6,6 @@ import { render } from "solid-js/web";
 import "./styles/main.css";
 
 import { App } from "./app";
-import { createDatasets } from "./scripts";
 
 const root = document.getElementById("root");
 
@@ -17,12 +16,10 @@ if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
 }
 
 render(() => {
-  const datasets = createDatasets();
-
   return (
     <MetaProvider>
       <Router>
-        <Route
+        {/* <Route
           path="/routes"
           component={() => (
             <div class="flex h-dvh flex-col gap-3 overflow-y-auto p-2">
@@ -64,8 +61,8 @@ render(() => {
               </For>
             </div>
           )}
-        />
-        <Route path="/:preset?" component={() => <App datasets={datasets} />} />
+        /> */}
+        <Route path="/:preset?" component={() => <App />} />
       </Router>
     </MetaProvider>
   );

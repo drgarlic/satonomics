@@ -170,7 +170,7 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
     }
 
     if should_export {
-        // MUST BE none !!! databases and states aren't safe here
+        // MUST BE `none` !!! databases and states aren't safe here
         export(ExportedData {
             databases: None,
             datasets: &mut datasets,

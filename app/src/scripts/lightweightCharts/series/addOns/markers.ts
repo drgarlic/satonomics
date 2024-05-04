@@ -1,9 +1,9 @@
 import {
   chartState,
   colors,
+  GENESIS_DAY,
   ONE_DAY_IN_MS,
   priceToUSLocale,
-  WHITEPAPER_DAY,
 } from "/src/scripts";
 
 export const setMinMaxMarkers = ({
@@ -23,7 +23,7 @@ export const setMinMaxMarkers = ({
 
   const offset =
     scale === "date"
-      ? first.number - new Date(WHITEPAPER_DAY).valueOf() / ONE_DAY_IN_MS
+      ? first.number - new Date(GENESIS_DAY).valueOf() / ONE_DAY_IN_MS
       : 0;
 
   const slicedDataList = range

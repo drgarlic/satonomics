@@ -10,11 +10,15 @@ impl TxoutIndex {
     pub fn new(tx_index: u32, vout: u16) -> Self {
         Self { tx_index, vout }
     }
+
+    pub fn as_u64(&self) -> u64 {
+        ((self.tx_index as u64) << 16_u64) + self.vout as u64
+    }
 }
 
 impl std::hash::Hash for TxoutIndex {
     fn hash<H: std::hash::Hasher>(&self, hasher: &mut H) {
-        hasher.write_u64(((self.tx_index as u64) << 16_u64) + self.vout as u64)
+        hasher.write_u64(self.as_u64())
     }
 }
 

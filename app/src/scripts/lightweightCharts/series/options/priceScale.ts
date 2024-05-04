@@ -37,8 +37,8 @@ export const resetLeftPriceScale = (
             bottom: 0.025,
           }
         : {
-            top: 0.1,
-            bottom: 0.1,
+            top: 0.25,
+            bottom: 0.25,
           }),
       ...options?.scaleMargins,
     },

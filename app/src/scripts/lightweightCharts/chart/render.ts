@@ -8,6 +8,7 @@ export const renderChart = async (params: {
   legendSetter: Setter<PresetLegend>;
   preset: Preset;
   presets: Presets;
+  activeResources: Accessor<Set<ResourceDataset<any, any>>>;
 }) => {
   dispose?.();
 
@@ -18,9 +19,14 @@ export const renderChart = async (params: {
       renderChart(params);
     };
 
-    const { datasets, liveCandle, legendSetter, presets, preset } = params;
-
-    if (!datasets.date.price.values()?.length) return;
+    const {
+      datasets,
+      liveCandle,
+      legendSetter,
+      presets,
+      preset,
+      activeResources,
+    } = params;
 
     const { scale } = preset;
 
@@ -41,6 +47,7 @@ export const renderChart = async (params: {
         liveCandle,
         preset,
         presets,
+        activeResources,
       });
 
       legendSetter(legend);

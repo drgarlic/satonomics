@@ -130,7 +130,7 @@ fn _file_handler(
             Json::import("../datasets/paths.json").unwrap();
 
         type_name = Some(path_to_type.get(&saved_path).cloned().unwrap_or_else(|| {
-            dbg!(&path_to_type);
+            // dbg!(&path_to_type);
             panic!("Fail for {saved_path}")
         }));
     }

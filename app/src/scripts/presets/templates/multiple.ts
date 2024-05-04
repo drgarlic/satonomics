@@ -31,6 +31,7 @@ export const applyMultipleSeries = <Scale extends ResourceScale>({
   priceDataset,
   priceOptions,
   presets,
+  activeResources,
 }: {
   // TODO: Fix types
   // scale: Scale;
@@ -102,6 +103,7 @@ export const applyMultipleSeries = <Scale extends ResourceScale>({
   )[];
   datasets: Datasets;
   presets: Presets;
+  activeResources: Accessor<Set<ResourceDataset<any, any>>>;
 }): PresetLegend => {
   const { halved } = priceScaleOptions || {};
 
@@ -245,23 +247,19 @@ export const applyMultipleSeries = <Scale extends ResourceScale>({
       },
     );
 
-  const { sources: priceSources, legend: priceLegend } = applyPriceSeries({
+  const { legend: priceLegend } = applyPriceSeries({
     scale,
     chart,
     datasets,
     liveCandle,
     preset,
     dataset: priceDataset,
+    activeResources,
     options: {
       ...priceOptions,
       halved,
     },
   });
-
-  presets.setSources([
-    ...list.map(({ dataset }) => dataset.sources),
-    priceSources,
-  ]);
 
   createEffect(() => {
     const options = {

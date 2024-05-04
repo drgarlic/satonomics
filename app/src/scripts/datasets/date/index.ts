@@ -1,70 +1,32 @@
-import { createLazyMemo } from "@solid-primitives/memo";
-
-import { ONE_DAY_IN_MS } from "/src/scripts/utils";
-import { createASS } from "/src/solid";
-
-import { _createResourceDataset } from "../base";
+import { createResourceDataset } from "../base";
 import { createCommonDatasets } from "../common";
 import { createPriceAveragesDatasets } from "./averages";
-import { createCurrencyDatasets } from "./currencies";
-import { createMarketCapitalizationDatasets } from "./marketcaps";
 
 export { averages } from "./averages";
 
-export function createDateDatasets() {
-  const cachedPrice = createASS<DatasetCandlestickData[] | null>(null);
-
-  const fetchedPrice = _createResourceDataset<
-    "date",
-    FetchedCandlestickData[],
-    DatasetCandlestickData
-  >({
+export function createDateDatasets({
+  setActiveResources,
+}: {
+  setActiveResources: Setter<Set<ResourceDataset<any, any>>>;
+}) {
+  const price = createResourceDataset<"date", OHLC>({
     scale: "date",
-    path: "/date-to-price",
-    autoFetch: false,
-    transform,
+    path: "/date-to-ohlc",
+    setActiveResources,
   });
 
-  import("/src/assets/data/btcusd.json").then((candlesticks) => {
-    cachedPrice.set(transform(candlesticks.default));
-
-    fetchedPrice.url.searchParams.set(
-      "since",
-      (
-        new Date(candlesticks.default.at(-1)?.date || 0).valueOf() / 1000
-      ).toString(),
-    );
-
-    fetchedPrice.fetch();
-  });
-
-  const candlestick = createLazyMemo(() => [
-    ...(cachedPrice() || []),
-    ...(fetchedPrice.values() || []),
-  ]);
-
-  const price = {
-    scale: "date" as const,
-    values: candlestick,
-    sources: fetchedPrice.sources,
-    url: fetchedPrice.url,
-  };
-
-  const common = createCommonDatasets(price);
+  const common = createCommonDatasets({ price, setActiveResources });
 
   return {
     price,
     ...common,
     ...createPriceAveragesDatasets(price),
-    ...createMarketCapitalizationDatasets(common.marketCapitalization),
-    ...createCurrencyDatasets(common.SupplyTotal),
 
     // sopr: createResourceHTTP(`/sopr`),
     // terminalPrice: createResourceHTTP(`/terminal-price`),
     // balancedPrice: createResourceHTTP(`/balanced-price`),
     // cointimePrice: createResourceHTTP(`/cointime-price`),
     // cvdd: createResourceHTTP(`/cvdd`),
-    // fundingRates: createResourceHTTP(`/funding-rates`),
     // vddMultiple: createResourceHTTP(`/vdd-multiple`),
 
     // const satsPrice = createLazyDataset(
@@ -180,13 +142,4 @@ export function createDateDatasets() {
     //   }),
     // ),
   };
-}
-
-function transform(values: FetchedCandlestickData[] | null) {
-  return (values || []).map((value) => ({
-    ...value,
-    number: new Date(value.date).valueOf() / ONE_DAY_IN_MS,
-    value: value.close,
-    time: value.date,
-  }));
 }

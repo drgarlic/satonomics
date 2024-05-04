@@ -1,11 +1,9 @@
 interface Dataset<
   Scale extends ResourceScale,
-  T extends SingleValueData = SingleValueData,
-  Value = DatasetValue<T>,
+  Value extends SingleValueData | CandlestickData = SingleValueData,
 > {
   scale: Scale;
-  sources: Accessor<Sources>;
-  values: Accessor<Value[] | null>;
+  values: Accessor<DatasetValue<Value>[]>;
 }
 
 type RatioKey =
