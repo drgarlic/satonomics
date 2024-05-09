@@ -41,9 +41,6 @@ export function createPresets(datasets: Datasets): Presets {
         createHodlersPresets({ scale: "date", datasets }),
         createAddressesPresets({ scale: "date", datasets }),
         createCoinblocksPresets({ scale: "date", datasets }),
-        // marketcapsPresets,
-        // fiatPresets,
-        // metalsPresets,
       ],
     },
     {

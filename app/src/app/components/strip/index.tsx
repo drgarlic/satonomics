@@ -1,22 +1,25 @@
-import { Anchor } from "./components/anchor";
+import { AnchorAnalytics } from "./components/anchorAnalytics";
+import { AnchorAPI } from "./components/anchorAPI";
+import { AnchorGit } from "./components/anchorGit";
+import { AnchorHome } from "./components/anchorHome";
 import { AnchorLogo } from "./components/anchorLogo";
+import { AnchorNostr } from "./components/anchorNostr";
 import { ButtonChart } from "./components/buttonChart";
 import { ButtonFavorites } from "./components/buttonFavorites";
 import { ButtonHistory } from "./components/buttonHistory";
 import { ButtonRefresh } from "./components/buttonRefresh";
 import { ButtonSearch } from "./components/buttonSearch";
+import { ButtonSettings } from "./components/buttonSettings";
 import { ButtonTree } from "./components/buttonTree";
 
-export function Selector({
+export function StripDesktop({
   selected,
   setSelected,
   needsRefresh,
-  position,
 }: {
   selected: Accessor<FrameName>;
   setSelected: Setter<FrameName>;
   needsRefresh: Accessor<boolean>;
-  position: "top" | "bottom";
 }) {
   return (
     // <div
@@ -26,53 +29,48 @@ export function Selector({
     //   ])}
     // >
     <>
-      <Show when={position === "top"}>
-        <AnchorLogo />
-      </Show>
+      <AnchorLogo />
 
-      <ButtonChart selected={selected} setSelected={setSelected} />
+      <ButtonTree selected={selected} setSelected={setSelected} />
+      <ButtonFavorites selected={selected} setSelected={setSelected} />
+      <ButtonSearch selected={selected} setSelected={setSelected} />
+      <ButtonHistory selected={selected} setSelected={setSelected} />
 
-      <Show when={position === "bottom"}>
-        <ButtonTree selected={selected} setSelected={setSelected} />
-        <ButtonFavorites selected={selected} setSelected={setSelected} />
-        <ButtonSearch selected={selected} setSelected={setSelected} />
-        <ButtonHistory selected={selected} setSelected={setSelected} />
-      </Show>
+      <ButtonSettings selected={selected} setSelected={setSelected} />
 
-      <Button
-        selected={() => selected() === "Settings"}
-        onClick={() => {
-          setSelected("Settings");
-        }}
-        icon={() =>
-          selected() === "Settings"
-            ? IconTablerAssemblyFilled
-            : IconTablerAssembly
-        }
-      />
-
-      <Show when={position === "top"}>
-        <div class="hidden size-full md:block" />
-      </Show>
+      <div class="size-full" />
 
       <Show when={needsRefresh()}>
         <ButtonRefresh />
       </Show>
 
-      <Show when={position === "top"}>
-        <Anchor icon={() => IconTablerApi} href="/routes" />
-        <Anchor
-          icon={() => IconTablerFeather}
-          href="https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44"
-        />
-        <Anchor
-          icon={() => IconTablerGitMerge}
-          href="https://github.com/satonomics-org"
-        />
-
-        <Anchor icon={() => IconTablerHome2} href="https://satonomics.xyz" />
-      </Show>
+      <AnchorAPI />
+      <AnchorGit />
+      <AnchorNostr />
+      <AnchorAnalytics />
+      <AnchorHome />
     </>
     // </div>
+  );
+}
+
+export function StripMobile({
+  selected,
+  setSelected,
+  needsRefresh,
+}: {
+  selected: Accessor<FrameName>;
+  setSelected: Setter<FrameName>;
+  needsRefresh: Accessor<boolean>;
+}) {
+  return (
+    <>
+      <ButtonChart selected={selected} setSelected={setSelected} />
+      <ButtonTree selected={selected} setSelected={setSelected} />
+      <ButtonFavorites selected={selected} setSelected={setSelected} />
+      <ButtonSearch selected={selected} setSelected={setSelected} />
+      <ButtonHistory selected={selected} setSelected={setSelected} />
+      <ButtonSettings selected={selected} setSelected={setSelected} />
+    </>
   );
 }

@@ -4,7 +4,7 @@ use chrono::{NaiveDateTime, NaiveTime, TimeZone, Timelike, Utc};
 use color_eyre::eyre::Error;
 
 use crate::{
-    datasets::{AnyDataset, MinInitialState},
+    datasets::{AnyDataset, MinInitialState, ProcessedBlockData},
     price::{Binance, Kraken},
     structs::{AnyHeightMap, HeightMap},
 };
@@ -18,11 +18,12 @@ pub struct HeightDataset {
     binance_1mn: Option<BTreeMap<u32, OHLC>>,
     binance_har: Option<BTreeMap<u32, OHLC>>,
 
-    pub map: HeightMap<OHLC>,
+    pub ohlcs: HeightMap<OHLC>,
+    pub closes: HeightMap<f32>,
 }
 
 impl HeightDataset {
-    pub fn import(parent_path: &str) -> color_eyre::Result<Self> {
+    pub fn import(price_path: &str, dataset_path: &str) -> color_eyre::Result<Self> {
         let mut s = Self {
             min_initial_state: MinInitialState::default(),
 
@@ -30,7 +31,8 @@ impl HeightDataset {
             binance_har: None,
             kraken_1mn: None,
 
-            map: HeightMap::_new_json(1, parent_path, usize::MAX, false),
+            ohlcs: HeightMap::_new_json(1, &format!("{price_path}/ohlc"), usize::MAX, false),
+            closes: HeightMap::_new_json(1, &format!("{dataset_path}/close"), usize::MAX, false),
         };
 
         s.min_initial_state
@@ -45,7 +47,7 @@ impl HeightDataset {
         timestamp: u32,
         previous_timestamp: Option<u32>,
     ) -> color_eyre::Result<OHLC> {
-        if let Some(ohlc) = self.map.get(&height) {
+        if let Some(ohlc) = self.ohlcs.get(&height) {
             return Ok(ohlc);
         }
 
@@ -77,7 +79,7 @@ impl HeightDataset {
                     }))
             });
 
-        self.map.insert(height, ohlc);
+        self.ohlcs.insert(height, ohlc);
 
         Ok(ohlc)
     }
@@ -178,6 +180,11 @@ impl HeightDataset {
 
         Ok(final_ohlc)
     }
+
+    pub fn insert_data(&mut self, &ProcessedBlockData { height, .. }: &ProcessedBlockData) {
+        self.closes
+            .insert(height, self.ohlcs.get(&height).unwrap().close);
+    }
 }
 
 impl AnyDataset for HeightDataset {
@@ -186,10 +193,10 @@ impl AnyDataset for HeightDataset {
     }
 
     fn to_any_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
-        vec![&self.map]
+        vec![&self.ohlcs, &self.closes]
     }
 
     fn to_any_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
-        vec![&mut self.map]
+        vec![&mut self.ohlcs, &mut self.closes]
     }
 }

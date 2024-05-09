@@ -6,7 +6,7 @@ use date::*;
 use height::*;
 pub use ohlc::*;
 
-use super::{AnyDataset, AnyDatasets, MinInitialState};
+use super::{AnyDataset, AnyDatasets, MinInitialState, ProcessedBlockData};
 
 pub struct PriceDatasets {
     min_initial_state: MinInitialState,
@@ -16,20 +16,25 @@ pub struct PriceDatasets {
 }
 
 impl PriceDatasets {
-    pub fn import() -> color_eyre::Result<Self> {
-        let path = "../price/ohlc";
+    pub fn import(datasets_path: &str) -> color_eyre::Result<Self> {
+        let price_path = "../price";
 
         let mut s = Self {
             min_initial_state: MinInitialState::default(),
 
-            date: DateDataset::import(path)?,
-            height: HeightDataset::import(path)?,
+            date: DateDataset::import(price_path, datasets_path)?,
+            height: HeightDataset::import(price_path, datasets_path)?,
         };
 
         s.min_initial_state
             .consume(MinInitialState::compute_from_datasets(&s));
 
         Ok(s)
+    }
+
+    pub fn insert_data(&mut self, processed_block_data: &ProcessedBlockData) {
+        self.date.insert_data(processed_block_data);
+        self.height.insert_data(processed_block_data);
     }
 }
 

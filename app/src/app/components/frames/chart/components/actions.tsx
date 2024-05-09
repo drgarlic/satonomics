@@ -1,9 +1,36 @@
+import { generate } from "lean-qr";
+
 import { classPropToString } from "/src/solid";
 
-export function Actions({ presets }: { presets: Presets }) {
+export function Actions({
+  presets,
+  fullscreen,
+  qrcode,
+}: {
+  presets: Presets;
+  qrcode: ASS<string>;
+  fullscreen?: ASS<boolean>;
+}) {
   return (
-    <div class="flex">
+    <div class="flex space-x-1">
       <Button
+        icon={() => IconTablerMaximize}
+        onClick={() => fullscreen?.set((b) => !b)}
+        classes="hidden md:block"
+      />
+      <Button
+        icon={() => IconTablerQrcode}
+        onClick={() => {
+          qrcode.set(() =>
+            generate(document.location.href).toDataURL({
+              on: [0xff, 0xff, 0xff, 0xff],
+              off: [0x00, 0x00, 0x00, 0x00],
+            }),
+          );
+        }}
+        classes="hidden md:block"
+      />
+      {/* <Button
         icon={() => IconTablerArrowsShuffle2}
         onClick={presets.selectRandom}
       />
@@ -16,7 +43,7 @@ export function Actions({ presets }: { presets: Presets }) {
         disabled={() => !presets.redoPossible()}
         icon={() => IconTablerArrowForward}
         onClick={presets.redo}
-      />
+      /> */}
       <Button
         colors={() =>
           presets.selected().isFavorite()
@@ -39,11 +66,13 @@ function Button({
   colors,
   onClick,
   disabled,
+  classes,
 }: {
   icon: () => ValidComponent;
   colors?: () => string;
   onClick: VoidFunction;
   disabled?: () => boolean;
+  classes?: string;
 }) {
   return (
     <button
@@ -51,6 +80,7 @@ function Button({
       class={classPropToString([
         colors?.() || (disabled?.() ? "" : "hover:bg-orange-200/15"),
         !disabled?.() && "group",
+        classes,
         "flex-none rounded-lg p-2 disabled:opacity-50",
       ])}
       onClick={onClick}

@@ -12,11 +12,13 @@ export function ChartFrame({
   legend,
   qrcode,
   standalone,
+  fullscreen,
 }: {
   presets: Presets;
   show: Accessor<boolean>;
   legend: Accessor<PresetLegend>;
   qrcode: ASS<string>;
+  fullscreen?: ASS<boolean>;
   standalone: boolean;
 }) {
   return (
@@ -40,7 +42,7 @@ export function ChartFrame({
 
           <div class="-my-1.5 border-l border-orange-200/15 pr-1.5" />
 
-          <Actions presets={presets} />
+          <Actions presets={presets} qrcode={qrcode} fullscreen={fullscreen} />
         </div>
       </Box>
 

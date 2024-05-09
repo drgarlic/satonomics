@@ -31,7 +31,7 @@ export function Line({
         active?.()
           ? "bg-orange-500/30 backdrop-blur-sm hover:bg-orange-500/50"
           : "hover:bg-orange-500/15",
-        "relative -mx-2 flex w-[calc(100%+1rem)] items-center whitespace-nowrap rounded-lg px-2 py-1 hover:backdrop-blur-sm",
+        "relative -mx-2 flex w-[calc(100%+1rem)] items-center whitespace-nowrap rounded-lg px-2 hover:backdrop-blur-sm",
         classes?.(),
       ])}
       ref={ref.set}
@@ -41,13 +41,18 @@ export function Line({
       }}
       title={name}
     >
+      <For each={new Array(depth)}>
+        {() => (
+          <span class="ml-1 h-8 w-3 flex-none border-l border-orange-200/20" />
+        )}
+      </For>
       <Show when={icon}>
         {(icon) => (
           <span
             class="-my-0.5 mr-1"
-            style={{
-              "margin-left": `${depth}rem`,
-            }}
+            // style={{
+            //   "margin-left": `${depth}rem`,
+            // }}
           >
             {icon()()}
           </span>
@@ -56,7 +61,7 @@ export function Line({
       <span
         class={classPropToString([
           !icon && "px-1",
-          "inline-flex w-full flex-col -space-y-1 truncate text-left",
+          "inline-flex w-full flex-col -space-y-1 truncate py-1 text-left",
         ])}
       >
         <Show when={path}>

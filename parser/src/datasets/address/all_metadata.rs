@@ -6,8 +6,9 @@ use crate::{
 pub struct AllAddressesMetadataDataset {
     min_initial_state: MinInitialState,
 
-    total_addresses_created: BiMap<u32>,
-    total_empty_addresses: BiMap<u32>,
+    created_addreses: BiMap<u32>,
+    empty_addresses: BiMap<u32>,
+    new_addresses: BiMap<u32>,
 }
 
 impl AllAddressesMetadataDataset {
@@ -17,8 +18,9 @@ impl AllAddressesMetadataDataset {
         let mut s = Self {
             min_initial_state: MinInitialState::default(),
 
-            total_addresses_created: BiMap::new_bin(1, &f("total_addresses_created")),
-            total_empty_addresses: BiMap::new_bin(1, &f("total_empty_addresses")),
+            created_addreses: BiMap::new_bin(1, &f("created_addresses")),
+            empty_addresses: BiMap::new_bin(1, &f("empty_addresses")),
+            new_addresses: BiMap::new_bin(1, &f("new_addresses")),
         };
 
         s.min_initial_state
@@ -36,24 +38,31 @@ impl AllAddressesMetadataDataset {
             ..
         } = processed_block_data;
 
-        let total_addresses_created = self
-            .total_addresses_created
+        let created_addresses = self
+            .created_addreses
             .height
             .insert(height, *databases.address_to_address_index.metadata.len);
 
-        let total_empty_addresses = self.total_empty_addresses.height.insert(
+        let previous_created_addresses = height.checked_sub(1).map_or(0, |prev_height| {
+            self.created_addreses.height.get(&prev_height).unwrap()
+        });
+
+        let new_addresses = self
+            .new_addresses
+            .height
+            .insert(height, created_addresses - previous_created_addresses);
+
+        let empty_addresses = self.empty_addresses.height.insert(
             height,
             *databases.address_index_to_empty_address_data.metadata.len,
         );
 
         if is_date_last_block {
-            self.total_addresses_created
-                .date
-                .insert(date, total_addresses_created);
+            self.created_addreses.date.insert(date, created_addresses);
 
-            self.total_empty_addresses
-                .date
-                .insert(date, total_empty_addresses);
+            self.empty_addresses.date.insert(date, empty_addresses);
+
+            self.new_addresses.date.insert(date, new_addresses);
         }
     }
 }
@@ -64,13 +73,18 @@ impl AnyDataset for AllAddressesMetadataDataset {
     }
 
     fn to_any_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![&self.total_addresses_created, &self.total_empty_addresses]
+        vec![
+            &self.created_addreses,
+            &self.empty_addresses,
+            &self.new_addresses,
+        ]
     }
 
     fn to_any_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
         vec![
-            &mut self.total_addresses_created,
-            &mut self.total_empty_addresses,
+            &mut self.created_addreses,
+            &mut self.empty_addresses,
+            &mut self.new_addresses,
         ]
     }
 }

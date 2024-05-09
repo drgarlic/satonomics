@@ -9,7 +9,7 @@ import {
   renderChart,
   sleep,
 } from "/src/scripts";
-import { createASS } from "/src/solid";
+import { classPropToString, createASS } from "/src/solid";
 
 import {
   Background,
@@ -20,8 +20,9 @@ import {
   LOCAL_STORAGE_MARQUEE_KEY,
   Qrcode,
   SearchFrame,
-  Selector,
   SettingsFrame,
+  StripDesktop,
+  StripMobile,
   TreeFrame,
 } from "./components";
 import { registerServiceWorker } from "./scripts";
@@ -34,6 +35,7 @@ export function App() {
   const tabFocused = createASS(true);
 
   const qrcode = createASS("");
+  const fullscreen = createASS(false);
 
   const activeResources = createASS<Set<ResourceDataset<any, any>>>(new Set(), {
     equals: false,
@@ -164,12 +166,19 @@ export function App() {
 
         <div class="flex size-full flex-col p-1 md:flex-row md:p-3">
           <div class="flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-orange-500/10 to-orange-950/10 md:flex-row">
-            <div class="flex gap-3 border-b border-white/10 bg-black/30 p-2 backdrop-blur-sm md:flex-col md:border-b-0 md:border-r md:p-3">
-              <Selector
+            <div
+              class="hidden flex-col gap-3 border-b border-r border-white/10 bg-black/30 p-3 backdrop-blur-sm md:flex"
+              style={{
+                display:
+                  windowSizeIsAtLeastMedium() && fullscreen()
+                    ? "none"
+                    : undefined,
+              }}
+            >
+              <StripDesktop
                 selected={selectedFrame}
                 setSelected={_selectedFrame.set}
                 needsRefresh={needRefresh[0]}
-                position="top"
               />
             </div>
             <div
@@ -177,6 +186,7 @@ export function App() {
               style={{
                 ...(windowSizeIsAtLeastMedium()
                   ? {
+                      display: fullscreen() ? "none" : undefined,
                       width: `${Math.min(barWidth(), windowSize.width * 0.75)}px`,
                     }
                   : {}),
@@ -197,18 +207,20 @@ export function App() {
               <SettingsFrame marquee={marquee} selectedFrame={selectedFrame} />
             </div>
 
-            <div class="flex justify-between gap-3 border-t border-white/10 bg-black/30 p-2 backdrop-blur-sm md:hidden md:flex-col md:border-b-0 md:border-l md:p-3">
-              <Selector
+            <div class="flex justify-between gap-3 border-t border-white/10 bg-black/30 p-2 backdrop-blur-sm md:hidden">
+              <StripMobile
                 selected={selectedFrame}
                 setSelected={_selectedFrame.set}
                 needsRefresh={needRefresh[0]}
-                position="bottom"
               />
             </div>
           </div>
 
           <div
             class="mx-[3px] my-8 hidden w-[6px] cursor-col-resize items-center justify-center rounded-full bg-orange-100 opacity-0 hover:opacity-50 md:block"
+            style={{
+              display: fullscreen() ? "none" : undefined,
+            }}
             onMouseDown={(event) =>
               resizingBarStart() === undefined &&
               // TODO: set size of bar instead
@@ -228,6 +240,7 @@ export function App() {
               show={windowSizeIsAtLeastMedium}
               legend={legend}
               qrcode={qrcode}
+              fullscreen={fullscreen}
             />
           </div>
         </div>

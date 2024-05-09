@@ -7,45 +7,45 @@ export function createPresets(scale: ResourceScale) {
     id: `${scale}-blocks`,
     name: "Blocks",
     tree: [
-      {
-        id: `${scale}-blocks-new`,
-        icon: IconTablerCube,
-        name: "New",
-        title: "New Blocks",
-        description: "",
-        applyPreset(params) {
-          return applyMultipleSeries({
-            scale,
-            ...params,
-            priceScaleOptions: {
-              halved: true,
-            },
-            list: [
-              {
-                id: "new-blocks",
-                title: "New",
-                color: colors.darkBitcoin,
-                dataset: params.datasets[scale].newBlocks,
-              },
-              {
-                id: "new-blocks",
-                title: "30 Day Moving Average",
-                color: colors.bitcoin,
-                dataset: params.datasets[scale].newBlocks30dSMA,
-              },
-              {
-                id: "target",
-                title: "Target",
-                color: colors.white,
-                dataset: params.datasets[scale].value144,
-                options: {
-                  lineStyle: LineStyle.LargeDashed,
-                },
-              },
-            ],
-          });
-        },
-      },
+      // {
+      //   id: `${scale}-blocks-new`,
+      //   icon: IconTablerCube,
+      //   name: "New",
+      //   title: "New Blocks",
+      //   description: "",
+      //   applyPreset(params) {
+      //     return applyMultipleSeries({
+      //       scale,
+      //       ...params,
+      //       priceScaleOptions: {
+      //         halved: true,
+      //       },
+      //       list: [
+      //         {
+      //           id: "new-blocks",
+      //           title: "New",
+      //           color: colors.darkBitcoin,
+      //           dataset: params.datasets[scale].block,
+      //         },
+      //         {
+      //           id: "new-blocks",
+      //           title: "30 Day Moving Average",
+      //           color: colors.bitcoin,
+      //           dataset: params.datasets[scale].newBlocks30dSMA,
+      //         },
+      //         {
+      //           id: "target",
+      //           title: "Target",
+      //           color: colors.white,
+      //           dataset: params.datasets[scale].value144,
+      //           options: {
+      //             lineStyle: LineStyle.LargeDashed,
+      //           },
+      //         },
+      //       ],
+      //     });
+      //   },
+      // },
       {
         id: `${scale}-blocks-total`,
         icon: IconTablerWall,
@@ -65,7 +65,7 @@ export function createPresets(scale: ResourceScale) {
                 title: "Total",
                 color: colors.bitcoin,
                 seriesType: SeriesType.Area,
-                dataset: params.datasets[scale].blocksTotal,
+                dataset: params.datasets[scale].coinblocks_created,
               },
             ],
           });

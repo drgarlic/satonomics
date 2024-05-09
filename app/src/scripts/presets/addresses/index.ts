@@ -38,7 +38,7 @@ export function createPresets({
                 title: `Total Non Empty Address`,
                 color: colors.bitcoin,
                 seriesType: SeriesType.Area,
-                dataset: params.datasets[scale].totalAddressCount,
+                dataset: params.datasets[scale].address_count,
               },
             ],
           });
@@ -62,7 +62,7 @@ export function createPresets({
                 id: "total-address-count",
                 title: `New Addresses`,
                 color: colors.white,
-                dataset: params.datasets[scale].newAddressCount,
+                dataset: params.datasets[scale].created_addresses,
               },
             ],
           });
@@ -83,11 +83,11 @@ export function createPresets({
             },
             list: [
               {
-                id: "total-addresses-created",
+                id: "created_addresses",
                 title: `Total Addresses Created`,
                 color: colors.bitcoin,
                 seriesType: SeriesType.Area,
-                dataset: params.datasets[scale].totalAddressesCreated,
+                dataset: params.datasets[scale].created_addresses,
               },
             ],
           });
@@ -112,7 +112,7 @@ export function createPresets({
                 title: `Total Empty Addresses`,
                 color: colors.darkWhite,
                 seriesType: SeriesType.Area,
-                dataset: params.datasets[scale].totalEmptyAddresses,
+                dataset: params.datasets[scale].empty_addresses,
               },
             ],
           });
@@ -232,7 +232,7 @@ export function createAddressCountPreset<Scale extends ResourceScale>({
             id: "address-count",
             title: "Address Count",
             color,
-            dataset: params.datasets[scale][`${datasetKey}AddressCount`],
+            dataset: params.datasets[scale][`${datasetKey}_address_count`],
           },
         ],
       });

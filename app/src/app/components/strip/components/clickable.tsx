@@ -1,32 +1,33 @@
 import { classPropToString } from "/src/solid";
 
-export function Button({
+export function Clickable({
   selected,
   onClick,
+  href,
   icon,
-  hideOnDesktop,
-  hideOnMobile,
   children,
 }: {
   selected?: Accessor<boolean>;
   onClick?: VoidFunction;
+  href?: string;
   icon?: () => ValidComponent;
-  hideOnDesktop?: boolean;
-  hideOnMobile?: boolean;
 } & ParentProps) {
   return (
-    <button
+    <Dynamic
+      component={onClick ? "button" : href ? "a" : "span"}
       class={classPropToString([
         selected?.() ? "bg-orange-200/10" : "opacity-50 hover:bg-orange-200/10",
-        hideOnDesktop ? "md:hidden" : "",
-        hideOnMobile ? "hidden md:block" : "",
         "select-none rounded-lg p-3.5 hover:text-orange-400 hover:opacity-100 active:scale-90",
       ])}
       onClick={onClick}
+      href={href}
+      target={
+        href?.startsWith("/") || href?.startsWith("http") ? "_blank" : undefined
+      }
     >
       <Show when={icon} fallback={children}>
         {(icon) => <Dynamic component={icon()()} class="size-5" />}
       </Show>
-    </button>
+    </Dynamic>
   );
 }

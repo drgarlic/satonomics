@@ -1,6 +1,9 @@
+import groupedKeysToPath from "/src/../../datasets/grouped_keys_to_url_path.json";
+
 import { createResourceDataset } from "../base";
 import { createCommonDatasets } from "../common";
-import { createPriceAveragesDatasets } from "./averages";
+
+// import { createPriceAveragesDatasets } from "./averages";
 
 export { averages } from "./averages";
 
@@ -9,6 +12,22 @@ export function createDateDatasets({
 }: {
   setActiveResources: Setter<Set<ResourceDataset<any, any>>>;
 }) {
+  type Key = keyof typeof groupedKeysToPath.date;
+  type ResourceData = ReturnType<typeof createResourceDataset<"date">>;
+
+  const resourceDatasets = {} as Record<Exclude<Key, "ohlc">, ResourceData>;
+
+  Object.keys(groupedKeysToPath.date).forEach(([_key, path]) => {
+    const key = _key as Key;
+    if (key !== "ohlc") {
+      resourceDatasets[key] = createResourceDataset<"date">({
+        scale: "date",
+        path,
+        setActiveResources,
+      });
+    }
+  });
+
   const price = createResourceDataset<"date", OHLC>({
     scale: "date",
     path: "/date-to-ohlc",
@@ -17,10 +36,11 @@ export function createDateDatasets({
 
   const common = createCommonDatasets({ price, setActiveResources });
 
-  return {
+  const datasets = {
     price,
-    ...common,
-    ...createPriceAveragesDatasets(price),
+    ...resourceDatasets,
+    // ...common,
+    // ...createPriceAveragesDatasets(price),
 
     // sopr: createResourceHTTP(`/sopr`),
     // terminalPrice: createResourceHTTP(`/terminal-price`),
@@ -142,4 +162,6 @@ export function createDateDatasets({
     //   }),
     // ),
   };
+
+  return datasets;
 }

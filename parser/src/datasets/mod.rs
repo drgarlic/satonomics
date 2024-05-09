@@ -104,7 +104,7 @@ impl AllDatasets {
 
             let utxo = UTXODatasets::import(path)?;
 
-            let price = PriceDatasets::import()?;
+            let price = PriceDatasets::import(path)?;
 
             let block_metadata = block_metadata_handle.join().unwrap()?;
 
@@ -143,6 +143,8 @@ impl AllDatasets {
 
     pub fn insert_data(&mut self, processed_block_data: ProcessedBlockData) {
         let ProcessedBlockData { height, date, .. } = processed_block_data;
+
+        self.price.insert_data(&processed_block_data);
 
         self.address.insert_data(&processed_block_data);
 
@@ -192,7 +194,7 @@ impl AllDatasets {
             })
             .collect();
 
-        Json::export("../datasets/paths.json", &path_to_type)
+        Json::export("../datasets/disk_path_to_type.json", &path_to_type)
     }
 
     pub fn export(&mut self) -> color_eyre::Result<()> {
