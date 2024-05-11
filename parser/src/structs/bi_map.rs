@@ -67,7 +67,7 @@ where
 }
 
 pub trait AnyBiMap {
-    fn are_date_and_height_safe(&self, date: NaiveDate, height: usize) -> bool;
+    // fn are_date_and_height_safe(&self, date: NaiveDate, height: usize) -> bool;
 
     fn as_any_map(&self) -> Vec<&(dyn AnyMap + Send + Sync)>;
 
@@ -92,10 +92,10 @@ where
         + Send
         + Sync,
 {
-    #[inline(always)]
-    fn are_date_and_height_safe(&self, date: NaiveDate, height: usize) -> bool {
-        self.date.is_date_safe(date) && self.height.is_height_safe(height)
-    }
+    // #[inline(always)]
+    // fn are_date_and_height_safe(&self, date: NaiveDate, height: usize) -> bool {
+    //     self.date.is_date_safe(date) && self.height.is_height_safe(height)
+    // }
 
     fn as_any_map(&self) -> Vec<&(dyn AnyMap + Send + Sync)> {
         vec![self.date.as_any_map(), self.height.as_any_map()]

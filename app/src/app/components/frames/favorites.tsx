@@ -1,5 +1,6 @@
-import { Header, Number } from ".";
-import { Line } from "./tree/components";
+import { Header } from "./header";
+import { Line } from "./line";
+import { Number } from "./number";
 
 export function FavoritesFrame({
   presets,

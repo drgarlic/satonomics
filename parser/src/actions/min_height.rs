@@ -23,10 +23,6 @@ pub fn find_first_unsafe_height(
         .as_ref()
         .cloned();
 
-    // TODO: Check states consistency
-    // And then states with databases consistency
-    // states should've same last date/height as the txindex database and lower or equal to address databases
-    //
     let usable_databases = databases.check_if_usable(
         min_initial_last_address_height,
         min_initial_last_address_date,
@@ -73,11 +69,13 @@ pub fn find_first_unsafe_height(
         .unwrap_or_else(|| {
             println!("Starting over...");
 
-            // if true {
-            //     panic!("");
-            // }
 
             let include_addresses = !usable_databases || min_initial_last_address_date.is_none() || min_initial_last_address_height.is_none();
+
+            // if true {
+            //     dbg!(include_addresses);
+            //     panic!("");
+            // }
 
             states.reset(include_addresses);
 

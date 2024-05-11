@@ -52,6 +52,8 @@ pub struct CointimeDataset {
     pub vaulted_cap: BiMap<f32>,
     pub vaulted_price: BiMap<f32>,
     pub vaulted_supply: BiMap<f32>,
+    pub vaulted_supply_net_change: BiMap<f32>,
+    pub vaulted_supply_3m_net_change: BiMap<f32>,
     pub vaultedness: BiMap<f32>,
     pub vaulting_rate: BiMap<f32>,
 }
@@ -86,6 +88,8 @@ impl CointimeDataset {
                 &f("liveliness_net_change_2w_median"),
             ),
             vaulted_supply: BiMap::new_bin(1, &f("vaulted_supply")),
+            vaulted_supply_net_change: BiMap::new_bin(1, &f("vaulted_supply_net_change")),
+            vaulted_supply_3m_net_change: BiMap::new_bin(1, &f("vaulted_supply_3m_net_change")),
             vaulting_rate: BiMap::new_bin(1, &f("vaulting_rate")),
             active_supply: BiMap::_new_bin(1, &f("active_supply"), 2),
             active_supply_net_change: BiMap::new_bin(1, &f("active_supply_net_change")),
@@ -236,6 +240,18 @@ impl CointimeDataset {
             .vaulted_supply
             .height
             .insert(height, vaultedness * circulating_supply);
+
+        self.vaulted_supply_net_change.height.insert_net_change(
+            height,
+            &self.vaulted_supply.height,
+            ONE_DAY_IN_BLOCK_TIME,
+        );
+
+        self.vaulted_supply_3m_net_change.height.insert_net_change(
+            height,
+            &self.vaulted_supply.height,
+            THREE_MONTHS_IN_BLOCK_TIME,
+        );
 
         let vaulting_rate = self
             .vaulting_rate
@@ -442,6 +458,18 @@ impl CointimeDataset {
 
             self.vaulted_supply.date.insert(date, vaulted_supply);
 
+            self.vaulted_supply_net_change.date.insert_net_change(
+                date,
+                &self.vaulted_supply.date,
+                ONE_DAY_IN_DAYS,
+            );
+
+            self.vaulted_supply_3m_net_change.date.insert_net_change(
+                date,
+                &self.vaulted_supply.date,
+                THREE_MONTHS_IN_DAYS,
+            );
+
             self.vaulting_rate.date.insert(date, vaulting_rate);
 
             self.active_supply.date.insert(date, active_supply);
@@ -586,6 +614,8 @@ impl AnyDataset for CointimeDataset {
             &self.vaulted_cap,
             &self.vaulted_price,
             &self.vaulted_supply,
+            &self.vaulted_supply_net_change,
+            &self.vaulted_supply_3m_net_change,
             &self.vaultedness,
             &self.vaulting_rate,
         ]
@@ -631,6 +661,8 @@ impl AnyDataset for CointimeDataset {
             &mut self.vaulted_cap,
             &mut self.vaulted_price,
             &mut self.vaulted_supply,
+            &mut self.vaulted_supply_net_change,
+            &mut self.vaulted_supply_3m_net_change,
             &mut self.vaultedness,
             &mut self.vaulting_rate,
         ]

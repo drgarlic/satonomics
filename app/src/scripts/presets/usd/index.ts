@@ -48,7 +48,7 @@ export function createPresets(scale: ResourceScale) {
           return applyMultipleSeries({
             scale,
             ...params,
-            priceDataset: params.datasets[scale].marketCapitalization,
+            priceDataset: params.datasets[scale].market_cap,
             priceOptions: {
               id: "marketcap",
               title: "Market Cap.",

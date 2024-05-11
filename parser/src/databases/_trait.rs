@@ -2,7 +2,7 @@ use std::{fs, io};
 
 use chrono::NaiveDate;
 
-use crate::structs::databases_folder_path;
+use super::databases_folder_path;
 
 pub trait AnyDatabaseGroup
 where

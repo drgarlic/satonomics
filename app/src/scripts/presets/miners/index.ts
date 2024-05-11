@@ -26,7 +26,7 @@ export function createPresets(scale: ResourceScale) {
                 id: "yearly-inflation-rate",
                 title: "Yearly Inflation Rate (%)",
                 color: colors.bitcoin,
-                dataset: params.datasets[scale].yearlyInflationRate,
+                dataset: params.datasets[scale].yearly_inflation_rate,
               },
             ],
           });
@@ -82,7 +82,7 @@ export function createPresets(scale: ResourceScale) {
                         id: "subsidy-in-dollars",
                         title: "Subsidy In Dollars",
                         color: colors.dollars,
-                        dataset: params.datasets[scale].subsidyInDollars,
+                        dataset: params.datasets[scale].subsidy_in_dollars,
                       },
                     ],
                   });
@@ -90,60 +90,65 @@ export function createPresets(scale: ResourceScale) {
               },
             ],
           },
-          {
-            id: `${scale}-last-subsidy`,
-            name: "Last",
-            tree: [
-              {
-                id: `${scale}-last-subsidy-in-bitcoin`,
-                icon: IconTablerCoinBitcoin,
-                name: "In Bitcoin",
-                title: "Last Subsidy (In Bitcoin)",
-                description: "",
-                applyPreset(params) {
-                  return applyMultipleSeries({
-                    scale,
-                    ...params,
-                    priceScaleOptions: {
-                      halved: true,
-                    },
-                    list: [
-                      {
-                        id: "last",
-                        title: "Last",
-                        color: colors.bitcoin,
-                        dataset: params.datasets[scale].lastSubsidy,
+          ...(scale === "date"
+            ? ([
+                {
+                  id: `${scale}-last-subsidy`,
+                  name: "Last",
+                  tree: [
+                    {
+                      id: `${scale}-last-subsidy-in-bitcoin`,
+                      icon: IconTablerCoinBitcoin,
+                      name: "In Bitcoin",
+                      title: "Last Subsidy (In Bitcoin)",
+                      description: "",
+                      applyPreset(params) {
+                        return applyMultipleSeries({
+                          scale,
+                          ...params,
+                          priceScaleOptions: {
+                            halved: true,
+                          },
+                          list: [
+                            {
+                              id: "last",
+                              title: "Last",
+                              color: colors.bitcoin,
+                              dataset: params.datasets[scale].last_subsidy,
+                            },
+                          ],
+                        });
                       },
-                    ],
-                  });
-                },
-              },
-              {
-                id: `${scale}-last-subsidy-in-dollars`,
-                icon: IconTablerCoin,
-                name: "In Dollars",
-                title: "Last Subsidy (In Dollars)",
-                description: "",
-                applyPreset(params) {
-                  return applyMultipleSeries({
-                    scale,
-                    ...params,
-                    priceScaleOptions: {
-                      halved: true,
                     },
-                    list: [
-                      {
-                        id: "last",
-                        title: "Last",
-                        color: colors.dollars,
-                        dataset: params.datasets[scale].lastSubsidyInDollars,
+                    {
+                      id: `${scale}-last-subsidy-in-dollars`,
+                      icon: IconTablerCoin,
+                      name: "In Dollars",
+                      title: "Last Subsidy (In Dollars)",
+                      description: "",
+                      applyPreset(params) {
+                        return applyMultipleSeries({
+                          scale,
+                          ...params,
+                          priceScaleOptions: {
+                            halved: true,
+                          },
+                          list: [
+                            {
+                              id: "last",
+                              title: "Last",
+                              color: colors.dollars,
+                              dataset:
+                                params.datasets[scale].subsidy_in_dollars,
+                            },
+                          ],
+                        });
                       },
-                    ],
-                  });
+                    },
+                  ],
                 },
-              },
-            ],
-          },
+              ] as PresetTree)
+            : []),
         ],
       },
       {

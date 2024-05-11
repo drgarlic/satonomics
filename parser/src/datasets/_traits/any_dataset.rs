@@ -105,10 +105,10 @@ pub trait AnyDataset {
         vec
     }
 
-    #[inline(always)]
-    fn is_empty(&self) -> bool {
-        self.to_any_map_vec().is_empty()
-    }
+    // #[inline(always)]
+    // fn is_empty(&self) -> bool {
+    //     self.to_any_map_vec().is_empty()
+    // }
 
     fn pre_export(&mut self) {
         self.to_any_mut_height_map_vec()

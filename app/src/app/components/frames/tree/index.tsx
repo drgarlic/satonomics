@@ -1,8 +1,11 @@
 import { scrollIntoView, sleep, tick } from "/src/scripts";
 import { createASS } from "/src/solid";
 
-import { Box, Button, Header, Number } from "..";
-import { Tree } from "./components";
+import { Box } from "../box";
+import { Button } from "../button";
+import { Header } from "../header";
+import { Number } from "../number";
+import { Tree } from "./components/tree";
 
 export function TreeFrame({
   presets,

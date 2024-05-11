@@ -213,6 +213,14 @@ impl UTXOCohortsDurableStates {
                 self.from_1y
                     .compute_one_shot_states(block_price, date_price)
             });
+            let from_2y_handle = scope.spawn(|| {
+                self.from_2y
+                    .compute_one_shot_states(block_price, date_price)
+            });
+            let from_4y_handle = scope.spawn(|| {
+                self.from_4y
+                    .compute_one_shot_states(block_price, date_price)
+            });
             let from_10y_handle = scope.spawn(|| {
                 self.from_10y
                     .compute_one_shot_states(block_price, date_price)
@@ -314,6 +322,8 @@ impl UTXOCohortsDurableStates {
                 from_7y_to_10y: from_7y_to_10y_handle.join().unwrap(),
 
                 from_1y: from_1y_handle.join().unwrap(),
+                from_2y: from_2y_handle.join().unwrap(),
+                from_4y: from_4y_handle.join().unwrap(),
                 from_10y: from_10y_handle.join().unwrap(),
 
                 year_2009: year_2009_handle.join().unwrap(),

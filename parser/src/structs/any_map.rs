@@ -14,7 +14,7 @@ pub trait AnyMap {
         }
     }
 
-    fn reset(&mut self) -> color_eyre::Result<()>;
+    // fn reset(&mut self) -> color_eyre::Result<()>;
 
     fn pre_export(&mut self);
     fn export(&self) -> color_eyre::Result<()>;

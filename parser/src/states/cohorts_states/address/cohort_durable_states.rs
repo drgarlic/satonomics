@@ -14,67 +14,63 @@ pub struct AddressCohortDurableStates {
 impl AddressCohortDurableStates {
     pub fn increment(
         &mut self,
-        amount: u64,
+        sats: u64,
         utxo_count: usize,
-        mean_price_paid_in_cents: u32,
+        mean_cents_paid: u32,
         split_sat_amount: &LiquiditySplitResult,
         split_utxo_count: &LiquiditySplitResult,
     ) {
         self.address_count += 1;
 
-        self.split
-            .all
-            .increment(amount, utxo_count, mean_price_paid_in_cents);
+        self.split.all.increment(sats, utxo_count, mean_cents_paid);
 
         self.split.illiquid.increment(
             split_sat_amount.illiquid.round() as u64,
             split_utxo_count.illiquid.round() as usize,
-            mean_price_paid_in_cents,
+            mean_cents_paid,
         );
 
         self.split.liquid.increment(
             split_sat_amount.liquid.round() as u64,
             split_utxo_count.liquid.round() as usize,
-            mean_price_paid_in_cents,
+            mean_cents_paid,
         );
 
         self.split.highly_liquid.increment(
             split_sat_amount.highly_liquid.round() as u64,
             split_utxo_count.highly_liquid.round() as usize,
-            mean_price_paid_in_cents,
+            mean_cents_paid,
         );
     }
 
     pub fn decrement(
         &mut self,
-        amount: u64,
+        sats: u64,
         utxo_count: usize,
-        mean_price_paid_in_cents: u32,
+        mean_cents_paid: u32,
         split_sat_amount: &LiquiditySplitResult,
         split_utxo_count: &LiquiditySplitResult,
     ) {
         self.address_count -= 1;
 
-        self.split
-            .all
-            .decrement(amount, utxo_count, mean_price_paid_in_cents);
+        self.split.all.decrement(sats, utxo_count, mean_cents_paid);
 
         self.split.illiquid.decrement(
             split_sat_amount.illiquid.round() as u64,
             split_utxo_count.illiquid.round() as usize,
-            mean_price_paid_in_cents,
+            mean_cents_paid,
         );
 
         self.split.liquid.decrement(
             split_sat_amount.liquid.round() as u64,
             split_utxo_count.liquid.round() as usize,
-            mean_price_paid_in_cents,
+            mean_cents_paid,
         );
 
         self.split.highly_liquid.decrement(
             split_sat_amount.highly_liquid.round() as u64,
             split_utxo_count.highly_liquid.round() as usize,
-            mean_price_paid_in_cents,
+            mean_cents_paid,
         );
     }
 

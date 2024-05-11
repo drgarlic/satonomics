@@ -1,8 +1,8 @@
-use super::{OneShotStates, PriceInCentsToAmount, SupplyState, UTXOState};
+use super::{OneShotStates, PriceInCentsToSats, SupplyState, UTXOState};
 
 #[derive(Default, Debug)]
 pub struct DurableStates {
-    price_in_cents_to_amount: PriceInCentsToAmount,
+    price_in_cents_to_sats: PriceInCentsToSats,
 
     pub supply_state: SupplyState,
     pub utxo_state: UTXOState,
@@ -19,7 +19,7 @@ impl DurableStates {
 
         self.supply_state.increment(amount);
         self.utxo_state.increment(utxo_count);
-        self.price_in_cents_to_amount
+        self.price_in_cents_to_sats
             .increment(price_in_cents, amount);
     }
 
@@ -33,7 +33,7 @@ impl DurableStates {
 
         self.supply_state.decrement(amount);
         self.utxo_state.decrement(utxo_count);
-        self.price_in_cents_to_amount
+        self.price_in_cents_to_sats
             .decrement(price_in_cents, amount);
     }
 
@@ -42,7 +42,7 @@ impl DurableStates {
         block_price: f32,
         date_price: Option<f32>,
     ) -> OneShotStates {
-        self.price_in_cents_to_amount.compute_on_shot_states(
+        self.price_in_cents_to_sats.compute_on_shot_states(
             self.supply_state.supply,
             block_price,
             date_price,

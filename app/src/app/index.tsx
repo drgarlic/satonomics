@@ -9,22 +9,20 @@ import {
   renderChart,
   sleep,
 } from "/src/scripts";
-import { classPropToString, createASS } from "/src/solid";
+import { createASS } from "/src/solid";
 
+import { Background, LOCAL_STORAGE_MARQUEE_KEY } from "./components/background";
+import { ChartFrame } from "./components/frames/chart";
+import { FavoritesFrame } from "./components/frames/favorites";
 import {
-  Background,
-  ChartFrame,
-  FavoritesFrame,
-  Head,
   INPUT_PRESET_SEARCH_ID,
-  LOCAL_STORAGE_MARQUEE_KEY,
-  Qrcode,
   SearchFrame,
-  SettingsFrame,
-  StripDesktop,
-  StripMobile,
-  TreeFrame,
-} from "./components";
+} from "./components/frames/search";
+import { SettingsFrame } from "./components/frames/settings";
+import { TreeFrame } from "./components/frames/tree";
+import { Head } from "./components/head";
+import { Qrcode } from "./components/qrcode";
+import { StripDesktop, StripMobile } from "./components/strip";
 import { registerServiceWorker } from "./scripts";
 
 const LOCAL_STORAGE_BAR_KEY = "bar-width";

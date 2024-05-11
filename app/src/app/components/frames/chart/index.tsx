@@ -1,10 +1,11 @@
 import { classPropToString } from "/src/solid";
 
 import { Box } from "../box";
-import { Chart, Title } from "./components";
 import { Actions } from "./components/actions";
+import { Chart } from "./components/chart";
 import { Legend } from "./components/legend";
 import { TimeScale } from "./components/timeScale";
+import { Title } from "./components/title";
 
 export function ChartFrame({
   presets,

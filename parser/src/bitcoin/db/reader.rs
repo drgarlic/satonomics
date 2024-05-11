@@ -34,12 +34,12 @@ pub trait BlockchainRead: std::io::Read {
         Ok(slice[0])
     }
 
-    #[inline]
-    fn read_u256(&mut self) -> OpResult<[u8; 32]> {
-        let mut arr = [0u8; 32];
-        self.read_exact(&mut arr)?;
-        Ok(arr)
-    }
+    // #[inline]
+    // fn read_u256(&mut self) -> OpResult<[u8; 32]> {
+    //     let mut arr = [0u8; 32];
+    //     self.read_exact(&mut arr)?;
+    //     Ok(arr)
+    // }
 
     #[inline]
     fn read_u32(&mut self) -> OpResult<u32> {
@@ -47,11 +47,11 @@ pub trait BlockchainRead: std::io::Read {
         Ok(u)
     }
 
-    #[inline]
-    fn read_i32(&mut self) -> OpResult<i32> {
-        let u = ReadBytesExt::read_i32::<LittleEndian>(self)?;
-        Ok(u)
-    }
+    // #[inline]
+    // fn read_i32(&mut self) -> OpResult<i32> {
+    //     let u = ReadBytesExt::read_i32::<LittleEndian>(self)?;
+    //     Ok(u)
+    // }
 
     #[inline]
     fn read_u8_vec(&mut self, count: u32) -> OpResult<Vec<u8>> {

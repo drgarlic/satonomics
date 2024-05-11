@@ -27,7 +27,7 @@ impl TransactionDataset {
             count: BiMap::new_bin(1, &f("transaction_count")),
             volume: BiMap::_new_bin(1, &f("transaction_volume"), 5),
 
-            annualized_volume: BiMap::new_bin(1, &f("annualized_transaction_volume")),
+            annualized_volume: BiMap::_new_bin(1, &f("annualized_transaction_volume"), usize::MAX),
             velocity: BiMap::new_bin(1, &f("transaction_velocity")),
         };
 

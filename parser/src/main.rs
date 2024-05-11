@@ -18,6 +18,7 @@ fn main() -> color_eyre::Result<()> {
         let block_count = {
             let bitcoin_db = BitcoinDB::new(Path::new(bitcoin_dir_path), true)?;
 
+            // let block_count = 200_000;
             let block_count = bitcoin_db.get_block_count();
             println!("{block_count} blocks found.");
 

@@ -5,7 +5,7 @@ use derive_deref::{Deref, DerefMut};
 use crate::{
     states::AddressIndexToAddressData,
     structs::{AddressData, AddressRealizedData},
-    utils::convert_price_to_significant_cents,
+    utils::convert_cents_to_significant_cents,
 };
 
 use super::{AddressCohortDurableStates, AddressCohortsOneShotStates, SplitByAddressCohort};
@@ -52,8 +52,7 @@ impl AddressCohortsDurableStates {
             return;
         }
 
-        let mean_price_paid_in_cents =
-            convert_price_to_significant_cents(address_data.mean_price_paid);
+        let mean_cents_paid = convert_cents_to_significant_cents(address_data.mean_cents_paid);
 
         let liquidity_classification = address_data.compute_liquidity_classification();
 
@@ -66,7 +65,7 @@ impl AddressCohortsDurableStates {
                     state.increment(
                         amount,
                         utxo_count,
-                        mean_price_paid_in_cents,
+                        mean_cents_paid,
                         &split_sat_amount_amount,
                         &split_utxo_count,
                     );
@@ -74,7 +73,7 @@ impl AddressCohortsDurableStates {
                     state.decrement(
                         amount,
                         utxo_count,
-                        mean_price_paid_in_cents,
+                        mean_cents_paid,
                         &split_sat_amount_amount,
                         &split_utxo_count,
                     )

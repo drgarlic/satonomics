@@ -27,6 +27,8 @@ pub enum UTXOCohortId {
     From7yTo10y,
 
     From1y,
+    From2y,
+    From4y,
     From10y,
 
     Year2009,
@@ -80,6 +82,8 @@ impl UTXOCohortId {
             UTXOCohortId::From7yTo10y => "from_7y_to_10y",
 
             UTXOCohortId::From1y => "from_1y",
+            UTXOCohortId::From2y => "from_2y",
+            UTXOCohortId::From4y => "from_4y",
             UTXOCohortId::From10y => "from_10y",
 
             UTXOCohortId::Year2009 => "year_2009",

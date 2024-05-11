@@ -26,20 +26,20 @@ export function createAgeCohortDatasets<Scale extends ResourceScale>({
   const resourcePartials: Partial<ResourceDatasets> = {};
   const lazyPartials: Partial<LazyDatasets> = {};
 
-  ageCohorts.forEach(({ key: ageKey, route: ageRoute }) => {
+  ageCohorts.forEach(({ key }) => {
     type CohortDatasets = Record<
-      `${typeof ageKey}${AgeCohortDatasetKey}`,
+      `${typeof key}${AgeCohortDatasetKey}`,
       ResourceDataset<Scale>
     >;
 
     const partial: Partial<CohortDatasets> = {};
 
     ageDatasets.forEach(({ key: cohortKey, route: cohortRoute }) => {
-      const attributeName = `${ageKey}${cohortKey}` as const;
+      const attributeName = `${key}${cohortKey}` as const;
 
       const resource = createResourceDataset({
         scale,
-        path: `/${scale}-to-${ageRoute ? ageRoute + "-" : ""}${cohortRoute}`,
+        path: `/${scale}-to-${key ? key + "-" : ""}${cohortRoute}`,
         setActiveResources,
       });
 
@@ -56,9 +56,7 @@ export function createAgeCohortDatasets<Scale extends ResourceScale>({
 
   const marketCapitalization = createMultipliedLazyDataset(supplyTotal, price);
 
-  ageCohorts.forEach(({ key: ageKey, route: ageRoute }) => {
-    const key = ageKey;
-
+  ageCohorts.forEach(({ key }) => {
     const lazyDatasets = createLazyCommonCohortDatasets({
       key,
       price,
@@ -87,105 +85,119 @@ export const xthCohorts = [
   {
     key: "lth",
     name: "LTH - Long Term Holders",
-    route: "lth",
   },
   {
     key: "sth",
     name: "STH - Short Term Holders",
-    route: "sth",
   },
 ] as const;
 
 export const upToCohorts = [
-  { key: "upTo1d", name: "Up To 1 Day", route: "up_to_1d" },
-  { key: "upTo1w", name: "Up To 1 Week", route: "up_to_7d" },
-  { key: "upTo1m", name: "Up To 1 Month", route: "up_to_1m" },
-  { key: "upTo2m", name: "Up To 2 Months", route: "up_to_2m" },
-  { key: "upTo3m", name: "Up To 3 Months", route: "up_to_3m" },
-  { key: "upTo4m", name: "Up To 4 Months", route: "up_to_4m" },
-  { key: "upTo5m", name: "Up To 5 Months", route: "up_to_5m" },
-  { key: "upTo6m", name: "Up To 6 Months", route: "up_to_6m" },
-  { key: "upTo1y", name: "Up To 1 Year", route: "up_to_1y" },
-  { key: "upTo2y", name: "Up To 2 Years", route: "up_to_2y" },
-  { key: "upTo3y", name: "Up To 3 Years", route: "up_to_3y" },
-  { key: "upTo5y", name: "Up To 5 Years", route: "up_to_5y" },
-  { key: "upTo7y", name: "Up To 7 Yeats", route: "up_to_7y" },
-  { key: "upTo10y", name: "Up To 10 Years", route: "up_to_10y" },
+  { key: "up_to_1d", name: "Up To 1 Day" },
+  { key: "up_to_1w", name: "Up To 1 Week" },
+  { key: "up_to_1m", name: "Up To 1 Month" },
+  { key: "up_to_2m", name: "Up To 2 Months" },
+  { key: "up_to_3m", name: "Up To 3 Months" },
+  { key: "up_to_4m", name: "Up To 4 Months" },
+  { key: "up_to_5m", name: "Up To 5 Months" },
+  { key: "up_to_6m", name: "Up To 6 Months" },
+  { key: "up_to_1y", name: "Up To 1 Year" },
+  { key: "up_to_2y", name: "Up To 2 Years" },
+  { key: "up_to_3y", name: "Up To 3 Years" },
+  { key: "up_to_5y", name: "Up To 5 Years" },
+  { key: "up_to_7y", name: "Up To 7 Yeats" },
+  { key: "up_to_10y", name: "Up To 10 Years" },
 ] as const;
 
 export const fromXToYCohorts = [
-  { key: "from1dTo1w", name: "From 1 Day To 1 Week", route: "from_1d_to_7d" },
-  { key: "from1wTo1m", name: "From 1 Week To 1 Month", route: "from_7d_to_1m" },
   {
-    key: "from1mTo3m",
+    key: "from_1d_to_1w",
+    name: "From 1 Day To 1 Week",
+  },
+  {
+    key: "from_1w_to_1m",
+    name: "From 1 Week To 1 Month",
+  },
+  {
+    key: "from_1m_to_3m",
     name: "From 1 Month To 3 Months",
-    route: "from_1m_to_3m",
   },
   {
-    key: "from3mTo6m",
+    key: "from_3m_to_6m",
     name: "From 3 Months To 6 Months",
-    route: "from_3m_to_6m",
   },
   {
-    key: "from6mTo1y",
+    key: "from_6m_to_1y",
     name: "From 6 Months To 1 Year",
-    route: "from_6m_to_1y",
   },
-  { key: "from1yTo2y", name: "From 1 Year To 2 Years", route: "from_1y_to_2y" },
   {
-    key: "from2yTo3y",
+    key: "from_1y_to_2y",
+    name: "From 1 Year To 2 Years",
+  },
+  {
+    key: "from_2y_to_3y",
     name: "From 2 Years To 3 Years",
-    route: "from_2y_to_3y",
   },
   {
-    key: "from3yTo5y",
+    key: "from_3y_to_5y",
     name: "From 3 Years To 5 Years",
-    route: "from_3y_to_5y",
   },
   {
-    key: "from5yTo7y",
+    key: "from_5y_to_7y",
     name: "From 5 Years To 7 Years",
-    route: "from_5y_to_7y",
   },
   {
-    key: "from7yTo10y",
+    key: "from_7y_to_10y",
     name: "From 7 Years To 10 Years",
-    route: "from_7y_to_10y",
+  },
+] as const;
+
+export const fromXCohorts = [
+  {
+    key: "from_1y",
+    name: "From 1 Year",
   },
   {
-    key: "from10yToEnd",
-    name: "From 10 Years To End",
-    route: "from_10y_to_end",
+    key: "from_2y",
+    name: "From 2 Years",
+  },
+  {
+    key: "from_4y",
+    name: "From 4 Years",
+  },
+  {
+    key: "from_10y",
+    name: "From 10 Years",
   },
 ] as const;
 
 export const yearCohorts = [
-  { key: "2009", name: "2009", route: "2009" },
-  { key: "2010", name: "2010", route: "2010" },
-  { key: "2011", name: "2011", route: "2011" },
-  { key: "2012", name: "2012", route: "2012" },
-  { key: "2013", name: "2013", route: "2013" },
-  { key: "2014", name: "2014", route: "2014" },
-  { key: "2015", name: "2015", route: "2015" },
-  { key: "2016", name: "2016", route: "2016" },
-  { key: "2017", name: "2017", route: "2017" },
-  { key: "2018", name: "2018", route: "2018" },
-  { key: "2019", name: "2019", route: "2019" },
-  { key: "2020", name: "2020", route: "2020" },
-  { key: "2021", name: "2021", route: "2021" },
-  { key: "2022", name: "2022", route: "2022" },
-  { key: "2023", name: "2023", route: "2023" },
-  { key: "2024", name: "2024", route: "2024" },
+  { key: "2009", name: "2009" },
+  { key: "2010", name: "2010" },
+  { key: "2011", name: "2011" },
+  { key: "2012", name: "2012" },
+  { key: "2013", name: "2013" },
+  { key: "2014", name: "2014" },
+  { key: "2015", name: "2015" },
+  { key: "2016", name: "2016" },
+  { key: "2017", name: "2017" },
+  { key: "2018", name: "2018" },
+  { key: "2019", name: "2019" },
+  { key: "2020", name: "2020" },
+  { key: "2021", name: "2021" },
+  { key: "2022", name: "2022" },
+  { key: "2023", name: "2023" },
+  { key: "2024", name: "2024" },
 ] as const;
 
 export const ageCohorts = [
   {
     key: "",
     name: "",
-    route: "",
   },
   ...xthCohorts,
   ...upToCohorts,
   ...fromXToYCohorts,
+  ...fromXCohorts,
   ...yearCohorts,
 ] as const;

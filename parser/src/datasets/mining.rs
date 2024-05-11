@@ -38,10 +38,14 @@ impl MiningDataset {
 
             subsidy: BiMap::_new_bin(1, &f("subsidy"), 5),
             subsidy_in_dollars: BiMap::new_bin(1, &f("subsidy_in_dollars")),
-            cumulative_subsidy_in_dollars: BiMap::new_bin(1, &f("cumulative_subsidy_in_dollars")),
+            cumulative_subsidy_in_dollars: BiMap::_new_bin(
+                1,
+                &f("cumulative_subsidy_in_dollars"),
+                usize::MAX,
+            ),
 
             annualized_issuance: BiMap::new_bin(1, &f("annualized_issuance")),
-            yearly_inflation_rate: BiMap::new_bin(1, &f("yearly_inflation_rate")),
+            yearly_inflation_rate: BiMap::_new_bin(1, &f("yearly_inflation_rate"), usize::MAX),
 
             last_subsidy: DateMap::new_bin(1, &f("last_subsidy")),
             last_subsidy_in_dollars: DateMap::new_bin(1, &f("last_subsidy_in_dollars")),

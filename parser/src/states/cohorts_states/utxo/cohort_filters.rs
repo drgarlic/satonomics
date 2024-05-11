@@ -52,6 +52,8 @@ pub const UTXO_FILTERS: SplitByUTXOCohort<UTXOFilter> = SplitByUTXOCohort {
     },
 
     from_1y: UTXOFilter::From(365),
+    from_2y: UTXOFilter::From(2 * 365),
+    from_4y: UTXOFilter::From(4 * 365),
     from_10y: UTXOFilter::From(10 * 365),
 
     year_2009: UTXOFilter::Year(2009),

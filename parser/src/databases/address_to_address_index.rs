@@ -4,11 +4,12 @@ use chrono::NaiveDate;
 
 use rayon::prelude::*;
 
-use crate::structs::{
-    Address, Database, SizedDatabase, U8x19, U8x31, UnsizedDatabase as _UnsizedDatabase,
-};
+use crate::structs::Address;
 
-use super::{AnyDatabaseGroup, Metadata};
+use super::{
+    AnyDatabaseGroup, Database, Metadata, SizedDatabase, U8x19, U8x31,
+    UnsizedDatabase as _UnsizedDatabase,
+};
 
 type Value = u32;
 type U8x19Database = SizedDatabase<U8x19, Value>;

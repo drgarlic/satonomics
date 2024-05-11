@@ -34,6 +34,8 @@ pub struct SplitByUTXOCohort<T> {
     pub from_7y_to_10y: T,
 
     pub from_1y: T,
+    pub from_2y: T,
+    pub from_4y: T,
     pub from_10y: T,
 
     pub year_2009: T,
@@ -82,6 +84,8 @@ impl<T> SplitByUTXOCohort<T> {
             UTXOCohortId::From5yTo7y => &self.from_5y_to_7y,
             UTXOCohortId::From7yTo10y => &self.from_7y_to_10y,
             UTXOCohortId::From1y => &self.from_1y,
+            UTXOCohortId::From2y => &self.from_2y,
+            UTXOCohortId::From4y => &self.from_4y,
             UTXOCohortId::From10y => &self.from_10y,
             UTXOCohortId::Year2009 => &self.year_2009,
             UTXOCohortId::Year2010 => &self.year_2010,
@@ -131,6 +135,8 @@ impl<T> SplitByUTXOCohort<T> {
             UTXOCohortId::From5yTo7y => &mut self.from_5y_to_7y,
             UTXOCohortId::From7yTo10y => &mut self.from_7y_to_10y,
             UTXOCohortId::From1y => &mut self.from_1y,
+            UTXOCohortId::From2y => &mut self.from_2y,
+            UTXOCohortId::From4y => &mut self.from_4y,
             UTXOCohortId::From10y => &mut self.from_10y,
             UTXOCohortId::Year2009 => &mut self.year_2009,
             UTXOCohortId::Year2010 => &mut self.year_2010,
@@ -236,6 +242,14 @@ impl<T> SplitByUTXOCohort<T> {
 
         if UTXO_FILTERS.from_1y.check(days_old, year) {
             set.insert(UTXOCohortId::From1y);
+        }
+
+        if UTXO_FILTERS.from_2y.check(days_old, year) {
+            set.insert(UTXOCohortId::From2y);
+        }
+
+        if UTXO_FILTERS.from_4y.check(days_old, year) {
+            set.insert(UTXOCohortId::From4y);
         }
 
         if UTXO_FILTERS.from_10y.check(days_old, year) {
@@ -464,6 +478,8 @@ impl<T> SplitByUTXOCohort<T> {
             &self.from_5y_to_7y,
             &self.from_7y_to_10y,
             &self.from_1y,
+            &self.from_2y,
+            &self.from_4y,
             &self.from_10y,
             &self.year_2009,
             &self.year_2010,
@@ -513,6 +529,8 @@ impl<T> SplitByUTXOCohort<T> {
             &mut self.from_5y_to_7y,
             &mut self.from_7y_to_10y,
             &mut self.from_1y,
+            &mut self.from_2y,
+            &mut self.from_4y,
             &mut self.from_10y,
             &mut self.year_2009,
             &mut self.year_2010,

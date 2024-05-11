@@ -58,6 +58,14 @@ impl Metadata {
     pub fn called_remove(&mut self) {
         self.len.decrement();
     }
+
+    pub fn check_if_in_sync(&self, other: &Self) -> bool {
+        self.last_date == other.last_date && self.last_height == other.last_height
+    }
+
+    pub fn check_farer_or_in_sync(&self, other: &Self) -> bool {
+        self.last_date >= other.last_date && self.last_height >= other.last_height
+    }
 }
 
 #[derive(Savefile, Default, Debug)]

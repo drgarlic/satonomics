@@ -78,7 +78,7 @@ export function createCohortPresetList<Scale extends ResourceScale>({
                   title: "UTXO Count",
                   color,
                   seriesType: SeriesType.Area,
-                  dataset: params.datasets[scale][`${datasetKey}UtxoCount`],
+                  dataset: params.datasets[scale][`${datasetKey}_utxo`],
                 },
               ],
             });

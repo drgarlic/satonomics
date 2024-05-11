@@ -8,9 +8,7 @@ use bitcoin::Txid;
 use chrono::NaiveDate;
 use rayon::prelude::*;
 
-use crate::structs::{SizedDatabase, U8x31};
-
-use super::{AnyDatabaseGroup, Metadata};
+use super::{AnyDatabaseGroup, Metadata, SizedDatabase, U8x31};
 
 type Key = U8x31;
 type Value = u32;

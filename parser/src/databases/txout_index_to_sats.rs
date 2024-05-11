@@ -8,20 +8,20 @@ use chrono::NaiveDate;
 
 use rayon::prelude::*;
 
-use crate::structs::EmptyAddressData;
+use crate::structs::{SizedDatabase, TxoutIndex};
 
-use super::{AnyDatabaseGroup, Metadata, SizedDatabase};
+use super::{AnyDatabaseGroup, Metadata};
 
-type Key = u32;
-type Value = EmptyAddressData;
+type Key = TxoutIndex;
+type Value = u64;
 type Database = SizedDatabase<Key, Value>;
 
-pub struct AddressIndexToEmptyAddressData {
+pub struct TxoutIndexToSats {
     map: BTreeMap<usize, Database>,
     pub metadata: Metadata,
 }
 
-impl Deref for AddressIndexToEmptyAddressData {
+impl Deref for TxoutIndexToSats {
     type Target = BTreeMap<usize, Database>;
 
     fn deref(&self) -> &Self::Target {
@@ -29,15 +29,15 @@ impl Deref for AddressIndexToEmptyAddressData {
     }
 }
 
-impl DerefMut for AddressIndexToEmptyAddressData {
+impl DerefMut for TxoutIndexToSats {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.map
     }
 }
 
-const DB_MAX_SIZE: usize = 1_000_000;
+const DB_MAX_SIZE: usize = 100_000_000;
 
-impl AddressIndexToEmptyAddressData {
+impl TxoutIndexToSats {
     pub fn insert(&mut self, key: Key, value: Value) -> Option<Value> {
         self.metadata.called_insert();
 
@@ -79,11 +79,11 @@ impl AddressIndexToEmptyAddressData {
     }
 
     fn db_index(key: &Key) -> usize {
-        *key as usize / DB_MAX_SIZE
+        key.as_u64() as usize / DB_MAX_SIZE
     }
 }
 
-impl AnyDatabaseGroup for AddressIndexToEmptyAddressData {
+impl AnyDatabaseGroup for TxoutIndexToSats {
     fn import() -> Self {
         Self {
             map: BTreeMap::default(),
@@ -106,6 +106,6 @@ impl AnyDatabaseGroup for AddressIndexToEmptyAddressData {
     }
 
     fn folder<'a>() -> &'a str {
-        "address_index_to_empty_address_data"
+        "txout_index_to_sats"
     }
 }

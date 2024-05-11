@@ -74,6 +74,10 @@ impl UTXODatasets {
 
             let from_1y_handle =
                 scope.spawn(|| UTXODataset::import(parent_path, UTXOCohortId::From1y));
+            let from_2y_handle =
+                scope.spawn(|| UTXODataset::import(parent_path, UTXOCohortId::From2y));
+            let from_4y_handle =
+                scope.spawn(|| UTXODataset::import(parent_path, UTXOCohortId::From4y));
             let from_10y_handle =
                 scope.spawn(|| UTXODataset::import(parent_path, UTXOCohortId::From10y));
 
@@ -110,9 +114,7 @@ impl UTXODatasets {
             let year_2024_handle =
                 scope.spawn(|| UTXODataset::import(parent_path, UTXOCohortId::Year2024));
 
-            let sth_handle =
-                scope.spawn(|| UTXODataset::import(parent_path, UTXOCohortId::ShortTermHolders));
-
+            let sth = UTXODataset::import(parent_path, UTXOCohortId::ShortTermHolders)?;
             let lth = UTXODataset::import(parent_path, UTXOCohortId::LongTermHolders)?;
 
             let mut s = Self {
@@ -146,9 +148,11 @@ impl UTXODatasets {
                     from_7y_to_10y: from_7y_to_10y_handle.join().unwrap()?,
 
                     from_1y: from_1y_handle.join().unwrap()?,
+                    from_2y: from_2y_handle.join().unwrap()?,
+                    from_4y: from_4y_handle.join().unwrap()?,
                     from_10y: from_10y_handle.join().unwrap()?,
 
-                    sth: sth_handle.join().unwrap()?,
+                    sth,
                     lth,
 
                     year_2009: year_2009_handle.join().unwrap()?,

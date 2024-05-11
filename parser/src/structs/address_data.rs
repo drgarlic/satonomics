@@ -1,18 +1,20 @@
+use sanakirja::{direct_repr, Storable, UnsizedStorable};
 use savefile_derive::Savefile;
 
 use crate::bitcoin::sats_to_btc;
 
 use super::{AddressType, EmptyAddressData, LiquidityClassification};
 
-#[derive(Debug, Clone, Copy, Savefile)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Savefile)]
 pub struct AddressData {
     pub address_type: AddressType,
     pub amount: u64,
     pub sent: u64,
     pub received: u64,
-    pub mean_price_paid: f32,
+    pub mean_cents_paid: u32,
     pub outputs_len: u32,
 }
+direct_repr!(AddressData);
 
 impl AddressData {
     pub fn new(address_type: AddressType) -> Self {
@@ -21,7 +23,7 @@ impl AddressData {
             amount: 0,
             sent: 0,
             received: 0,
-            mean_price_paid: 0.0,
+            mean_cents_paid: 0,
             outputs_len: 0,
         }
     }
@@ -33,7 +35,7 @@ impl AddressData {
 
 impl AddressData {
     pub fn receive(&mut self, sat_amount: u64, price: f32) {
-        let previous_mean_price_paid = self.mean_price_paid;
+        let previous_mean_cents_paid = self.mean_cents_paid;
 
         let previous_sat_amount = self.amount;
         let new_sat_amount = previous_sat_amount + sat_amount;
@@ -44,8 +46,10 @@ impl AddressData {
         let previous_btc_amount = sats_to_btc(previous_sat_amount);
         let new_btc_amount = sats_to_btc(new_sat_amount);
 
-        self.mean_price_paid =
-            (previous_mean_price_paid * previous_btc_amount + priced_btc_value) / new_btc_amount;
+        self.mean_cents_paid = ((previous_mean_cents_paid as f32 / 100.0 * previous_btc_amount
+            + priced_btc_value)
+            / new_btc_amount
+            * 100.0) as u32;
 
         self.amount = new_sat_amount;
 
@@ -55,7 +59,7 @@ impl AddressData {
     }
 
     pub fn spend(&mut self, sat_amount: u64, price: f32) -> f32 {
-        let previous_mean_price_paid = self.mean_price_paid;
+        let previous_mean_cents_paid = self.mean_cents_paid;
 
         let previous_sat_amount = self.amount;
         let new_sat_amount = previous_sat_amount - sat_amount;
@@ -66,8 +70,10 @@ impl AddressData {
         let previous_btc_amount = sats_to_btc(previous_sat_amount);
         let new_btc_amount = sats_to_btc(new_sat_amount);
 
-        self.mean_price_paid =
-            ((previous_mean_price_paid * previous_btc_amount) - priced_btc_value) / new_btc_amount;
+        self.mean_cents_paid = (((previous_mean_cents_paid as f32 / 100.0 * previous_btc_amount)
+            - priced_btc_value)
+            / new_btc_amount
+            * 100.0) as u32;
 
         self.amount = new_sat_amount;
 
@@ -75,7 +81,8 @@ impl AddressData {
 
         self.outputs_len -= 1;
 
-        priced_btc_value - (btc_value * previous_mean_price_paid)
+        // realized_profit_or_loss
+        priced_btc_value - (btc_value * previous_mean_cents_paid as f32 * 100.0)
     }
 
     #[inline(always)]
@@ -89,7 +96,7 @@ impl AddressData {
             amount: 0,
             sent: empty.transfered,
             received: empty.transfered,
-            mean_price_paid: 0.0,
+            mean_cents_paid: 0,
             outputs_len: 0,
         }
     }

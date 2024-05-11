@@ -1,17 +1,18 @@
 use std::sync::Arc;
 
-use axum::{routing::get, serve, Router};
-use generate::generate_paths_json_file;
-use routes::{build_routes, Routes};
+use axum::{extract::State, http::HeaderMap, response::Response, routing::get, serve, Router};
+use reqwest::header::HOST;
+use response::generic_to_reponse;
+use routes::Routes;
 use serde::Serialize;
 use tokio::net::TcpListener;
 use tower_http::compression::CompressionLayer;
 
 mod chunk;
-mod generate;
 mod handler;
 mod imports;
 mod kind;
+mod paths;
 mod response;
 mod routes;
 
@@ -33,9 +34,9 @@ pub struct AppState {
 async fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 
-    let routes = build_routes();
+    let routes = Routes::build();
 
-    generate_paths_json_file(&routes);
+    routes.generate_grouped_keys_to_url_path_file();
 
     let state = AppState {
         routes: Arc::new(routes),
@@ -49,8 +50,8 @@ async fn main() -> color_eyre::Result<()> {
 
     let router = Router::new()
         .route("/*path", get(file_handler))
+        .route("/", get(fallback))
         .with_state(state)
-        .fallback(|| async { "Route not found" })
         .layer(compression_layer);
 
     let listener = TcpListener::bind("0.0.0.0:3111").await?;
@@ -58,4 +59,14 @@ async fn main() -> color_eyre::Result<()> {
     serve(listener, router).await?;
 
     Ok(())
+}
+
+pub async fn fallback(headers: HeaderMap, State(app_state): State<AppState>) -> Response {
+    generic_to_reponse(
+        app_state
+            .routes
+            .to_full_paths(headers[HOST].to_str().unwrap().to_string()),
+        None,
+        60,
+    )
 }

@@ -266,17 +266,17 @@ where
         std::any::type_name::<T>()
     }
 
-    fn reset(&mut self) -> color_eyre::Result<()> {
-        fs::remove_dir(&self.path_all)?;
+    // fn reset(&mut self) -> color_eyre::Result<()> {
+    //     fs::remove_dir(&self.path_all)?;
 
-        self.initial_last_height = None;
-        self.initial_first_unsafe_height = None;
+    //     self.initial_last_height = None;
+    //     self.initial_first_unsafe_height = None;
 
-        self.imported.clear();
-        self.to_insert.clear();
+    //     self.imported.clear();
+    //     self.to_insert.clear();
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     fn pre_export(&mut self) {
         self.to_insert

@@ -12,6 +12,7 @@ pub struct PricePaidSubDataset {
 
     pub realized_cap: BiMap<f32>,
     pub realized_price: BiMap<f32>,
+    pub mvrv: BiMap<f32>,
 
     pp_median: BiMap<f32>,
     pp_95p: BiMap<f32>,
@@ -41,8 +42,9 @@ impl PricePaidSubDataset {
         let mut s = Self {
             min_initial_state: MinInitialState::default(),
 
-            realized_cap: BiMap::new_bin(1, &f("realized_cap")),
-            realized_price: BiMap::new_bin(1, &f("realized_price")),
+            realized_cap: BiMap::_new_bin(1, &f("realized_cap"), usize::MAX),
+            realized_price: BiMap::_new_bin(1, &f("realized_price"), usize::MAX),
+            mvrv: BiMap::new_bin(1, &f("mvrv")),
 
             pp_median: BiMap::new_bin(1, &f("median_price_paid")),
             pp_95p: BiMap::new_bin(1, &f("95p_price_paid")),
@@ -77,6 +79,8 @@ impl PricePaidSubDataset {
             height,
             is_date_last_block,
             date,
+            date_price,
+            block_price,
             ..
         }: &ProcessedBlockData,
         state: &PricePaidState,
@@ -119,6 +123,14 @@ impl PricePaidSubDataset {
 
         if is_date_last_block {
             self.realized_price.date.insert(date, realized_price);
+        }
+
+        self.mvrv
+            .height
+            .insert(height, block_price / realized_price);
+
+        if is_date_last_block {
+            self.mvrv.date.insert(date, date_price / realized_price);
         }
 
         // Check if iter was empty
@@ -191,6 +203,7 @@ impl PricePaidSubDataset {
         vec![
             &self.realized_cap,
             &self.realized_price,
+            &self.mvrv,
             &self.pp_95p,
             &self.pp_90p,
             &self.pp_85p,
@@ -217,6 +230,7 @@ impl PricePaidSubDataset {
         vec![
             &mut self.realized_cap,
             &mut self.realized_price,
+            &mut self.mvrv,
             &mut self.pp_95p,
             &mut self.pp_90p,
             &mut self.pp_85p,

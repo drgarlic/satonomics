@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, ops::RangeInclusive, thread};
+use std::{collections::BTreeMap, ops::RangeInclusive};
 
 use chrono::NaiveDate;
 use itertools::Itertools;
@@ -87,58 +87,44 @@ impl AllDatasets {
     pub fn import() -> color_eyre::Result<Self> {
         let path = "../datasets";
 
-        thread::scope(|scope| {
-            let date_metadata_handle = scope.spawn(|| DateMetadataDataset::import(path));
+        let date_metadata = DateMetadataDataset::import(path)?;
 
-            let cointime_handle = scope.spawn(|| CointimeDataset::import(path));
+        let cointime = CointimeDataset::import(path)?;
 
-            let coindays_handle = scope.spawn(|| CoindaysDataset::import(path));
+        let coindays = CoindaysDataset::import(path)?;
 
-            let mining_handle = scope.spawn(|| MiningDataset::import(path));
+        let mining = MiningDataset::import(path)?;
 
-            let block_metadata_handle = scope.spawn(|| BlockMetadataDataset::import(path));
+        let block_metadata = BlockMetadataDataset::import(path)?;
 
-            let transaction_handle = scope.spawn(|| TransactionDataset::import(path));
+        let transaction = TransactionDataset::import(path)?;
 
-            let address = AddressDatasets::import(path)?;
+        let address = AddressDatasets::import(path)?;
 
-            let utxo = UTXODatasets::import(path)?;
+        let utxo = UTXODatasets::import(path)?;
 
-            let price = PriceDatasets::import(path)?;
+        let price = PriceDatasets::import(path)?;
 
-            let block_metadata = block_metadata_handle.join().unwrap()?;
+        let mut s = Self {
+            min_initial_state: MinInitialState::default(),
 
-            let cointime = cointime_handle.join().unwrap()?;
+            address,
+            block_metadata,
+            cointime,
+            coindays,
+            date_metadata,
+            price,
+            mining,
+            transaction,
+            utxo,
+        };
 
-            let coindays = coindays_handle.join().unwrap()?;
+        s.min_initial_state
+            .consume(MinInitialState::compute_from_datasets(&s));
 
-            let date_metadata = date_metadata_handle.join().unwrap()?;
+        s.export_path_to_type()?;
 
-            let mining = mining_handle.join().unwrap()?;
-
-            let transaction = transaction_handle.join().unwrap()?;
-
-            let mut s = Self {
-                min_initial_state: MinInitialState::default(),
-
-                address,
-                block_metadata,
-                cointime,
-                coindays,
-                date_metadata,
-                price,
-                mining,
-                transaction,
-                utxo,
-            };
-
-            s.min_initial_state
-                .consume(MinInitialState::compute_from_datasets(&s));
-
-            s.export_path_to_type()?;
-
-            Ok(s)
-        })
+        Ok(s)
     }
 
     pub fn insert_data(&mut self, processed_block_data: ProcessedBlockData) {

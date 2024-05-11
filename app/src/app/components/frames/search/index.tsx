@@ -4,8 +4,9 @@ import { createVisibilityObserver } from "@solid-primitives/intersection-observe
 import { scrollIntoView } from "/src/scripts";
 import { createASS } from "/src/solid";
 
-import { Box, Button } from "..";
-import { Line } from "../tree/components";
+import { Box } from "../box";
+import { Button } from "../button";
+import { Line } from "../line";
 
 const PER_PAGE = 100;
 

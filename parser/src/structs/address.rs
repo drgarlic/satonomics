@@ -4,7 +4,7 @@ use itertools::Itertools;
 
 use crate::{
     bitcoin::multisig_addresses,
-    structs::{U8x19, U8x31, SANAKIRJA_MAX_KEY_SIZE},
+    databases::{U8x19, U8x31, SANAKIRJA_MAX_KEY_SIZE},
 };
 
 use super::{AddressType, Counter};

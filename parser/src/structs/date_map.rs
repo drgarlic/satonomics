@@ -263,17 +263,17 @@ where
         std::any::type_name::<T>()
     }
 
-    fn reset(&mut self) -> color_eyre::Result<()> {
-        fs::remove_dir(&self.path_all)?;
+    // fn reset(&mut self) -> color_eyre::Result<()> {
+    //     fs::remove_dir(&self.path_all)?;
 
-        self.initial_last_date = None;
-        self.initial_first_unsafe_date = None;
+    //     self.initial_last_date = None;
+    //     self.initial_first_unsafe_date = None;
 
-        self.imported.clear();
-        self.to_insert.clear();
+    //     self.imported.clear();
+    //     self.to_insert.clear();
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     fn pre_export(&mut self) {
         self.to_insert
@@ -407,7 +407,7 @@ where
     {
         map.iter()
             .enumerate()
-            .map(|(index, (date, value))| (date.to_owned(), transform((date, value, &map, index))))
+            .map(|(index, (date, value))| (date.to_owned(), transform((date, value, map, index))))
             .collect()
     }
 

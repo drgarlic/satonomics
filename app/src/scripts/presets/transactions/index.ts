@@ -23,7 +23,7 @@ export function createPresets(scale: ResourceScale) {
                 id: "transaction-count",
                 title: "Transaction Count",
                 color: colors.bitcoin,
-                dataset: params.datasets[scale].transactionCount,
+                dataset: params.datasets[scale].transaction_count,
               },
             ],
           });
@@ -47,7 +47,7 @@ export function createPresets(scale: ResourceScale) {
                 id: "transaction-volume",
                 title: "Transaction Volume",
                 color: colors.bitcoin,
-                dataset: params.datasets[scale].transactionVolume,
+                dataset: params.datasets[scale].transaction_volume,
               },
             ],
           });
@@ -71,7 +71,7 @@ export function createPresets(scale: ResourceScale) {
                 id: "transaction-volume-annualized",
                 title: "Transaction Volume Annualized",
                 color: colors.bitcoin,
-                dataset: params.datasets[scale].transactionVolumeAnnualized,
+                dataset: params.datasets[scale].annualized_transaction_volume,
               },
             ],
           });
@@ -95,7 +95,7 @@ export function createPresets(scale: ResourceScale) {
                 id: "transactions-velocity",
                 title: "Transactions Velocity",
                 color: colors.bitcoin,
-                dataset: params.datasets[scale].transactionsVelocity,
+                dataset: params.datasets[scale].transaction_velocity,
               },
             ],
           });

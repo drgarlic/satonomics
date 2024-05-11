@@ -108,14 +108,16 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
                         .map_or(true, |next_block_date| blocks_loop_date < next_block_date);
 
                     if should_insert {
+                        let compute_addresses = databases.check_if_needs_to_compute_addresses(
+                            current_block_height,
+                            current_block_date,
+                        );
+
                         parse_block(ParseData {
                             bitcoin_db,
                             block: current_block,
                             block_index: blocks_loop_i,
-                            compute_addresses: databases.check_if_needs_to_compute_addresses(
-                                current_block_height,
-                                current_block_date,
-                            ),
+                            compute_addresses,
                             databases: &mut databases,
                             datasets: &mut datasets,
                             date: current_block_date,
@@ -150,7 +152,7 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
             }
         }
 
-        // Not sure why -1
+        // Don't remember why -1
         let last_height = height - 1;
 
         println!(

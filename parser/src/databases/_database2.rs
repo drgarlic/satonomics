@@ -1,30 +1,16 @@
+// https://github.com/satonomics-org/explorer/commit/f4ef0ab8397b531b6309d012313d58e00c2a3500?diff=unified&w=0#diff-d6cebd388b8cbacdc37d2925aa13a245dceb9ffd4999d3b5f4278ef27b22d29f
+
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt::Debug,
     fs,
 };
 
-use derive_deref::{Deref, DerefMut};
+use heed::{EnvOpenOptions, RwTxn};
 
-// https://docs.rs/sanakirja/latest/sanakirja/index.html
-// https://pijul.org/posts/2021-02-06-rethinking-sanakirja/
-// Seems indeed much faster than ReDB and LMDB (heed)
-// But a lot has changed code wise between them so a retest wouldn't hurt
-use sanakirja::{
-    btree::{self, page, page_unsized, BTreeMutPage, Db_},
-    direct_repr, Commit, Env, Error, MutTxn, RootDb, Storable, UnsizedStorable,
-};
+use super::databases_folder_path;
 
-use crate::io::OUTPUTS_FOLDER_PATH;
-
-#[allow(unused)]
-pub type SizedDatabase<Key, Value> = Database<Key, Key, Value, page::Page<Key, Value>>;
-#[allow(unused)]
-pub type UnsizedDatabase<KeyTree, KeyDB, Value> =
-    Database<KeyTree, KeyDB, Value, page_unsized::Page<KeyDB, Value>>;
-
-/// There is no `cached_gets` since it's much cheaper and faster to do a parallel search first using `unsafe_get` than caching gets along the way.
-pub struct Database<KeyTree, KeyDB, Value, Page>
+pub struct Database2<KeyTree, KeyDB, Value, Page>
 where
     KeyTree: Ord + Clone + Debug,
     KeyDB: Ord + ?Sized + Storable,
@@ -33,8 +19,8 @@ where
 {
     cached_puts: BTreeMap<KeyTree, Value>,
     cached_dels: BTreeSet<KeyTree>,
-    db: Db_<KeyDB, Value, Page>,
-    txn: MutTxn<Env, ()>,
+    db: heed::Database<KeyDB, Value, Page>,
+    wtxn: RwTxn,
     key_tree_to_key_db: fn(&KeyTree) -> &KeyDB,
 }
 
@@ -42,7 +28,7 @@ pub const SANAKIRJA_MAX_KEY_SIZE: usize = 510;
 const ROOT_DB: usize = 0;
 const PAGE_SIZE: u64 = 4096 * 256; // 1mo - Must be a multiplier of 4096
 
-impl<KeyDB, KeyTree, Value, Page> Database<KeyTree, KeyDB, Value, Page>
+impl<KeyDB, KeyTree, Value, Page> Database2<KeyTree, KeyDB, Value, Page>
 where
     KeyTree: Ord + Clone + Debug,
     KeyDB: Ord + ?Sized + Storable,
@@ -54,17 +40,22 @@ where
         file: &str,
         key_tree_to_key_db: fn(&KeyTree) -> &KeyDB,
     ) -> color_eyre::Result<Self> {
-        let mut txn = Self::init_txn(folder, file)?;
+        let path = databases_folder_path(folder);
 
-        let db = txn
-            .root_db(ROOT_DB)
-            .unwrap_or_else(|| unsafe { btree::create_db_(&mut txn).unwrap() });
+        fs::create_dir_all(&path)?;
+
+        let env = unsafe { EnvOpenOptions::new().open(format!("{path}/{file}"))? };
+
+        // We open the default unnamed database
+        let mut wtxn = env.write_txn()?;
+
+        let db: heed::Database<KeyDB, Value> = env.create_database(&mut wtxn, None)?;
 
         Ok(Self {
             cached_puts: BTreeMap::default(),
             cached_dels: BTreeSet::default(),
             db,
-            txn,
+            wtxn,
             key_tree_to_key_db,
         })
     }
@@ -163,64 +154,4 @@ where
 
         None
     }
-
-    fn init_txn(folder: &str, file: &str) -> color_eyre::Result<MutTxn<Env, ()>> {
-        let path = databases_folder_path(folder);
-
-        fs::create_dir_all(&path)?;
-
-        let env = unsafe { Env::new_nolock(format!("{path}/{file}"), PAGE_SIZE, 1).unwrap() };
-
-        let txn = Env::mut_txn_begin(env)?;
-
-        Ok(txn)
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Default, Copy)]
-pub struct U8x19([u8; 19]);
-direct_repr!(U8x19);
-impl From<&[u8]> for U8x19 {
-    fn from(slice: &[u8]) -> Self {
-        let mut arr = Self::default();
-        arr.copy_from_slice(slice);
-        arr
-    }
-}
-
-// #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Default, Copy)]
-// pub struct U8x20([u8; 20]);
-// direct_repr!(U8x20);
-// impl From<&[u8]> for U8x20 {
-//     fn from(slice: &[u8]) -> Self {
-//         let mut arr = Self::default();
-//         arr.copy_from_slice(slice);
-//         arr
-//     }
-// }
-
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Default, Copy)]
-pub struct U8x31([u8; 31]);
-direct_repr!(U8x31);
-impl From<&[u8]> for U8x31 {
-    fn from(slice: &[u8]) -> Self {
-        let mut arr = Self::default();
-        arr.copy_from_slice(slice);
-        arr
-    }
-}
-
-// #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Default, Copy)]
-// pub struct U8x32([u8; 32]);
-// direct_repr!(U8x32);
-// impl From<&[u8]> for U8x32 {
-//     fn from(slice: &[u8]) -> Self {
-//         let mut arr = Self::default();
-//         arr.copy_from_slice(slice);
-//         arr
-//     }
-// }
-
-pub fn databases_folder_path(folder: &str) -> String {
-    format!("{OUTPUTS_FOLDER_PATH}/databases/{folder}")
 }

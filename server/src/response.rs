@@ -54,7 +54,7 @@ where
     generic_to_reponse(dataset, Some(chunk), 60)
 }
 
-fn generic_to_reponse<T>(generic: T, chunk: Option<Chunk>, cache_time: u64) -> Response
+pub fn generic_to_reponse<T>(generic: T, chunk: Option<Chunk>, cache_time: u64) -> Response
 where
     T: Serialize,
 {
