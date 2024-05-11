@@ -84,7 +84,7 @@ impl PricePaidSubDataset {
             ..
         }: &ProcessedBlockData,
         state: &PricePaidState,
-        cohort_supply: f32,
+        supply: f32,
     ) {
         let PricePaidState {
             realized_cap,
@@ -119,7 +119,7 @@ impl PricePaidSubDataset {
         let realized_price = self
             .realized_price
             .height
-            .insert(height, cohort_supply / realized_cap);
+            .insert(height, supply / realized_cap);
 
         if is_date_last_block {
             self.realized_price.date.insert(date, realized_price);

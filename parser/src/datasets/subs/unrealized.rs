@@ -9,6 +9,7 @@ pub struct UnrealizedSubDataset {
     min_initial_state: MinInitialState,
 
     supply_in_profit: BiMap<f32>,
+    supply_in_loss: BiMap<f32>,
     unrealized_profit: BiMap<f32>,
     unrealized_loss: BiMap<f32>,
 }
@@ -21,6 +22,7 @@ impl UnrealizedSubDataset {
             min_initial_state: MinInitialState::default(),
 
             supply_in_profit: BiMap::new_bin(1, &f("supply_in_profit")),
+            supply_in_loss: BiMap::new_bin(1, &f("supply_in_loss")),
             unrealized_profit: BiMap::new_bin(1, &f("unrealized_profit")),
             unrealized_loss: BiMap::new_bin(1, &f("unrealized_loss")),
         };
@@ -41,10 +43,16 @@ impl UnrealizedSubDataset {
         }: &ProcessedBlockData,
         block_state: &UnrealizedState,
         date_state: &Option<UnrealizedState>,
+        supply: f32,
     ) {
-        self.supply_in_profit
+        let supply_in_profit = self
+            .supply_in_profit
             .height
             .insert(height, sats_to_btc(block_state.supply_in_profit));
+
+        self.supply_in_loss
+            .height
+            .insert(height, supply - supply_in_profit);
 
         self.unrealized_profit
             .height
@@ -57,9 +65,14 @@ impl UnrealizedSubDataset {
         if is_date_last_block {
             let date_state = date_state.as_ref().unwrap();
 
-            self.supply_in_profit
+            let supply_in_profit = self
+                .supply_in_profit
                 .date
                 .insert(date, sats_to_btc(date_state.supply_in_profit));
+
+            self.supply_in_loss
+                .date
+                .insert(date, supply - supply_in_profit);
 
             self.unrealized_profit
                 .date

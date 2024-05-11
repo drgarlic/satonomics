@@ -212,24 +212,48 @@ impl CohortDataset {
             processed_block_data,
             &states.all.unrealized_block_state,
             &states.all.unrealized_date_state,
+            self.all
+                .supply
+                .total
+                .height
+                .get(&processed_block_data.height)
+                .unwrap(),
         );
 
         self.illiquid.unrealized.insert(
             processed_block_data,
             &states.illiquid.unrealized_block_state,
             &states.illiquid.unrealized_date_state,
+            self.illiquid
+                .supply
+                .total
+                .height
+                .get(&processed_block_data.height)
+                .unwrap(),
         );
 
         self.liquid.unrealized.insert(
             processed_block_data,
             &states.liquid.unrealized_block_state,
             &states.liquid.unrealized_date_state,
+            self.liquid
+                .supply
+                .total
+                .height
+                .get(&processed_block_data.height)
+                .unwrap(),
         );
 
         self.highly_liquid.unrealized.insert(
             processed_block_data,
             &states.highly_liquid.unrealized_block_state,
             &states.highly_liquid.unrealized_date_state,
+            self.highly_liquid
+                .supply
+                .total
+                .height
+                .get(&processed_block_data.height)
+                .unwrap(),
         );
     }
 

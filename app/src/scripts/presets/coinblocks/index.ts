@@ -834,13 +834,13 @@ export function createPresets<Scale extends ResourceScale>({
                     id: "vaulted",
                     title: "Vaulted Supply",
                     color: colors.vaultedness,
-                    dataset: datasets.vaultedSupply,
+                    dataset: datasets.vaulted_supply,
                   },
                   {
                     id: "supply-in-profit",
                     title: "Supply in profit",
                     color: colors.bitcoin,
-                    dataset: datasets.SupplyInProfit,
+                    dataset: datasets.supply_in_profit,
                   },
                 ],
               });
@@ -864,19 +864,19 @@ export function createPresets<Scale extends ResourceScale>({
                     id: "circulating-supply",
                     title: "Circulating Supply",
                     color: colors.coinblocksCreated,
-                    dataset: datasets.SupplyTotal,
+                    dataset: datasets.supply,
                   },
                   {
                     id: "active",
                     title: "Active Supply",
                     color: colors.liveliness,
-                    dataset: datasets.activeSupply,
+                    dataset: datasets.active_supply,
                   },
                   {
                     id: "supply-in-loss",
                     title: "Supply in Loss",
                     color: colors.bitcoin,
-                    dataset: datasets.SupplyInLoss,
+                    dataset: datasets.supply_in_loss,
                   },
                 ],
               });

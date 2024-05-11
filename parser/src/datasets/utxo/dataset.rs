@@ -68,6 +68,7 @@ impl UTXODataset {
                 &utxo_cohorts_one_shot_states
                     .get(&self.id)
                     .unrealized_date_state,
+                self.subs.supply.total.height.get(&height).unwrap(),
             );
         }
 
