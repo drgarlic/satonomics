@@ -26,7 +26,7 @@ export function createPresets(datasets: Datasets): Presets {
       name: "Date",
       tree: [
         createUSDPresets("date"),
-        createBlocksPresets("date"),
+        createBlocksPresets(),
         createMinersPresets("date"),
         createTransactionsPresets("date"),
         ...createCohortPresetList({
@@ -49,7 +49,6 @@ export function createPresets(datasets: Datasets): Presets {
       name: "Height",
       tree: [
         createUSDPresets("height"),
-        createBlocksPresets("height"),
         createMinersPresets("height"),
         createTransactionsPresets("height"),
         ...createCohortPresetList({

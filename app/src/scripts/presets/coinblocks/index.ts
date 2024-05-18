@@ -706,7 +706,7 @@ export function createPresets<Scale extends ResourceScale>({
                     title: "Vaulted Supply Net Change",
                     color: `${colors.vaultedPrice}80`,
                     seriesType: SeriesType.Based,
-                    dataset: datasets.vaultedSupply90dNetChange,
+                    dataset: datasets.vaulted_supply_3m_net_change,
                   },
                 ],
               });
@@ -828,7 +828,7 @@ export function createPresets<Scale extends ResourceScale>({
                     id: "circulating-supply",
                     title: "Circulating Supply",
                     color: colors.coinblocksCreated,
-                    dataset: datasets.SupplyTotal,
+                    dataset: datasets.supply,
                   },
                   {
                     id: "vaulted",
@@ -903,13 +903,13 @@ export function createPresets<Scale extends ResourceScale>({
                 id: "cointime-adjusted-yearly-inflation-rate",
                 title: "Cointime Adjusted (%)",
                 color: colors.coinblocksCreated,
-                dataset: datasets.cointimeAdjustedYearlyInflationRate,
+                dataset: datasets.cointime_adjusted_yearly_inflation_rate,
               },
               {
                 id: "yearly-inflation-rate",
                 title: "Nominal (%)",
                 color: colors.bitcoin,
-                dataset: datasets.yearlyInflationRate,
+                dataset: datasets.yearly_inflation_rate,
               },
             ],
           });
@@ -934,13 +934,13 @@ export function createPresets<Scale extends ResourceScale>({
                 id: "cointime-adjusted-transactions-velocity",
                 title: "Cointime Adjusted",
                 color: colors.coinblocksCreated,
-                dataset: datasets.cointimeAdjustedVelocity,
+                dataset: datasets.cointime_adjusted_velocity,
               },
               {
                 id: "transactions-velocity",
                 title: "Nominal",
                 color: colors.bitcoin,
-                dataset: datasets.transactionsVelocity,
+                dataset: datasets.transaction_velocity,
               },
             ],
           });
@@ -969,25 +969,25 @@ export function createPresets<Scale extends ResourceScale>({
                     id: "thermo-cap",
                     title: "Thermo Cap",
                     color: colors.thermoCap,
-                    dataset: datasets.thermoCap,
+                    dataset: datasets.thermo_cap,
                   },
                   {
                     id: "investor-cap",
                     title: "Investor Cap",
                     color: colors.investorCap,
-                    dataset: datasets.investorCapitalization,
+                    dataset: datasets.investor_cap,
                   },
                   {
                     id: "realized-cap",
                     title: "Realized Cap",
                     color: colors.realizedCap,
-                    dataset: datasets.CumulatedNetRealizedProfitAndLoss,
+                    dataset: datasets.realized_cap,
                   },
                   {
                     id: "market-cap",
                     title: "Market Cap",
                     color: colors.bitcoin,
-                    dataset: datasets.marketCapitalization,
+                    dataset: datasets.market_cap,
                   },
                 ],
               });
@@ -1012,7 +1012,7 @@ export function createPresets<Scale extends ResourceScale>({
                     id: "thermo-cap",
                     title: "Thermo Cap",
                     color: colors.thermoCap,
-                    dataset: datasets.thermoCap,
+                    dataset: datasets.thermo_cap,
                   },
                 ],
               });
@@ -1037,7 +1037,7 @@ export function createPresets<Scale extends ResourceScale>({
                     id: "investor-cap",
                     title: "Investor Cap",
                     color: colors.investorCap,
-                    dataset: datasets.investorCapitalization,
+                    dataset: datasets.investor_cap,
                   },
                 ],
               });
@@ -1061,7 +1061,7 @@ export function createPresets<Scale extends ResourceScale>({
                     id: "investor-cap",
                     title: "Investor Cap",
                     color: colors.bitcoin,
-                    dataset: datasets.thermoCapToInvestorCapRatio,
+                    dataset: datasets.thermo_cap_to_investor_cap_ratio,
                   },
                 ],
               });
@@ -1092,13 +1092,13 @@ export function createPresets<Scale extends ResourceScale>({
                         id: "active-price",
                         title: "Active Price",
                         color: colors.liveliness,
-                        dataset: datasets.activePrice,
+                        dataset: datasets.active_price,
                       },
                       {
                         id: "realized-price",
                         title: "Realized Price",
                         color: colors.bitcoin,
-                        dataset: datasets.PricePaidMean,
+                        dataset: datasets.realized_price,
                       },
                     ],
                   });
@@ -1133,7 +1133,7 @@ export function createPresets<Scale extends ResourceScale>({
                         id: "vaulted-price",
                         title: "Vaulted Price",
                         color: colors.vaultedness,
-                        dataset: datasets.vaultedPrice,
+                        dataset: datasets.vaulted_price,
                       },
                     ],
                   });
@@ -1168,7 +1168,7 @@ export function createPresets<Scale extends ResourceScale>({
                         id: "true-market-mean",
                         title: "True Market Mean",
                         color: colors.trueMarketMeanPrice,
-                        dataset: datasets.trueMarketMean,
+                        dataset: datasets.true_market_mean,
                       },
                     ],
                   });

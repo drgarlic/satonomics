@@ -243,7 +243,9 @@ export const applyMultipleSeries = <Scale extends ResourceScale>({
           }),
         );
 
-        createEffect(() => series.setData(dataset?.values() || []));
+        createEffect(() => {
+          series.setData(dataset?.values() || []);
+        });
       },
     );
 

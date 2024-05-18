@@ -1,9 +1,6 @@
 import groupedKeysToPath from "/src/../../datasets/grouped_keys_to_url_path.json";
 
 import { createResourceDataset } from "../base";
-import { createCommonDatasets } from "../common";
-
-// import { createPriceAveragesDatasets } from "./averages";
 
 export { averages } from "./averages";
 
@@ -17,8 +14,9 @@ export function createDateDatasets({
 
   const resourceDatasets = {} as Record<Exclude<Key, "ohlc">, ResourceData>;
 
-  Object.keys(groupedKeysToPath.date).forEach(([_key, path]) => {
+  Object.entries(groupedKeysToPath.date).forEach(([_key, path]) => {
     const key = _key as Key;
+
     if (key !== "ohlc") {
       resourceDatasets[key] = createResourceDataset<"date">({
         scale: "date",
@@ -34,7 +32,7 @@ export function createDateDatasets({
     setActiveResources,
   });
 
-  const common = createCommonDatasets({ price, setActiveResources });
+  // const common = createCommonDatasets({ price, setActiveResources });
 
   const datasets = {
     price,

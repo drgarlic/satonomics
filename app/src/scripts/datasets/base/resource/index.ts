@@ -134,6 +134,8 @@ export function createResourceDataset<
     fetch: _fetch,
     fetchedJSONs,
     values: createLazyMemo(() => {
+      console.log(url);
+
       setActiveResources((resources) => resources.add(resource));
 
       onCleanup(() =>
