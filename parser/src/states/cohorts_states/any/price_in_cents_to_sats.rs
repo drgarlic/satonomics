@@ -31,7 +31,7 @@ impl PriceInCentsToSats {
         }
     }
 
-    pub fn compute_on_shot_states(
+    pub fn compute_one_shot_states(
         &self,
         supply: u64,
         block_price: f32,

@@ -17,9 +17,8 @@ use sanakirja::{
 
 use crate::io::OUTPUTS_FOLDER_PATH;
 
-#[allow(unused)]
 pub type SizedDatabase<Key, Value> = Database<Key, Key, Value, page::Page<Key, Value>>;
-#[allow(unused)]
+
 pub type UnsizedDatabase<KeyTree, KeyDB, Value> =
     Database<KeyTree, KeyDB, Value, page_unsized::Page<KeyDB, Value>>;
 

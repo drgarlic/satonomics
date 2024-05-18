@@ -370,6 +370,14 @@ impl<T> SplitByUTXOCohort<T> {
             apply(&mut self.from_1y);
         }
 
+        if UTXO_FILTERS.from_2y.check(days_old, year) {
+            apply(&mut self.from_2y);
+        }
+
+        if UTXO_FILTERS.from_4y.check(days_old, year) {
+            apply(&mut self.from_4y);
+        }
+
         if UTXO_FILTERS.from_10y.check(days_old, year) {
             apply(&mut self.from_10y);
         }

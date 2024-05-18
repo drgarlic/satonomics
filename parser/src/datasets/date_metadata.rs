@@ -3,11 +3,12 @@ use crate::{
     structs::{AnyDateMap, DateMap},
 };
 
-use super::{MinInitialState, ProcessedBlockData};
+use super::{InsertData, MinInitialStates};
 
 pub struct DateMetadataDataset {
-    min_initial_state: MinInitialState,
+    min_initial_states: MinInitialStates,
 
+    // Inserted
     pub first_height: DateMap<usize>,
     pub last_height: DateMap<usize>,
 }
@@ -17,26 +18,28 @@ impl DateMetadataDataset {
         let f = |s: &str| format!("{parent_path}/{s}");
 
         let mut s = Self {
-            min_initial_state: MinInitialState::default(),
+            min_initial_states: MinInitialStates::default(),
 
             first_height: DateMap::_new_bin(1, &f("first_height"), usize::MAX, true),
             last_height: DateMap::_new_bin(1, &f("last_height"), usize::MAX, true),
         };
 
-        s.min_initial_state
-            .consume(MinInitialState::compute_from_dataset(&s));
+        s.min_initial_states
+            .consume(MinInitialStates::compute_from_dataset(&s));
+
+        dbg!(&s.min_initial_states);
 
         Ok(s)
     }
 
-    pub fn insert_data(
+    pub fn insert(
         &mut self,
-        &ProcessedBlockData {
+        &InsertData {
             date,
             date_first_height,
             height,
             ..
-        }: &ProcessedBlockData,
+        }: &InsertData,
     ) {
         self.first_height.insert(date, date_first_height);
 
@@ -45,15 +48,15 @@ impl DateMetadataDataset {
 }
 
 impl AnyDataset for DateMetadataDataset {
-    fn to_any_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
+    fn to_inserted_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
         vec![&self.first_height, &self.last_height]
     }
 
-    fn to_any_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
+    fn to_inserted_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
         vec![&mut self.first_height, &mut self.last_height]
     }
 
-    fn get_min_initial_state(&self) -> &MinInitialState {
-        &self.min_initial_state
+    fn get_min_initial_states(&self) -> &MinInitialStates {
+        &self.min_initial_states
     }
 }

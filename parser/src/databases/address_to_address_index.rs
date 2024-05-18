@@ -42,20 +42,19 @@ pub struct AddressToAddressIndex {
 }
 
 impl AddressToAddressIndex {
-    #[allow(unused)]
-    pub fn safe_get(&mut self, address: &Address) -> Option<&Value> {
-        match address {
-            Address::Empty(key) => self.open_empty().get(key),
-            Address::Unknown(key) => self.open_unknown().get(key),
-            Address::MultiSig(key) => self.open_multisig().get(key),
-            Address::P2PK((prefix, rest)) => self.open_p2pk(*prefix).get(rest),
-            Address::P2PKH((prefix, rest)) => self.open_p2pkh(*prefix).get(rest),
-            Address::P2SH((prefix, rest)) => self.open_p2sh(*prefix).get(rest),
-            Address::P2WPKH((prefix, rest)) => self.open_p2wpkh(*prefix).get(rest),
-            Address::P2WSH((prefix, rest)) => self.open_p2wsh(*prefix).get(rest),
-            Address::P2TR((prefix, rest)) => self.open_p2tr(*prefix).get(rest),
-        }
-    }
+    // pub fn safe_get(&mut self, address: &Address) -> Option<&Value> {
+    //     match address {
+    //         Address::Empty(key) => self.open_empty().get(key),
+    //         Address::Unknown(key) => self.open_unknown().get(key),
+    //         Address::MultiSig(key) => self.open_multisig().get(key),
+    //         Address::P2PK((prefix, rest)) => self.open_p2pk(*prefix).get(rest),
+    //         Address::P2PKH((prefix, rest)) => self.open_p2pkh(*prefix).get(rest),
+    //         Address::P2SH((prefix, rest)) => self.open_p2sh(*prefix).get(rest),
+    //         Address::P2WPKH((prefix, rest)) => self.open_p2wpkh(*prefix).get(rest),
+    //         Address::P2WSH((prefix, rest)) => self.open_p2wsh(*prefix).get(rest),
+    //         Address::P2TR((prefix, rest)) => self.open_p2tr(*prefix).get(rest),
+    //     }
+    // }
 
     pub fn open_db(&mut self, address: &Address) {
         match address {

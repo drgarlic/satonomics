@@ -10,13 +10,11 @@ impl Counter {
         self.0 += 1;
     }
 
-    #[allow(unused)]
     #[inline(always)]
     pub fn decrement(&mut self) {
         self.0 -= 1;
     }
 
-    #[allow(unused)]
     #[inline(always)]
     pub fn reset(&mut self) {
         self.0 = 0;

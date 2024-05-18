@@ -4,7 +4,7 @@ use chrono::{NaiveDateTime, NaiveTime, TimeZone, Timelike, Utc};
 use color_eyre::eyre::Error;
 
 use crate::{
-    datasets::{AnyDataset, MinInitialState, ProcessedBlockData},
+    datasets::{AnyDataset, InsertData, MinInitialStates},
     price::{Binance, Kraken},
     structs::{AnyHeightMap, HeightMap},
 };
@@ -12,12 +12,13 @@ use crate::{
 use super::OHLC;
 
 pub struct HeightDataset {
-    min_initial_state: MinInitialState,
+    min_initial_states: MinInitialStates,
 
     kraken_1mn: Option<BTreeMap<u32, OHLC>>,
     binance_1mn: Option<BTreeMap<u32, OHLC>>,
     binance_har: Option<BTreeMap<u32, OHLC>>,
 
+    // Inserted
     pub ohlcs: HeightMap<OHLC>,
     pub closes: HeightMap<f32>,
 }
@@ -25,7 +26,7 @@ pub struct HeightDataset {
 impl HeightDataset {
     pub fn import(price_path: &str, dataset_path: &str) -> color_eyre::Result<Self> {
         let mut s = Self {
-            min_initial_state: MinInitialState::default(),
+            min_initial_states: MinInitialStates::default(),
 
             binance_1mn: None,
             binance_har: None,
@@ -35,8 +36,8 @@ impl HeightDataset {
             closes: HeightMap::_new_json(1, &format!("{dataset_path}/close"), usize::MAX, false),
         };
 
-        s.min_initial_state
-            .consume(MinInitialState::compute_from_dataset(&s));
+        s.min_initial_states
+            .consume(MinInitialStates::compute_from_dataset(&s));
 
         Ok(s)
     }
@@ -181,22 +182,22 @@ impl HeightDataset {
         Ok(final_ohlc)
     }
 
-    pub fn insert_data(&mut self, &ProcessedBlockData { height, .. }: &ProcessedBlockData) {
+    pub fn insert(&mut self, &InsertData { height, .. }: &InsertData) {
         self.closes
             .insert(height, self.ohlcs.get(&height).unwrap().close);
     }
 }
 
 impl AnyDataset for HeightDataset {
-    fn get_min_initial_state(&self) -> &MinInitialState {
-        &self.min_initial_state
+    fn get_min_initial_states(&self) -> &MinInitialStates {
+        &self.min_initial_states
     }
 
-    fn to_any_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
+    fn to_inserted_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
         vec![&self.ohlcs, &self.closes]
     }
 
-    fn to_any_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
+    fn to_inserted_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
         vec![&mut self.ohlcs, &mut self.closes]
     }
 }

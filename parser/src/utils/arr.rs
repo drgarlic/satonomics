@@ -65,7 +65,6 @@ impl<T> ArrayOperations<T> for &[T] {
             .collect_vec()
     }
 
-    #[allow(unused)]
     fn add(&self, other: &[T]) -> Vec<T>
     where
         T: Add<Output = T> + Copy + Default,
@@ -74,7 +73,6 @@ impl<T> ArrayOperations<T> for &[T] {
             .transform(|(index, value, _)| *value + *other.get(index).unwrap())
     }
 
-    #[allow(unused)]
     fn subtract(&self, other: &[T]) -> Vec<T>
     where
         T: Sub<Output = T> + Copy + Default,
@@ -83,7 +81,6 @@ impl<T> ArrayOperations<T> for &[T] {
             .transform(|(index, value, _)| *value - *other.get(index).unwrap())
     }
 
-    #[allow(unused)]
     fn multiply(&self, other: &[T]) -> Vec<T>
     where
         T: Mul<Output = T> + Copy + Default,
@@ -92,7 +89,6 @@ impl<T> ArrayOperations<T> for &[T] {
             .transform(|(index, value, _)| *value * *other.get(index).unwrap())
     }
 
-    #[allow(unused)]
     fn divide(&self, other: &[T]) -> Vec<T>
     where
         T: Div<Output = T> + Copy + Default,
@@ -110,7 +106,6 @@ impl<T> ArrayOperations<T> for &[T] {
         }
     }
 
-    #[allow(unused)]
     fn cumulate(&self) -> Vec<T>
     where
         T: Sum + Copy + Default + AddAssign,
@@ -125,7 +120,6 @@ impl<T> ArrayOperations<T> for &[T] {
             .collect_vec()
     }
 
-    #[allow(unused)]
     fn last_x_sum(&self, x: usize) -> Vec<T>
     where
         T: Sum + Copy + Default + AddAssign + SubAssign,
@@ -148,7 +142,6 @@ impl<T> ArrayOperations<T> for &[T] {
             .collect_vec()
     }
 
-    #[allow(unused)]
     fn moving_average(&self, x: usize) -> Vec<f32>
     where
         T: Sum + Copy + Default + AddAssign + SubAssign + ToF32,
@@ -169,7 +162,6 @@ impl<T> ArrayOperations<T> for &[T] {
             .collect_vec()
     }
 
-    #[allow(unused)]
     fn net_change(&self, offset: usize) -> Vec<T>
     where
         T: Copy + Default + Sub<Output = T>,
@@ -187,7 +179,6 @@ impl<T> ArrayOperations<T> for &[T] {
         })
     }
 
-    #[allow(unused)]
     fn median(&self, size: usize) -> Vec<Option<T>>
     where
         T: FloatCore,

@@ -1,11 +1,12 @@
 use crate::{
-    datasets::{AnyDataset, MinInitialState, ProcessedBlockData},
+    datasets::{AnyDataset, InsertData, MinInitialStates},
     structs::{AnyBiMap, BiMap},
 };
 
 pub struct MetadataDataset {
-    min_initial_state: MinInitialState,
+    min_initial_states: MinInitialStates,
 
+    // Inserted
     address_count: BiMap<usize>,
 }
 
@@ -14,25 +15,25 @@ impl MetadataDataset {
         let f = |s: &str| format!("{parent_path}/{s}");
 
         let mut s = Self {
-            min_initial_state: MinInitialState::default(),
+            min_initial_states: MinInitialStates::default(),
 
             address_count: BiMap::new_bin(1, &f("address_count")),
         };
 
-        s.min_initial_state
-            .consume(MinInitialState::compute_from_dataset(&s));
+        s.min_initial_states
+            .consume(MinInitialStates::compute_from_dataset(&s));
 
         Ok(s)
     }
 
     pub fn insert(
         &mut self,
-        &ProcessedBlockData {
+        &InsertData {
             height,
             date,
             is_date_last_block,
             ..
-        }: &ProcessedBlockData,
+        }: &InsertData,
         address_count: usize,
     ) {
         self.address_count.height.insert(height, address_count);
@@ -44,15 +45,15 @@ impl MetadataDataset {
 }
 
 impl AnyDataset for MetadataDataset {
-    fn get_min_initial_state(&self) -> &MinInitialState {
-        &self.min_initial_state
+    fn get_min_initial_states(&self) -> &MinInitialStates {
+        &self.min_initial_states
     }
 
-    fn to_any_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
+    fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
         vec![&self.address_count]
     }
 
-    fn to_any_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
+    fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
         vec![&mut self.address_count]
     }
 }

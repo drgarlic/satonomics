@@ -1,14 +1,16 @@
-use std::time::Instant;
+use std::{collections::BTreeSet, time::Instant};
 
 use chrono::{offset::Local, Datelike};
 use export::ExportedData;
-use parse_block::ParseData;
+use itertools::Itertools;
+
+use parse::ParseData;
 
 use crate::{
-    actions::{export, find_first_unsafe_height, parse_block},
+    actions::{export, find_first_inserted_unsafe_height, parse},
     bitcoin::{check_if_height_safe, BitcoinDB, NUMBER_OF_UNSAFE_BLOCKS},
     databases::Databases,
-    datasets::AllDatasets,
+    datasets::{AllDatasets, ComputeData},
     states::States,
     structs::DateData,
     utils::timestamp_to_naive_date,
@@ -42,7 +44,10 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
 
     println!("{:?} - Imported states", Local::now());
 
-    let mut height = find_first_unsafe_height(&mut states, &mut databases, &datasets);
+    let first_unsafe_heights =
+        find_first_inserted_unsafe_height(&mut states, &mut databases, &datasets);
+
+    let mut height = first_unsafe_heights.min();
 
     println!("{:?} - Starting parsing at height: {height}", Local::now());
 
@@ -53,6 +58,9 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
 
     'parsing: loop {
         let time = Instant::now();
+
+        let mut processed_heights = BTreeSet::new();
+        let mut processed_dates = BTreeSet::new();
 
         'days: loop {
             let mut blocks_loop_i = 0;
@@ -107,13 +115,16 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
                         // Do NOT change `blocks_loop_date` to `current_block_date` !!!
                         .map_or(true, |next_block_date| blocks_loop_date < next_block_date);
 
-                    if should_insert {
+                    processed_dates.insert(current_block_date);
+                    processed_heights.insert(current_block_height);
+
+                    if should_insert && first_unsafe_heights.inserted <= current_block_height {
                         let compute_addresses = databases.check_if_needs_to_compute_addresses(
                             current_block_height,
                             current_block_date,
                         );
 
-                        parse_block(ParseData {
+                        parse(ParseData {
                             bitcoin_db,
                             block: current_block,
                             block_index: blocks_loop_i,
@@ -160,26 +171,24 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
             time.elapsed().as_secs_f32(),
         );
 
-        if should_export && check_if_height_safe(height, block_count) {
+        if first_unsafe_heights.computed <= last_height {
+            datasets.compute(ComputeData {
+                dates: &processed_dates.into_iter().collect_vec(),
+                heights: &processed_heights.into_iter().collect_vec(),
+            });
+        }
+
+        if should_export {
+            let is_safe = check_if_height_safe(height, block_count);
+
             export(ExportedData {
-                databases: Some(&mut databases),
+                databases: is_safe.then_some(&mut databases),
                 datasets: &mut datasets,
                 date: blocks_loop_date.unwrap(),
                 height: last_height,
-                states: Some(&states),
+                states: is_safe.then_some(&states),
             })?;
         }
-    }
-
-    if should_export {
-        // MUST BE `none` !!! databases and states aren't safe here
-        export(ExportedData {
-            databases: None,
-            datasets: &mut datasets,
-            date: blocks_loop_date.unwrap(),
-            height,
-            states: None,
-        })?;
     }
 
     Ok(())

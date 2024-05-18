@@ -6,10 +6,10 @@ use date::*;
 use height::*;
 pub use ohlc::*;
 
-use super::{AnyDataset, AnyDatasets, MinInitialState, ProcessedBlockData};
+use super::{AnyDataset, AnyDatasets, InsertData, MinInitialStates};
 
 pub struct PriceDatasets {
-    min_initial_state: MinInitialState,
+    min_initial_states: MinInitialStates,
 
     pub date: DateDataset,
     pub height: HeightDataset,
@@ -20,27 +20,27 @@ impl PriceDatasets {
         let price_path = "../price";
 
         let mut s = Self {
-            min_initial_state: MinInitialState::default(),
+            min_initial_states: MinInitialStates::default(),
 
             date: DateDataset::import(price_path, datasets_path)?,
             height: HeightDataset::import(price_path, datasets_path)?,
         };
 
-        s.min_initial_state
-            .consume(MinInitialState::compute_from_datasets(&s));
+        s.min_initial_states
+            .consume(MinInitialStates::compute_from_datasets(&s));
 
         Ok(s)
     }
 
-    pub fn insert_data(&mut self, processed_block_data: &ProcessedBlockData) {
-        self.date.insert_data(processed_block_data);
-        self.height.insert_data(processed_block_data);
+    pub fn insert(&mut self, insert_data: &InsertData) {
+        self.date.insert(insert_data);
+        self.height.insert(insert_data);
     }
 }
 
 impl AnyDatasets for PriceDatasets {
-    fn get_min_initial_state(&self) -> &MinInitialState {
-        &self.min_initial_state
+    fn get_min_initial_states(&self) -> &MinInitialStates {
+        &self.min_initial_states
     }
 
     fn to_any_dataset_vec(&self) -> Vec<&(dyn AnyDataset + Send + Sync)> {

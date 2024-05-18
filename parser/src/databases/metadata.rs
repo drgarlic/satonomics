@@ -39,9 +39,18 @@ impl Metadata {
         }
     }
 
+    // pub fn should_export(&self, height: usize, date: NaiveDate) -> bool {
+    //     self.last_height.unwrap_or_default() < height || *self.last_date.unwrap_or_default() < date
+    // }
+
     pub fn export(&mut self, height: usize, date: NaiveDate) -> color_eyre::Result<()> {
-        self.last_height.replace(height);
-        self.last_date.replace(WNaiveDate::wrap(date));
+        if self.last_height.unwrap_or_default() < height {
+            self.last_height.replace(height);
+        }
+
+        if *self.last_date.unwrap_or_default() < date {
+            self.last_date.replace(WNaiveDate::wrap(date));
+        }
 
         self.data.export(&self.path)
     }

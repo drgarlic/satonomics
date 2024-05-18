@@ -9,12 +9,13 @@ use itertools::Itertools;
 use crate::{
     datasets::AnyDatasets,
     states::{SplitByUTXOCohort, UTXOCohortId},
+    DateMap, HeightMap,
 };
 
-use super::{AnyDataset, MinInitialState, ProcessedBlockData};
+use super::{AnyDataset, ComputeData, InsertData, MinInitialStates};
 
 pub struct UTXODatasets {
-    min_initial_state: MinInitialState,
+    min_initial_states: MinInitialStates,
 
     cohorts: SplitByUTXOCohort<UTXODataset>,
 }
@@ -118,7 +119,7 @@ impl UTXODatasets {
             let lth = UTXODataset::import(parent_path, UTXOCohortId::LongTermHolders)?;
 
             let mut s = Self {
-                min_initial_state: MinInitialState::default(),
+                min_initial_states: MinInitialStates::default(),
 
                 cohorts: SplitByUTXOCohort {
                     up_to_1d: up_to_1d_handle.join().unwrap()?,
@@ -174,18 +175,32 @@ impl UTXODatasets {
                 },
             };
 
-            s.min_initial_state
-                .consume(MinInitialState::compute_from_datasets(&s));
+            s.min_initial_states
+                .consume(MinInitialStates::compute_from_datasets(&s));
+
+            dbg!(&s.min_initial_states);
 
             Ok(s)
         })
     }
 
-    pub fn insert_data(&mut self, processed_block_data: &ProcessedBlockData) {
+    pub fn insert(&mut self, insert_data: &InsertData) {
         self.cohorts
             .as_mut_vec()
             .into_iter()
-            .for_each(|cohort| cohort.insert_data(processed_block_data))
+            .for_each(|cohort| cohort.insert(insert_data))
+    }
+
+    pub fn compute(
+        &mut self,
+        compute_data: &ComputeData,
+        date_closes: &mut DateMap<f32>,
+        height_closes: &mut HeightMap<f32>,
+    ) {
+        self.cohorts
+            .as_mut_vec()
+            .into_iter()
+            .for_each(|cohort| cohort.compute(compute_data, date_closes, height_closes))
     }
 
     fn as_vec(&self) -> Vec<&UTXODataset> {
@@ -198,8 +213,8 @@ impl UTXODatasets {
 }
 
 impl AnyDatasets for UTXODatasets {
-    fn get_min_initial_state(&self) -> &MinInitialState {
-        &self.min_initial_state
+    fn get_min_initial_states(&self) -> &MinInitialStates {
+        &self.min_initial_states
     }
 
     fn to_any_dataset_vec(&self) -> Vec<&(dyn AnyDataset + Send + Sync)> {

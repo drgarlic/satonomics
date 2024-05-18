@@ -12,7 +12,7 @@ use rayon::prelude::*;
 use crate::{
     bitcoin::BitcoinDB,
     databases::{AddressIndexToEmptyAddressData, AddressToAddressIndex, Databases, TxidToTxIndex},
-    datasets::{AllDatasets, ProcessedBlockData},
+    datasets::{AllDatasets, InsertData},
     states::{
         AddressCohortsInputStates, AddressCohortsOutputStates, AddressCohortsRealizedStates,
         States, UTXOCohortsOneShotStates, UTXOCohortsReceivedStates, UTXOCohortsSentStates,
@@ -64,7 +64,7 @@ impl ReceivedData {
     }
 }
 
-pub fn parse_block(
+pub fn parse(
     ParseData {
         bitcoin_db,
         block,
@@ -159,13 +159,14 @@ pub fn parse_block(
                 &mut databases.address_to_address_index,
             );
 
-            let empty_address_index_to_empty_address_data =
+            let empty_address_index_to_empty_address_data = compute_addresses.then(|| {
                 take_empty_address_index_to_empty_address_data(
                     states,
                     &mut databases.address_index_to_empty_address_data,
                     &txouts_parsing_results.partial_txout_data_vec,
                     compute_addresses,
-                );
+                )
+            });
 
             // Reverse to get in order via pop later
             txouts_parsing_results.partial_txout_data_vec.reverse();
@@ -260,6 +261,8 @@ pub fn parse_block(
                                 (address_data, address_index)
                             } else {
                                 let empty_address_data = empty_address_index_to_empty_address_data
+                                    .as_mut()
+                                    .unwrap()
                                     .remove(&address_index)
                                     .or_else(|| {
                                         address_index_to_removed_address_data
@@ -690,7 +693,7 @@ pub fn parse_block(
         }
     });
 
-    datasets.insert_data(ProcessedBlockData {
+    datasets.insert(InsertData {
         address_cohorts_input_states: &address_cohorts_input_states,
         address_cohorts_one_shot_states: &address_cohorts_one_shot_states,
         address_cohorts_output_states: &address_cohorts_output_states,

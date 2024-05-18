@@ -1,14 +1,18 @@
 use crate::{
     bitcoin::sats_to_btc,
-    datasets::{AnyDataset, MinInitialState, ProcessedBlockData},
+    datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
     states::SupplyState,
     structs::{AnyBiMap, BiMap},
+    DateMap, HeightMap,
 };
 
 pub struct SupplySubDataset {
-    min_initial_state: MinInitialState,
+    min_initial_states: MinInitialStates,
 
+    // Inserted
     pub total: BiMap<f32>,
+
+    // Computed
     pub market_cap: BiMap<f32>,
 }
 
@@ -17,54 +21,70 @@ impl SupplySubDataset {
         let f = |s: &str| format!("{parent_path}/{s}");
 
         let mut s = Self {
-            min_initial_state: MinInitialState::default(),
+            min_initial_states: MinInitialStates::default(),
 
             total: BiMap::_new_bin(1, &f("supply"), usize::MAX),
             market_cap: BiMap::_new_bin(1, &f("market_cap"), usize::MAX),
         };
 
-        s.min_initial_state
-            .consume(MinInitialState::compute_from_dataset(&s));
+        s.min_initial_states
+            .consume(MinInitialStates::compute_from_dataset(&s));
 
         Ok(s)
     }
 
     pub fn insert(
         &mut self,
-        &ProcessedBlockData {
+        &InsertData {
             height,
             date,
             is_date_last_block,
-            date_price,
-            block_price,
             ..
-        }: &ProcessedBlockData,
+        }: &InsertData,
         state: &SupplyState,
     ) {
         let total_supply = self.total.height.insert(height, sats_to_btc(state.supply));
 
-        self.market_cap
-            .height
-            .insert(height, total_supply * block_price);
-
         if is_date_last_block {
             self.total.date.insert(date, total_supply);
-
-            self.market_cap.date.insert(date, total_supply * date_price);
         }
+    }
+
+    pub fn compute(
+        &mut self,
+        &ComputeData { heights, dates }: &ComputeData,
+        date_closes: &mut DateMap<f32>,
+        height_closes: &mut HeightMap<f32>,
+    ) {
+        self.market_cap.height.multiple_insert_multiply(
+            heights,
+            &mut self.total.height,
+            height_closes,
+        );
+        self.market_cap
+            .date
+            .multiple_insert_multiply(dates, &mut self.total.date, date_closes);
     }
 }
 
 impl AnyDataset for SupplySubDataset {
-    fn get_min_initial_state(&self) -> &MinInitialState {
-        &self.min_initial_state
+    fn get_min_initial_states(&self) -> &MinInitialStates {
+        &self.min_initial_states
     }
 
-    fn to_any_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![&self.total, &self.market_cap]
+    fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
+        vec![&self.total]
     }
 
-    fn to_any_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![&mut self.total, &mut self.market_cap]
+    fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
+        vec![&mut self.total]
+    }
+
+    fn to_computed_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
+        vec![&self.market_cap]
+    }
+
+    fn to_computed_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
+        vec![&mut self.market_cap]
     }
 }

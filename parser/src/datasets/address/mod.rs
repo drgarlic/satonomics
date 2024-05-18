@@ -4,14 +4,17 @@ mod cohort_metadata;
 
 use std::thread;
 
-use crate::structs::{AddressSize, AddressSplit, AddressType};
+use crate::{
+    structs::{AddressSize, AddressSplit, AddressType},
+    DateMap, HeightMap,
+};
 
 use self::{all_metadata::AllAddressesMetadataDataset, cohort::CohortDataset};
 
-use super::{AnyDataset, AnyDatasets, MinInitialState, ProcessedBlockData};
+use super::{AnyDataset, AnyDatasets, ComputeData, InsertData, MinInitialStates};
 
 pub struct AddressDatasets {
-    min_initial_state: MinInitialState,
+    min_initial_states: MinInitialStates,
 
     metadata: AllAddressesMetadataDataset,
 
@@ -140,7 +143,7 @@ impl AddressDatasets {
             )?;
 
             let mut s = Self {
-                min_initial_state: MinInitialState::default(),
+                min_initial_states: MinInitialStates::default(),
 
                 metadata: AllAddressesMetadataDataset::import(parent_path)?,
 
@@ -163,39 +166,73 @@ impl AddressDatasets {
                 p2tr,
             };
 
-            s.min_initial_state
-                .consume(MinInitialState::compute_from_datasets(&s));
+            s.min_initial_states
+                .consume(MinInitialStates::compute_from_datasets(&s));
+
+            dbg!(&s.min_initial_states);
 
             Ok(s)
         })
     }
 
-    pub fn insert_data(&mut self, processed_block_data: &ProcessedBlockData) {
-        self.metadata.insert_data(processed_block_data);
+    pub fn insert(&mut self, insert_data: &InsertData) {
+        self.metadata.insert(insert_data);
 
-        self.all.insert_data(processed_block_data);
+        self.all.insert(insert_data);
 
-        self.plankton.insert_data(processed_block_data);
-        self.shrimp.insert_data(processed_block_data);
-        self.crab.insert_data(processed_block_data);
-        self.fish.insert_data(processed_block_data);
-        self.shark.insert_data(processed_block_data);
-        self.whale.insert_data(processed_block_data);
-        self.humpback.insert_data(processed_block_data);
-        self.megalodon.insert_data(processed_block_data);
+        self.plankton.insert(insert_data);
+        self.shrimp.insert(insert_data);
+        self.crab.insert(insert_data);
+        self.fish.insert(insert_data);
+        self.shark.insert(insert_data);
+        self.whale.insert(insert_data);
+        self.humpback.insert(insert_data);
+        self.megalodon.insert(insert_data);
 
-        self.p2pk.insert_data(processed_block_data);
-        self.p2pkh.insert_data(processed_block_data);
-        self.p2sh.insert_data(processed_block_data);
-        self.p2wpkh.insert_data(processed_block_data);
-        self.p2wsh.insert_data(processed_block_data);
-        self.p2tr.insert_data(processed_block_data);
+        self.p2pk.insert(insert_data);
+        self.p2pkh.insert(insert_data);
+        self.p2sh.insert(insert_data);
+        self.p2wpkh.insert(insert_data);
+        self.p2wsh.insert(insert_data);
+        self.p2tr.insert(insert_data);
+    }
+
+    pub fn compute(
+        &mut self,
+        compute_data: &ComputeData,
+        date_closes: &mut DateMap<f32>,
+        height_closes: &mut HeightMap<f32>,
+    ) {
+        self.metadata.compute(compute_data);
+
+        self.all.compute(compute_data, date_closes, height_closes);
+
+        self.plankton
+            .compute(compute_data, date_closes, height_closes);
+        self.shrimp
+            .compute(compute_data, date_closes, height_closes);
+        self.crab.compute(compute_data, date_closes, height_closes);
+        self.fish.compute(compute_data, date_closes, height_closes);
+        self.shark.compute(compute_data, date_closes, height_closes);
+        self.whale.compute(compute_data, date_closes, height_closes);
+        self.humpback
+            .compute(compute_data, date_closes, height_closes);
+        self.megalodon
+            .compute(compute_data, date_closes, height_closes);
+
+        self.p2pk.compute(compute_data, date_closes, height_closes);
+        self.p2pkh.compute(compute_data, date_closes, height_closes);
+        self.p2sh.compute(compute_data, date_closes, height_closes);
+        self.p2wpkh
+            .compute(compute_data, date_closes, height_closes);
+        self.p2wsh.compute(compute_data, date_closes, height_closes);
+        self.p2tr.compute(compute_data, date_closes, height_closes);
     }
 }
 
 impl AnyDatasets for AddressDatasets {
-    fn get_min_initial_state(&self) -> &MinInitialState {
-        &self.min_initial_state
+    fn get_min_initial_states(&self) -> &MinInitialStates {
+        &self.min_initial_states
     }
 
     fn to_any_dataset_vec(&self) -> Vec<&(dyn AnyDataset + Send + Sync)> {

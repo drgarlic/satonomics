@@ -1,12 +1,11 @@
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, VecDeque},
     fmt::Debug,
     fs,
     iter::Sum,
     mem,
-    ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
+    ops::{Add, Div, Mul, Sub},
     path::{Path, PathBuf},
-    str::FromStr,
 };
 
 use chrono::{Datelike, Days, NaiveDate};
@@ -23,6 +22,7 @@ use crate::{
 use super::{AnyMap, WNaiveDate};
 
 const NUMBER_OF_UNSAFE_DATES: usize = 2;
+const MIN_YEAR: usize = 2009;
 
 #[derive(Debug, Savefile, Serialize, Deserialize)]
 pub struct SerializedDateMap<T> {
@@ -59,12 +59,10 @@ where
         + savefile::Deserialize
         + savefile::ReprC,
 {
-    #[allow(unused)]
     pub fn new_bin(version: u32, path: &str) -> Self {
         Self::new(version, path, Serialization::Binary, 1, true)
     }
 
-    #[allow(unused)]
     pub fn _new_bin(version: u32, path: &str, chunks_in_memory: usize, export_last: bool) -> Self {
         Self::new(
             version,
@@ -75,12 +73,10 @@ where
         )
     }
 
-    #[allow(unused)]
     pub fn new_json(version: u32, path: &str) -> Self {
         Self::new(version, path, Serialization::Json, 1, true)
     }
 
-    #[allow(unused)]
     pub fn _new_json(version: u32, path: &str, chunks_in_memory: usize, export_last: bool) -> Self {
         Self::new(
             version,
@@ -187,6 +183,40 @@ where
             .get(&year)
             .and_then(|tree| tree.get(date).cloned())
             .or_else(|| {
+                self.imported
+                    .get(&year)
+                    .and_then(|serialized| serialized.map.get(date))
+                    .cloned()
+            })
+    }
+
+    /// Same as _get_or_import but with NaiveDate instead of &WNaiveDate
+    pub fn get_or_import(&mut self, date: NaiveDate) -> Option<T> {
+        self._get_or_import(&WNaiveDate::wrap(date))
+    }
+
+    /// Same as get_or_import but with &WNaiveDate instead of NaiveDate
+    pub fn _get_or_import(&mut self, date: &WNaiveDate) -> Option<T> {
+        let year = date.year() as usize;
+
+        if year < MIN_YEAR {
+            return None;
+        }
+
+        self.to_insert
+            .get(&year)
+            .and_then(|tree| tree.get(date).cloned())
+            .or_else(|| {
+                #[allow(clippy::map_entry)] // Can't be mut and then use read_dir()
+                if !self.imported.contains_key(&year) {
+                    let dir_content = self.read_dir();
+
+                    if let Some(path) = dir_content.get(&year) {
+                        let serialized = self.import(path).unwrap();
+                        self.imported.insert(year, serialized);
+                    }
+                }
+
                 self.imported
                     .get(&year)
                     .and_then(|serialized| serialized.map.get(date))
@@ -319,17 +349,21 @@ where
     fn post_export(&mut self) {
         let len = self.imported.len();
 
-        let keys = self.imported.keys().cloned().collect_vec();
-
-        keys.into_iter()
+        let keys = self
+            .imported
+            .keys()
             .enumerate()
             .filter(|(index, _)| {
                 let v = self.chunks_in_memory;
                 v.checked_add(*index).unwrap_or(v) < len
             })
-            .for_each(|(_, key)| {
-                self.imported.remove(&key);
-            });
+            .map(|(_, key)| key)
+            .cloned()
+            .collect_vec();
+
+        keys.into_iter().for_each(|key| {
+            self.imported.remove(&key);
+        });
 
         self.to_insert.clear();
     }
@@ -390,259 +424,174 @@ where
         + savefile::Deserialize
         + savefile::ReprC,
 {
-    // #[allow(unused)]
-    // pub fn transform<F>(&self, transform: F) -> BTreeMap<WNaiveDate, T>
-    // where
-    //     T: Copy + Default,
-    //     F: Fn((&WNaiveDate, &T, &BTreeMap<WNaiveDate, T>, usize)) -> T,
-    // {
-    //     Self::_transform(self.imported.lock().as_ref().unwrap(), transform)
-    // }
-
-    #[allow(unused)]
-    pub fn _transform<F>(map: &BTreeMap<WNaiveDate, T>, transform: F) -> BTreeMap<WNaiveDate, T>
-    where
-        T: Copy + Default,
-        F: Fn((&WNaiveDate, &T, &BTreeMap<WNaiveDate, T>, usize)) -> T,
+    pub fn multiple_insert_simple_transform<F>(
+        &mut self,
+        dates: &[NaiveDate],
+        source: &mut DateMap<T>,
+        transform: F,
+    ) where
+        T: Div<Output = T>,
+        F: Fn(T) -> T,
     {
-        map.iter()
-            .enumerate()
-            .map(|(index, (date, value))| (date.to_owned(), transform((date, value, map, index))))
-            .collect()
+        dates.iter().for_each(|date| {
+            let date = *date;
+
+            self.insert(date, transform(source.get_or_import(date).unwrap()));
+        });
     }
 
-    // #[allow(unused)]
-    // pub fn add(&self, other: &Self) -> BTreeMap<WNaiveDate, T>
-    // where
-    //     T: Add<Output = T> + Copy + Default,
-    // {
-    //     Self::_add(
-    //         self.imported.lock().as_ref().unwrap(),
-    //         other.imported.lock().as_ref().unwrap(),
-    //     )
-    // }
-
-    pub fn _add(
-        map1: &BTreeMap<WNaiveDate, T>,
-        map2: &BTreeMap<WNaiveDate, T>,
-    ) -> BTreeMap<WNaiveDate, T>
-    where
-        T: Add<Output = T> + Copy + Default,
+    pub fn multiple_insert_complex_transform<F>(
+        &mut self,
+        dates: &[NaiveDate],
+        source: &mut DateMap<T>,
+        transform: F,
+    ) where
+        T: Div<Output = T>,
+        F: Fn((T, &NaiveDate)) -> T,
     {
-        Self::_transform(map1, |(date, value, ..)| {
-            map2.get(date)
-                .map(|value2| *value + *value2)
-                .unwrap_or_default()
-        })
+        dates.iter().for_each(|date| {
+            let date = *date;
+
+            self.insert(
+                date,
+                transform((source.get_or_import(date).unwrap(), &date)),
+            );
+        });
     }
 
-    // #[allow(unused)]
-    // pub fn subtract(&self, other: &Self) -> BTreeMap<WNaiveDate, T>
-    // where
-    //     T: Sub<Output = T> + Copy + Default,
-    // {
-    //     Self::_subtract(
-    //         self.imported.lock().as_ref().unwrap(),
-    //         other.imported.lock().as_ref().unwrap(),
-    //     )
-    // }
-
-    #[allow(unused)]
-    pub fn _subtract(
-        map1: &BTreeMap<WNaiveDate, T>,
-        map2: &BTreeMap<WNaiveDate, T>,
-    ) -> BTreeMap<WNaiveDate, T>
-    where
-        T: Sub<Output = T> + Copy + Default,
+    pub fn multiple_insert_add(
+        &mut self,
+        dates: &[NaiveDate],
+        added: &mut DateMap<T>,
+        adder: &mut DateMap<T>,
+    ) where
+        T: Add<Output = T>,
     {
-        if map1.len() != map2.len() {
-            panic!("Can't subtract two arrays with a different length");
-        }
+        dates.iter().for_each(|date| {
+            let date = *date;
 
-        Self::_transform(map1, |(date, value, ..)| {
-            map2.get(date)
-                .map(|value2| *value - *value2)
-                .unwrap_or_default()
-        })
+            self.insert(
+                date,
+                added.get_or_import(date).unwrap() + adder.get_or_import(date).unwrap(),
+            );
+        });
     }
 
-    // #[allow(unused)]
-    // pub fn multiply(&self, other: &Self) -> BTreeMap<WNaiveDate, T>
-    // where
-    //     T: Mul<Output = T> + Copy + Default,
-    // {
-    //     Self::_multiply(
-    //         self.imported.lock().as_ref().unwrap(),
-    //         other.imported.lock().as_ref().unwrap(),
-    //     )
-    // }
-
-    #[allow(unused)]
-    pub fn _multiply(
-        map1: &BTreeMap<WNaiveDate, T>,
-        map2: &BTreeMap<WNaiveDate, T>,
-    ) -> BTreeMap<WNaiveDate, T>
-    where
-        T: Mul<Output = T> + Copy + Default,
+    pub fn multiple_insert_subtract(
+        &mut self,
+        dates: &[NaiveDate],
+        subtracted: &mut DateMap<T>,
+        subtracter: &mut DateMap<T>,
+    ) where
+        T: Sub<Output = T>,
     {
-        Self::_transform(map1, |(date, value, ..)| {
-            map2.get(date)
-                .map(|value2| *value * *value2)
-                .unwrap_or_default()
-        })
+        dates.iter().for_each(|date| {
+            let date = *date;
+
+            self.insert(
+                date,
+                subtracted.get_or_import(date).unwrap() - subtracter.get_or_import(date).unwrap(),
+            );
+        });
     }
 
-    // #[allow(unused)]
-    // pub fn divide(&self, other: &Self) -> BTreeMap<WNaiveDate, T>
-    // where
-    //     T: Div<Output = T> + Copy + Default,
-    // {
-    //     Self::_divide(
-    //         self.imported.lock().as_ref().unwrap(),
-    //         other.imported.lock().as_ref().unwrap(),
-    //     )
-    // }
-
-    #[allow(unused)]
-    pub fn _divide(
-        map1: &BTreeMap<WNaiveDate, T>,
-        map2: &BTreeMap<WNaiveDate, T>,
-    ) -> BTreeMap<WNaiveDate, T>
-    where
-        T: Div<Output = T> + Copy + Default,
+    pub fn multiple_insert_multiply(
+        &mut self,
+        dates: &[NaiveDate],
+        multiplied: &mut DateMap<T>,
+        multiplier: &mut DateMap<T>,
+    ) where
+        T: Mul<Output = T>,
     {
-        Self::_transform(map1, |(date, value, ..)| {
-            map2.get(date)
-                .map(|value2| *value / *value2)
-                .unwrap_or_default()
-        })
+        dates.iter().for_each(|date| {
+            let date = *date;
+
+            self.insert(
+                date,
+                multiplied.get_or_import(date).unwrap() * multiplier.get_or_import(date).unwrap(),
+            );
+        });
     }
 
-    // #[allow(unused)]
-    // pub fn cumulate(&self) -> BTreeMap<WNaiveDate, T>
-    // where
-    //     T: Sum + Copy + Default + AddAssign,
-    // {
-    //     Self::_cumulate(self.imported.lock().as_ref().unwrap())
-    // }
-
-    #[allow(unused)]
-    pub fn _cumulate(map: &BTreeMap<WNaiveDate, T>) -> BTreeMap<WNaiveDate, T>
-    where
-        T: Sum + Copy + Default + AddAssign,
+    pub fn multiple_insert_divide(
+        &mut self,
+        dates: &[NaiveDate],
+        divided: &mut DateMap<T>,
+        divider: &mut DateMap<T>,
+    ) where
+        T: Div<Output = T>,
     {
-        let mut sum = T::default();
+        dates.iter().for_each(|date| {
+            let date = *date;
 
-        map.iter()
-            .map(|(date, value)| {
-                sum += *value;
-                (date.to_owned(), sum)
-            })
-            .collect()
+            self.insert(
+                date,
+                divided.get_or_import(date).unwrap() / divider.get_or_import(date).unwrap(),
+            );
+        });
     }
 
-    pub fn insert_cumulative(&mut self, date: NaiveDate, source: &DateMap<T>) -> T
+    pub fn multiple_insert_cumulative(&mut self, range: &[NaiveDate], source: &mut DateMap<T>)
     where
         T: Add<Output = T> + Sub<Output = T>,
     {
-        let previous_cum = date
-            .checked_sub_days(Days::new(1))
-            .map(|previous_date| {
-                self.get(previous_date).unwrap_or_else(|| {
-                    if previous_date.year() == 2009 && previous_date.month() == 1 {
-                        let day = previous_date.day();
+        self._multiple_insert_last_x_sum(range, source, None)
+    }
 
-                        if day == 8 {
-                            self.get(NaiveDate::from_str("2009-01-03").unwrap())
-                                .unwrap()
-                        } else if day == 2 {
-                            T::default()
-                        } else {
-                            panic!()
-                        }
-                    } else {
-                        dbg!(previous_date, &self.path_all);
-                        panic!()
-                    }
+    pub fn multiple_insert_last_x_sum(
+        &mut self,
+        range: &[NaiveDate],
+        source: &mut DateMap<T>,
+        days: usize,
+    ) where
+        T: Add<Output = T> + Sub<Output = T>,
+    {
+        self._multiple_insert_last_x_sum(range, source, Some(days))
+    }
+
+    fn _multiple_insert_last_x_sum(
+        &mut self,
+        range: &[NaiveDate],
+        source: &mut DateMap<T>,
+        days: Option<usize>,
+    ) where
+        T: Add<Output = T> + Sub<Output = T>,
+    {
+        let mut sum = None;
+
+        range.iter().for_each(|date| {
+            let date = *date;
+
+            let to_subtract = days
+                .and_then(|x| {
+                    date.checked_sub_days(Days::new(x as u64 - 1))
+                        .and_then(|previous_date| source.get_or_import(previous_date))
                 })
-            })
-            .unwrap_or_default();
+                .unwrap_or_default();
 
-        let last_value = source.get(date).unwrap();
+            let previous_sum = sum.unwrap_or_else(|| {
+                date.checked_sub_days(Days::new(1))
+                    .and_then(|previous_sum_date| self.get_or_import(previous_sum_date))
+                    .unwrap_or_default()
+            });
 
-        let cum_value = previous_cum + last_value;
+            let last_value = source.get_or_import(date).unwrap_or_else(|| {
+                dbg!(date);
+                panic!();
+            });
 
-        self.insert(date, cum_value);
+            sum.replace(previous_sum - to_subtract + last_value);
 
-        cum_value
+            self.insert(date, sum.unwrap());
+        });
     }
 
-    #[allow(unused)]
-    pub fn insert_last_x_sum(&mut self, date: NaiveDate, source: &DateMap<T>, x: usize) -> T
-    where
-        T: Add<Output = T> + Sub<Output = T>,
-    {
-        let to_subtract = date
-            .checked_sub_days(Days::new(x as u64 - 1))
-            .and_then(|previous_date| source.get(previous_date))
-            .unwrap_or_default();
-
-        let previous_sum = date
-            .checked_sub_days(Days::new(1))
-            .and_then(|previous_sum_date| self.get(previous_sum_date))
-            .unwrap_or_default();
-
-        let last_value = source.get(date).unwrap();
-
-        let sum = previous_sum - to_subtract + last_value;
-
-        self.insert(date, sum);
-
-        sum
-    }
-
-    // #[allow(unused)]
-    // pub fn last_x_sum(&self, x: usize) -> BTreeMap<WNaiveDate, T>
-    // where
-    //     T: Sum + Copy + Default + AddAssign + SubAssign,
-    // {
-    //     Self::_last_x_sum(self.imported.lock().as_ref().unwrap(), x)
-    // }
-
-    #[allow(unused)]
-    pub fn _last_x_sum(map: &BTreeMap<WNaiveDate, T>, x: usize) -> BTreeMap<WNaiveDate, T>
-    where
-        T: Sum + Copy + Default + AddAssign + SubAssign,
-    {
-        let mut sum = T::default();
-
-        map.iter()
-            .enumerate()
-            .map(|(index, (date, value))| {
-                sum += *value;
-
-                if index >= x - 1 {
-                    let previous_index = index + 1 - x;
-
-                    sum -= *map.values().nth(previous_index).unwrap()
-                }
-
-                (date.to_owned(), sum)
-            })
-            .collect()
-    }
-
-    // #[allow(unused)]
-    // pub fn simple_moving_average(&self, x: usize) -> BTreeMap<WNaiveDate, f32>
-    // where
-    //     T: Sum + Copy + Default + AddAssign + SubAssign + ToF32,
-    // {
-    //     Self::_simple_moving_average(self.imported.lock().as_ref().unwrap(), x)
-    // }
-    //
-    #[allow(unused)]
-    pub fn insert_simple_average<K>(&mut self, date: NaiveDate, source: &DateMap<K>, x: usize)
-    where
+    pub fn multiple_insert_simple_average<K>(
+        &mut self,
+        range: &[NaiveDate],
+        source: &mut DateMap<K>,
+        days: usize,
+    ) where
         T: Into<f32> + From<f32>,
         K: Clone
             + Copy
@@ -656,54 +605,475 @@ where
             + savefile::ReprC
             + ToF32,
     {
-        let to_subtract = date
-            .checked_sub_days(Days::new(x as u64 - 1))
-            .and_then(|previous_date| source.get(previous_date))
-            .unwrap_or_default()
-            .to_f32();
+        let x = days as f32;
 
-        let previous_average: f32 = date
-            .checked_sub_days(Days::new(1))
-            .and_then(|previous_average_date| self.get(previous_average_date))
-            .unwrap_or_default()
-            .into();
+        let mut average = None;
 
-        let last_value: f32 = source.get(date).unwrap().to_f32();
+        range.iter().for_each(|date| {
+            let date = *date;
 
-        let sum = previous_average * x as f32 - 0.0 + last_value;
+            let previous_average: f32 = average
+                .unwrap_or_else(|| {
+                    date.checked_sub_days(Days::new(1))
+                        .and_then(|previous_average_date| self.get(previous_average_date))
+                        .unwrap_or_default()
+                })
+                .into();
 
-        let average: T = (sum / x as f32).into();
+            let last_value = source.get_or_import(date).unwrap().to_f32();
 
-        self.insert(date, average);
+            average.replace(((previous_average * x - 1.0 + last_value) / x).into());
+
+            self.insert(date, average.unwrap());
+        });
     }
 
-    #[allow(unused)]
-    pub fn _simple_moving_average(
-        map: &BTreeMap<WNaiveDate, T>,
-        x: usize,
-    ) -> BTreeMap<WNaiveDate, f32>
-    where
-        T: Sum + Copy + Default + AddAssign + SubAssign + Into<f32>,
+    pub fn multiple_insert_net_change(
+        &mut self,
+        dates: &[NaiveDate],
+        source: &mut DateMap<T>,
+        days: usize,
+    ) where
+        T: Sub<Output = T>,
     {
-        let mut sum = T::default();
+        dates.iter().for_each(|date| {
+            let date = *date;
 
-        map.iter()
-            .enumerate()
-            .map(|(index, (date, value))| {
-                sum += *value;
+            let previous_value = date
+                .checked_sub_days(Days::new(days as u64))
+                .and_then(|date| source.get_or_import(date))
+                .unwrap_or_default();
 
-                if index >= x - 1 {
-                    sum -= *map.values().nth(index + 1 - x).unwrap()
-                }
+            let last_value = source.get_or_import(date).unwrap();
 
-                let float_sum: f32 = sum.into();
+            let net = last_value - previous_value;
 
-                (date.to_owned(), float_sum / x as f32)
-            })
-            .collect()
+            self.insert(date, net);
+        });
     }
 
-    // #[allow(unused)]
+    pub fn multiple_insert_median(
+        &mut self,
+        dates: &[NaiveDate],
+        source: &mut DateMap<T>,
+        days: Option<usize>,
+    ) where
+        T: FloatCore,
+    {
+        self.multiple_insert_percentile(dates, source, 0.5, days);
+    }
+
+    pub fn multiple_insert_percentile(
+        &mut self,
+        dates: &[NaiveDate],
+        source: &mut DateMap<T>,
+        percentile: f32,
+        days: Option<usize>,
+    ) where
+        T: FloatCore,
+    {
+        if !(0.0..=1.0).contains(&percentile) {
+            panic!("The percentile should be between 0.0 and 1.0");
+        }
+
+        if days.map_or(false, |size| size < 3) {
+            panic!("Computing a median for a size lower than 3 is useless");
+        }
+
+        let mut ordered_vec = None;
+        let mut sorted_vec = None;
+
+        dates.iter().for_each(|date| {
+            let date = *date;
+
+            let value = {
+                if let Some(start) = days.map_or(NaiveDate::from_ymd_opt(2009, 3, 1), |size| {
+                    date.checked_sub_days(Days::new(size as u64 - 1))
+                }) {
+                    if ordered_vec.is_none() {
+                        let mut vec = start
+                            .iter_days()
+                            .take_while(|d| *d != date)
+                            .flat_map(|date| source.get_or_import(date))
+                            .map(|f| OrderedFloat(f))
+                            .collect_vec();
+
+                        if days.is_some() {
+                            ordered_vec.replace(VecDeque::from(vec.clone()));
+                        }
+
+                        vec.sort_unstable();
+                        sorted_vec.replace(vec);
+                    } else {
+                        let float_value = OrderedFloat(source.get_or_import(date).unwrap());
+
+                        if let Some(days) = days {
+                            if let Some(ordered_vec) = ordered_vec.as_mut() {
+                                if ordered_vec.len() == days {
+                                    let first = ordered_vec.pop_front().unwrap();
+
+                                    let pos =
+                                        sorted_vec.as_ref().unwrap().binary_search(&first).unwrap();
+
+                                    sorted_vec.as_mut().unwrap().remove(pos);
+                                }
+
+                                ordered_vec.push_back(float_value);
+                            }
+                        }
+
+                        let pos = sorted_vec
+                            .as_ref()
+                            .unwrap()
+                            .binary_search(&float_value)
+                            .unwrap_or_else(|pos| pos);
+                        sorted_vec.as_mut().unwrap().insert(pos, float_value);
+                    }
+
+                    let vec = sorted_vec.as_ref().unwrap();
+
+                    if vec.is_empty() {
+                        T::default()
+                    } else {
+                        let index = vec.len() as f32 * percentile;
+
+                        if index.fract() != 0.0 && vec.len() > 1 {
+                            (vec.get(index.ceil() as usize)
+                                .unwrap_or_else(|| {
+                                    dbg!(vec, index, &self.path_all, &source.path_all, days);
+                                    panic!()
+                                })
+                                .0
+                                + vec
+                                    .get(index.floor() as usize)
+                                    .unwrap_or_else(|| {
+                                        dbg!(vec, index, &self.path_all, &source.path_all, days);
+                                        panic!()
+                                    })
+                                    .0)
+                                / T::from(2.0).unwrap()
+                        } else {
+                            vec.get(index.floor() as usize)
+                                .unwrap_or_else(|| {
+                                    dbg!(vec, index);
+                                    panic!();
+                                })
+                                .0
+                        }
+                    }
+                } else {
+                    T::default()
+                }
+            };
+
+            self.insert(date, value);
+        });
+    }
+
+    //
+    // pub fn transform<F>(&self, transform: F) -> BTreeMap<WNaiveDate, T>
+    // where
+    //     T: Copy + Default,
+    //     F: Fn((&WNaiveDate, &T, &BTreeMap<WNaiveDate, T>, usize)) -> T,
+    // {
+    //     Self::_transform(self.imported.lock().as_ref().unwrap(), transform)
+    // }
+
+    // pub fn _transform<F>(map: &BTreeMap<WNaiveDate, T>, transform: F) -> BTreeMap<WNaiveDate, T>
+    // where
+    //     T: Copy + Default,
+    //     F: Fn((&WNaiveDate, &T, &BTreeMap<WNaiveDate, T>, usize)) -> T,
+    // {
+    //     map.iter()
+    //         .enumerate()
+    //         .map(|(index, (date, value))| (date.to_owned(), transform((date, value, map, index))))
+    //         .collect()
+    // }
+
+    //
+    // pub fn add(&self, other: &Self) -> BTreeMap<WNaiveDate, T>
+    // where
+    //     T: Add<Output = T> + Copy + Default,
+    // {
+    //     Self::_add(
+    //         self.imported.lock().as_ref().unwrap(),
+    //         other.imported.lock().as_ref().unwrap(),
+    //     )
+    // }
+
+    // pub fn _add(
+    //     map1: &BTreeMap<WNaiveDate, T>,
+    //     map2: &BTreeMap<WNaiveDate, T>,
+    // ) -> BTreeMap<WNaiveDate, T>
+    // where
+    //     T: Add<Output = T> + Copy + Default,
+    // {
+    //     Self::_transform(map1, |(date, value, ..)| {
+    //         map2.get(date)
+    //             .map(|value2| *value + *value2)
+    //             .unwrap_or_default()
+    //     })
+    // }
+
+    //
+    // pub fn subtract(&self, other: &Self) -> BTreeMap<WNaiveDate, T>
+    // where
+    //     T: Sub<Output = T> + Copy + Default,
+    // {
+    //     Self::_subtract(
+    //         self.imported.lock().as_ref().unwrap(),
+    //         other.imported.lock().as_ref().unwrap(),
+    //     )
+    // }
+
+    // pub fn _subtract(
+    //     map1: &BTreeMap<WNaiveDate, T>,
+    //     map2: &BTreeMap<WNaiveDate, T>,
+    // ) -> BTreeMap<WNaiveDate, T>
+    // where
+    //     T: Sub<Output = T> + Copy + Default,
+    // {
+    //     if map1.len() != map2.len() {
+    //         panic!("Can't subtract two arrays with a different length");
+    //     }
+
+    //     Self::_transform(map1, |(date, value, ..)| {
+    //         map2.get(date)
+    //             .map(|value2| *value - *value2)
+    //             .unwrap_or_default()
+    //     })
+    // }
+
+    //
+    // pub fn multiply(&self, other: &Self) -> BTreeMap<WNaiveDate, T>
+    // where
+    //     T: Mul<Output = T> + Copy + Default,
+    // {
+    //     Self::_multiply(
+    //         self.imported.lock().as_ref().unwrap(),
+    //         other.imported.lock().as_ref().unwrap(),
+    //     )
+    // }
+
+    //
+    // pub fn _multiply(
+    //     map1: &BTreeMap<WNaiveDate, T>,
+    //     map2: &BTreeMap<WNaiveDate, T>,
+    // ) -> BTreeMap<WNaiveDate, T>
+    // where
+    //     T: Mul<Output = T> + Copy + Default,
+    // {
+    //     Self::_transform(map1, |(date, value, ..)| {
+    //         map2.get(date)
+    //             .map(|value2| *value * *value2)
+    //             .unwrap_or_default()
+    //     })
+    // }
+
+    //
+    // pub fn divide(&self, other: &Self) -> BTreeMap<WNaiveDate, T>
+    // where
+    //     T: Div<Output = T> + Copy + Default,
+    // {
+    //     Self::_divide(
+    //         self.imported.lock().as_ref().unwrap(),
+    //         other.imported.lock().as_ref().unwrap(),
+    //     )
+    // }
+
+    //
+    // pub fn _divide(
+    //     map1: &BTreeMap<WNaiveDate, T>,
+    //     map2: &BTreeMap<WNaiveDate, T>,
+    // ) -> BTreeMap<WNaiveDate, T>
+    // where
+    //     T: Div<Output = T> + Copy + Default,
+    // {
+    //     Self::_transform(map1, |(date, value, ..)| {
+    //         map2.get(date)
+    //             .map(|value2| *value / *value2)
+    //             .unwrap_or_default()
+    //     })
+    // }
+
+    //
+    // pub fn cumulate(&self) -> BTreeMap<WNaiveDate, T>
+    // where
+    //     T: Sum + Copy + Default + AddAssign,
+    // {
+    //     Self::_cumulate(self.imported.lock().as_ref().unwrap())
+    // }
+
+    //
+    // pub fn _cumulate(map: &BTreeMap<WNaiveDate, T>) -> BTreeMap<WNaiveDate, T>
+    // where
+    //     T: Sum + Copy + Default + AddAssign,
+    // {
+    //     let mut sum = T::default();
+
+    //     map.iter()
+    //         .map(|(date, value)| {
+    //             sum += *value;
+    //             (date.to_owned(), sum)
+    //         })
+    //         .collect()
+    // }
+
+    // pub fn insert_cumulative(&mut self, date: NaiveDate, source: &DateMap<T>) -> T
+    // where
+    //     T: Add<Output = T> + Sub<Output = T>,
+    // {
+    //     let previous_cum = date
+    //         .checked_sub_days(Days::new(1))
+    //         .map(|previous_date| {
+    //             self.get(previous_date).unwrap_or_else(|| {
+    //                 if previous_date.year() == 2009 && previous_date.month() == 1 {
+    //                     let day = previous_date.day();
+
+    //                     if day == 8 {
+    //                         self.get(NaiveDate::from_str("2009-01-03").unwrap())
+    //                             .unwrap()
+    //                     } else if day == 2 {
+    //                         T::default()
+    //                     } else {
+    //                         panic!()
+    //                     }
+    //                 } else {
+    //                     dbg!(previous_date, &self.path_all);
+    //                     panic!()
+    //                 }
+    //             })
+    //         })
+    //         .unwrap_or_default();
+
+    //     let last_value = source.get(date).unwrap();
+
+    //     let cum_value = previous_cum + last_value;
+
+    //     self.insert(date, cum_value);
+
+    //     cum_value
+    // }
+
+    //
+    // pub fn insert_last_x_sum(&mut self, date: NaiveDate, source: &DateMap<T>, x: usize) -> T
+    // where
+    //     T: Add<Output = T> + Sub<Output = T>,
+    // {
+    //     let to_subtract = date
+    //         .checked_sub_days(Days::new(x as u64 - 1))
+    //         .and_then(|previous_date| source.get(previous_date))
+    //         .unwrap_or_default();
+
+    //     let previous_sum = date
+    //         .checked_sub_days(Days::new(1))
+    //         .and_then(|previous_sum_date| self.get(previous_sum_date))
+    //         .unwrap_or_default();
+
+    //     let last_value = source.get(date).unwrap();
+
+    //     let sum = previous_sum - to_subtract + last_value;
+
+    //     self.insert(date, sum);
+
+    //     sum
+    // }
+
+    //
+    // pub fn last_x_sum(&self, x: usize) -> BTreeMap<WNaiveDate, T>
+    // where
+    //     T: Sum + Copy + Default + AddAssign + SubAssign,
+    // {
+    //     Self::_last_x_sum(self.imported.lock().as_ref().unwrap(), x)
+    // }
+
+    // pub fn _last_x_sum(map: &BTreeMap<WNaiveDate, T>, days: usize) -> BTreeMap<WNaiveDate, T>
+    // where
+    //     T: Sum + Copy + Default + AddAssign + SubAssign,
+    // {
+    //     let mut sum = T::default();
+
+    //     map.iter()
+    //         .enumerate()
+    //         .map(|(index, (date, value))| {
+    //             sum += *value;
+
+    //             if index >= days - 1 {
+    //                 let previous_index = index + 1 - days;
+
+    //                 sum -= *map.values().nth(previous_index).unwrap()
+    //             }
+
+    //             (date.to_owned(), sum)
+    //         })
+    //         .collect()
+    // }
+
+    //
+    // pub fn simple_moving_average(&self, x: usize) -> BTreeMap<WNaiveDate, f32>
+    // where
+    //     T: Sum + Copy + Default + AddAssign + SubAssign + ToF32,
+    // {
+    //     Self::_simple_moving_average(self.imported.lock().as_ref().unwrap(), x)
+    // }
+
+    // pub fn insert_simple_average<K>(&mut self, date: NaiveDate, source: &DateMap<K>, x: usize)
+    // where
+    //     T: Into<f32> + From<f32>,
+    //     K: Clone
+    //         + Copy
+    //         + Default
+    //         + Debug
+    //         + Serialize
+    //         + DeserializeOwned
+    //         + Sum
+    //         + savefile::Serialize
+    //         + savefile::Deserialize
+    //         + savefile::ReprC
+    //         + ToF32,
+    // {
+    //     let previous_average: f32 = date
+    //         .checked_sub_days(Days::new(1))
+    //         .and_then(|previous_average_date| self.get(previous_average_date))
+    //         .unwrap_or_default()
+    //         .into();
+
+    //     let last_value: f32 = source.get(date).unwrap().to_f32();
+
+    //     let sum = previous_average * x as f32 - 1.0 + last_value;
+
+    //     let average: T = (sum / x as f32).into();
+
+    //     self.insert(date, average);
+    // }
+
+    //
+    // pub fn _simple_moving_average(
+    //     map: &BTreeMap<WNaiveDate, T>,
+    //     x: usize,
+    // ) -> BTreeMap<WNaiveDate, f32>
+    // where
+    //     T: Sum + Copy + Default + AddAssign + SubAssign + Into<f32>,
+    // {
+    //     let mut sum = T::default();
+
+    //     map.iter()
+    //         .enumerate()
+    //         .map(|(index, (date, value))| {
+    //             sum += *value;
+
+    //             if index >= x - 1 {
+    //                 sum -= *map.values().nth(index + 1 - x).unwrap()
+    //             }
+
+    //             let float_sum: f32 = sum.into();
+
+    //             (date.to_owned(), float_sum / x as f32)
+    //         })
+    //         .collect()
+    // }
+
+    //
     // pub fn net_change(&self, offset: usize) -> BTreeMap<WNaiveDate, T>
     // where
     //     T: Copy + Default + Sub<Output = T>,
@@ -712,137 +1082,129 @@ where
     // }
     //
     //
-    pub fn insert_net_change(&mut self, date: NaiveDate, source: &DateMap<T>, offset: usize) -> T
-    where
-        T: Sub<Output = T>,
-    {
-        let previous_value = date
-            .checked_sub_days(Days::new(offset as u64))
-            .and_then(|date| source.get(date))
-            .unwrap_or_default();
+    // pub fn insert_net_change(&mut self, date: NaiveDate, source: &DateMap<T>, offset: usize) -> T
+    // where
+    //     T: Sub<Output = T>,
+    // {
+    //     let previous_value = date
+    //         .checked_sub_days(Days::new(offset as u64))
+    //         .and_then(|date| source.get(date))
+    //         .unwrap_or_default();
 
-        let last_value = source.get(date).unwrap_or_else(|| {
-            dbg!(date);
-            panic!();
-        });
+    //     let last_value = source.get(date).unwrap_or_else(|| {
+    //         dbg!(date);
+    //         panic!();
+    //     });
 
-        let net = last_value - previous_value;
+    //     let net = last_value - previous_value;
 
-        self.insert(date, net);
+    //     self.insert(date, net);
 
-        net
-    }
+    //     net
+    // }
 
-    #[allow(unused)]
-    pub fn _net_change(map: &BTreeMap<WNaiveDate, T>, offset: usize) -> BTreeMap<WNaiveDate, T>
-    where
-        T: Copy + Default + Sub<Output = T>,
-    {
-        Self::_transform(map, |(_, value, map, index)| {
-            let previous = {
-                if let Some(previous_index) = index.checked_sub(offset) {
-                    *map.values().nth(previous_index).unwrap()
-                } else {
-                    T::default()
-                }
-            };
+    //
+    // pub fn _net_change(map: &BTreeMap<WNaiveDate, T>, offset: usize) -> BTreeMap<WNaiveDate, T>
+    // where
+    //     T: Copy + Default + Sub<Output = T>,
+    // {
+    //     Self::_transform(map, |(_, value, map, index)| {
+    //         let previous = {
+    //             if let Some(previous_index) = index.checked_sub(offset) {
+    //                 *map.values().nth(previous_index).unwrap()
+    //             } else {
+    //                 T::default()
+    //             }
+    //         };
 
-            *value - previous
-        })
-    }
+    //         *value - previous
+    //     })
+    // }
 
-    // #[allow(unused)]
-    // pub fn median(&self, size: usize) -> BTreeMap<WNaiveDate, Option<T>>
+    //
+    // pub fn _median(map: &BTreeMap<WNaiveDate, T>, size: usize) -> BTreeMap<WNaiveDate, Option<T>>
     // where
     //     T: FloatCore,
     // {
-    //     Self::_median(self.imported.lock().as_ref().unwrap(), size)
+    //     let even = size % 2 == 0;
+    //     let median_index = size / 2;
+
+    //     if size < 3 {
+    //         panic!("Computing a median for a size lower than 3 is useless");
+    //     }
+
+    //     map.iter()
+    //         .enumerate()
+    //         .map(|(index, (date, _))| {
+    //             let value = {
+    //                 if index >= size - 1 {
+    //                     let mut vec = map
+    //                         .values()
+    //                         .rev()
+    //                         .take(size)
+    //                         .map(|v| OrderedFloat(*v))
+    //                         .collect_vec();
+
+    //                     vec.sort_unstable();
+
+    //                     if even {
+    //                         Some(
+    //                             (**vec.get(median_index).unwrap()
+    //                                 + **vec.get(median_index - 1).unwrap())
+    //                                 / T::from(2.0).unwrap(),
+    //                         )
+    //                     } else {
+    //                         Some(**vec.get(median_index).unwrap())
+    //                     }
+    //                 } else {
+    //                     None
+    //                 }
+    //             };
+
+    //             (date.to_owned(), value)
+    //         })
+    //         .collect()
     // }
     //
-    pub fn insert_median(&mut self, date: NaiveDate, source: &DateMap<T>, size: usize) -> T
-    where
-        T: FloatCore,
-    {
-        if size < 3 {
-            panic!("Computing a median for a size lower than 3 is useless");
-        }
+    // pub fn insert_median(&mut self, date: NaiveDate, source: &DateMap<T>, size: usize) -> T
+    // where
+    //     T: FloatCore,
+    // {
+    //     if size < 3 {
+    //         panic!("Computing a median for a size lower than 3 is useless");
+    //     }
 
-        let median = {
-            if let Some(start) = date.checked_sub_days(Days::new(size as u64 - 1)) {
-                let even = size % 2 == 0;
-                let median_index = size / 2;
+    //     let median = {
+    //         if let Some(start) = date.checked_sub_days(Days::new(size as u64 - 1)) {
+    //             let even = size % 2 == 0;
+    //             let median_index = size / 2;
 
-                let mut vec = start
-                    .iter_days()
-                    .take(size)
-                    .flat_map(|date| source.get(date))
-                    .map(|f| OrderedFloat(f))
-                    .collect_vec();
+    //             let mut vec = start
+    //                 .iter_days()
+    //                 .take(size)
+    //                 .flat_map(|date| source.get(date))
+    //                 .map(|f| OrderedFloat(f))
+    //                 .collect_vec();
 
-                if vec.len() != size {
-                    return T::default();
-                }
+    //             if vec.len() != size {
+    //                 return T::default();
+    //             }
 
-                vec.sort_unstable();
+    //             vec.sort_unstable();
 
-                if even {
-                    (vec.get(median_index).unwrap().0 + vec.get(median_index - 1).unwrap().0)
-                        / T::from(2.0).unwrap()
-                } else {
-                    vec.get(median_index).unwrap().0
-                }
-            } else {
-                T::default()
-            }
-        };
+    //             if even {
+    //                 (vec.get(median_index).unwrap().0 + vec.get(median_index - 1).unwrap().0)
+    //                     / T::from(2.0).unwrap()
+    //             } else {
+    //                 vec.get(median_index).unwrap().0
+    //             }
+    //         } else {
+    //             T::default()
+    //         }
+    //     };
 
-        self.insert(date, median);
+    //     self.insert(date, median);
 
-        median
-    }
-
-    #[allow(unused)]
-    pub fn _median(map: &BTreeMap<WNaiveDate, T>, size: usize) -> BTreeMap<WNaiveDate, Option<T>>
-    where
-        T: FloatCore,
-    {
-        let even = size % 2 == 0;
-        let median_index = size / 2;
-
-        if size < 3 {
-            panic!("Computing a median for a size lower than 3 is useless");
-        }
-
-        map.iter()
-            .enumerate()
-            .map(|(index, (date, _))| {
-                let value = {
-                    if index >= size - 1 {
-                        let mut vec = map
-                            .values()
-                            .rev()
-                            .take(size)
-                            .map(|v| OrderedFloat(*v))
-                            .collect_vec();
-
-                        vec.sort_unstable();
-
-                        if even {
-                            Some(
-                                (**vec.get(median_index).unwrap()
-                                    + **vec.get(median_index - 1).unwrap())
-                                    / T::from(2.0).unwrap(),
-                            )
-                        } else {
-                            Some(**vec.get(median_index).unwrap())
-                        }
-                    } else {
-                        None
-                    }
-                };
-
-                (date.to_owned(), value)
-            })
-            .collect()
-    }
+    //     median
+    // }
 }

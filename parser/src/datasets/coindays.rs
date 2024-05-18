@@ -4,11 +4,12 @@ use crate::{
     structs::{AnyBiMap, BiMap},
 };
 
-use super::{MinInitialState, ProcessedBlockData};
+use super::{InsertData, MinInitialStates};
 
 pub struct CoindaysDataset {
-    min_initial_state: MinInitialState,
+    min_initial_states: MinInitialStates,
 
+    // Inserted
     pub destroyed: BiMap<f32>,
 }
 
@@ -17,27 +18,29 @@ impl CoindaysDataset {
         let f = |s: &str| format!("{parent_path}/{s}");
 
         let mut s = Self {
-            min_initial_state: MinInitialState::default(),
+            min_initial_states: MinInitialStates::default(),
 
             destroyed: BiMap::new_bin(1, &f("coindays_destroyed")),
         };
 
-        s.min_initial_state
-            .consume(MinInitialState::compute_from_dataset(&s));
+        s.min_initial_states
+            .consume(MinInitialStates::compute_from_dataset(&s));
+
+        dbg!(&s.min_initial_states);
 
         Ok(s)
     }
 
-    pub fn insert_data(
+    pub fn insert(
         &mut self,
-        &ProcessedBlockData {
+        &InsertData {
             height,
             satdays_destroyed,
             date_blocks_range,
             is_date_last_block,
             date,
             ..
-        }: &ProcessedBlockData,
+        }: &InsertData,
     ) {
         self.destroyed
             .height
@@ -51,15 +54,15 @@ impl CoindaysDataset {
 }
 
 impl AnyDataset for CoindaysDataset {
-    fn to_any_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
+    fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
         vec![&self.destroyed]
     }
 
-    fn to_any_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
+    fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
         vec![&mut self.destroyed]
     }
 
-    fn get_min_initial_state(&self) -> &MinInitialState {
-        &self.min_initial_state
+    fn get_min_initial_states(&self) -> &MinInitialStates {
+        &self.min_initial_states
     }
 }

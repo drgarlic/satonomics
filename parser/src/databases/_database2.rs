@@ -73,7 +73,6 @@ where
         self.cached_puts.get(key)
     }
 
-    #[allow(unused)]
     pub fn take(&mut self, key: &KeyTree) -> Option<Value> {
         if self.cached_dels.get(key).is_none() {
             self.remove_from_puts(key).or_else(|| {

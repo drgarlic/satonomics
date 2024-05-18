@@ -42,7 +42,7 @@ impl DurableStates {
         block_price: f32,
         date_price: Option<f32>,
     ) -> OneShotStates {
-        self.price_in_cents_to_sats.compute_on_shot_states(
+        self.price_in_cents_to_sats.compute_one_shot_states(
             self.supply_state.supply,
             block_price,
             date_price,

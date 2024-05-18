@@ -1,11 +1,11 @@
 use std::{
     cmp::Ordering,
-    collections::BTreeMap,
+    collections::{BTreeMap, VecDeque},
     fmt::Debug,
     fs,
     iter::Sum,
     mem,
-    ops::{Add, RangeInclusive, Sub},
+    ops::{Add, Div, Mul, RangeInclusive, Sub},
     path::{Path, PathBuf},
 };
 
@@ -61,12 +61,10 @@ where
         + savefile::Deserialize
         + savefile::ReprC,
 {
-    #[allow(unused)]
     pub fn new_bin(version: u32, path: &str) -> Self {
         Self::new(version, path, Serialization::Binary, 1, true)
     }
 
-    #[allow(unused)]
     pub fn _new_bin(version: u32, path: &str, chunks_in_memory: usize, export_last: bool) -> Self {
         Self::new(
             version,
@@ -77,12 +75,10 @@ where
         )
     }
 
-    #[allow(unused)]
     pub fn new_json(version: u32, path: &str) -> Self {
         Self::new(version, path, Serialization::Json, 1, true)
     }
 
-    #[allow(unused)]
     pub fn _new_json(version: u32, path: &str, chunks_in_memory: usize, export_last: bool) -> Self {
         Self::new(
             version,
@@ -158,6 +154,10 @@ where
             last_height.checked_sub(offset)
         });
 
+        if s.initial_first_unsafe_height.is_none() {
+            dbg!(path);
+        }
+
         s
     }
 
@@ -199,6 +199,29 @@ where
                     .and_then(|serialized| serialized.map.get(height - chunk_start))
                     .cloned()
             })
+    }
+
+    pub fn get_or_import(&mut self, height: &usize) -> T {
+        let chunk_start = Self::height_to_chunk_start(*height);
+
+        self.to_insert
+            .get(&chunk_start)
+            .and_then(|map| map.get(&(height - chunk_start)).cloned())
+            .or_else(|| {
+                #[allow(clippy::map_entry)] // Can't be mut and then use read_dir()
+                if !self.imported.contains_key(&chunk_start) {
+                    let dir_content = self.read_dir();
+                    let path = dir_content.get(&chunk_start).unwrap();
+                    let serialized = self.import(path).unwrap();
+                    self.imported.insert(chunk_start, serialized);
+                }
+
+                self.imported
+                    .get(&chunk_start)
+                    .and_then(|serialized| serialized.map.get(height - chunk_start))
+                    .cloned()
+            })
+            .unwrap()
     }
 
     #[inline(always)]
@@ -336,18 +359,22 @@ where
     fn post_export(&mut self) {
         let len = self.imported.len();
 
-        let keys = self.imported.keys().cloned().collect_vec();
-
-        keys.into_iter()
+        let keys = self
+            .imported
+            .keys()
             .enumerate()
             .filter(|(index, _)| {
                 let v = self.chunks_in_memory;
                 let v = v.checked_mul(HEIGHT_MAP_CHUNK_SIZE).unwrap_or(v);
                 v.checked_add(*index).unwrap_or(v) < len
             })
-            .for_each(|(_, key)| {
-                self.imported.remove(&key);
-            });
+            .map(|(_, key)| key)
+            .cloned()
+            .collect_vec();
+
+        keys.into_iter().for_each(|key| {
+            self.imported.remove(&key);
+        });
 
         self.to_insert.clear();
     }
@@ -418,149 +445,414 @@ where
             .sum::<T>()
     }
 
-    pub fn insert_cumulative(&mut self, height: usize, source: &HeightMap<T>) -> T
-    where
-        T: Add<Output = T> + Sub<Output = T>,
+    pub fn multiple_insert_simple_transform<F>(
+        &mut self,
+        heights: &[usize],
+        source: &mut HeightMap<T>,
+        transform: F,
+    ) where
+        T: Div<Output = T>,
+        F: Fn(T) -> T,
     {
-        let previous_cum = height
-            .checked_sub(1)
-            .map(|previous_sum_height| {
-                self.get(&previous_sum_height).unwrap_or_else(|| {
-                    dbg!(previous_sum_height);
-                    panic!()
-                })
-            })
-            .unwrap_or_default();
-
-        let last_value = source.get(&height).unwrap();
-
-        let cum_value = previous_cum + last_value;
-
-        self.insert(height, cum_value);
-
-        cum_value
+        heights.iter().for_each(|height| {
+            self.insert(*height, transform(source.get_or_import(height)));
+        });
     }
 
-    pub fn insert_last_x_sum(&mut self, height: usize, source: &HeightMap<T>, x: usize) -> T
-    where
-        T: Add<Output = T> + Sub<Output = T>,
+    pub fn multiple_insert_complex_transform<F>(
+        &mut self,
+        heights: &[usize],
+        source: &mut HeightMap<T>,
+        transform: F,
+    ) where
+        T: Div<Output = T>,
+        F: Fn((T, &usize)) -> T,
     {
-        let to_subtract = (height + 1)
-            .checked_sub(x)
-            .map(|previous_height| {
-                source.get(&previous_height).unwrap_or_else(|| {
-                    dbg!(&self.path_all, &source.path_all, previous_height);
-                    panic!()
-                })
-            })
-            .unwrap_or_default();
-
-        let previous_sum = height
-            .checked_sub(1)
-            .map(|previous_sum_height| self.get(&previous_sum_height).unwrap())
-            .unwrap_or_default();
-
-        let last_value = source.get(&height).unwrap();
-
-        let sum = previous_sum - to_subtract + last_value;
-
-        self.insert(height, sum);
-
-        sum
+        heights.iter().for_each(|height| {
+            self.insert(*height, transform((source.get_or_import(height), height)));
+        });
     }
 
-    #[allow(unused)]
-    pub fn insert_simple_average(&mut self, height: usize, source: &HeightMap<T>, x: usize)
-    where
-        T: Into<f32> + From<f32>,
+    pub fn multiple_insert_add(
+        &mut self,
+        heights: &[usize],
+        added: &mut HeightMap<T>,
+        adder: &mut HeightMap<T>,
+    ) where
+        T: Add<Output = T>,
     {
-        let to_subtract: f32 = (height + 1)
-            .checked_sub(x)
-            .map(|previous_height| source.get(&previous_height).unwrap())
-            .unwrap_or_default()
-            .into();
-
-        let previous_average: f32 = height
-            .checked_sub(1)
-            .map(|previous_average_height| self.get(&previous_average_height).unwrap())
-            .unwrap_or_default()
-            .into();
-
-        let last_value: f32 = source.get(&height).unwrap().into();
-
-        let sum = previous_average * x as f32 - to_subtract + last_value;
-
-        let average: T = (sum / x as f32).into();
-
-        self.insert(height, average);
+        heights.iter().for_each(|height| {
+            self.insert(
+                *height,
+                added.get_or_import(height) + adder.get_or_import(height),
+            );
+        });
     }
 
-    pub fn insert_net_change(&mut self, height: usize, source: &HeightMap<T>, offset: usize) -> T
-    where
+    pub fn multiple_insert_subtract(
+        &mut self,
+        heights: &[usize],
+        subtracted: &mut HeightMap<T>,
+        subtracter: &mut HeightMap<T>,
+    ) where
         T: Sub<Output = T>,
     {
-        let previous_value = height
-            .checked_sub(offset)
-            .map(|height| {
-                source.get(&height).unwrap_or_else(|| {
-                    dbg!(&self.path_all, &source.path_all, offset);
-                    panic!();
-                })
-            })
-            .unwrap_or_default();
-
-        let last_value = source.get(&height).unwrap();
-
-        let net = last_value - previous_value;
-
-        self.insert(height, net);
-
-        net
+        heights.iter().for_each(|height| {
+            self.insert(
+                *height,
+                subtracted.get_or_import(height) - subtracter.get_or_import(height),
+            );
+        });
     }
 
-    pub fn insert_median(&mut self, height: usize, source: &HeightMap<T>, size: usize) -> T
+    pub fn multiple_insert_multiply(
+        &mut self,
+        heights: &[usize],
+        multiplied: &mut HeightMap<T>,
+        multiplier: &mut HeightMap<T>,
+    ) where
+        T: Mul<Output = T>,
+    {
+        heights.iter().for_each(|height| {
+            self.insert(
+                *height,
+                multiplied.get_or_import(height) * multiplier.get_or_import(height),
+            );
+        });
+    }
+
+    pub fn multiple_insert_divide(
+        &mut self,
+        heights: &[usize],
+        divided: &mut HeightMap<T>,
+        divider: &mut HeightMap<T>,
+    ) where
+        T: Div<Output = T>,
+    {
+        heights.iter().for_each(|height| {
+            self.insert(
+                *height,
+                divided.get_or_import(height) / divider.get_or_import(height),
+            );
+        });
+    }
+
+    pub fn multiple_insert_cumulative(&mut self, heights: &[usize], source: &mut HeightMap<T>)
     where
+        T: Add<Output = T> + Sub<Output = T>,
+    {
+        self._multiple_insert_last_x_sum(heights, source, None)
+    }
+
+    pub fn multiple_insert_last_x_sum(
+        &mut self,
+        heights: &[usize],
+        source: &mut HeightMap<T>,
+        block_time: usize,
+    ) where
+        T: Add<Output = T> + Sub<Output = T>,
+    {
+        self._multiple_insert_last_x_sum(heights, source, Some(block_time))
+    }
+
+    fn _multiple_insert_last_x_sum(
+        &mut self,
+        heights: &[usize],
+        source: &mut HeightMap<T>,
+        block_time: Option<usize>,
+    ) where
+        T: Add<Output = T> + Sub<Output = T>,
+    {
+        let mut sum = None;
+
+        heights.iter().for_each(|height| {
+            let to_subtract = block_time
+                .and_then(|x| {
+                    (height + 1)
+                        .checked_sub(x)
+                        .map(|previous_height| source.get_or_import(&previous_height))
+                })
+                .unwrap_or_default();
+
+            let previous_sum = sum.unwrap_or_else(|| {
+                height
+                    .checked_sub(1)
+                    .map(|previous_sum_height| self.get_or_import(&previous_sum_height))
+                    .unwrap_or_default()
+            });
+
+            let last_value = source.get_or_import(height);
+
+            sum.replace(previous_sum + last_value - to_subtract);
+
+            self.insert(*height, sum.unwrap());
+        });
+    }
+
+    pub fn multiple_insert_net_change(
+        &mut self,
+        heights: &[usize],
+        source: &mut HeightMap<T>,
+        block_time: usize,
+    ) where
+        T: Sub<Output = T>,
+    {
+        heights.iter().for_each(|height| {
+            let height = *height;
+
+            let previous_value = height
+                .checked_sub(block_time)
+                .map(|height| source.get_or_import(&height))
+                .unwrap_or_default();
+
+            let last_value = source.get_or_import(&height);
+
+            let net = last_value - previous_value;
+
+            self.insert(height, net);
+        });
+    }
+
+    pub fn multiple_insert_median(
+        &mut self,
+        heights: &[usize],
+        source: &mut HeightMap<T>,
+        block_time: Option<usize>,
+    ) where
         T: FloatCore,
     {
-        if size < 3 {
+        self.multiple_insert_percentile(heights, source, 0.5, block_time);
+    }
+
+    pub fn multiple_insert_percentile(
+        &mut self,
+        heights: &[usize],
+        source: &mut HeightMap<T>,
+        percentile: f32,
+        block_time: Option<usize>,
+    ) where
+        T: FloatCore,
+    {
+        if !(0.0..=1.0).contains(&percentile) {
+            panic!("The percentile should be between 0.0 and 1.0");
+        }
+
+        if block_time.map_or(false, |size| size < 3) {
             panic!("Computing a median for a size lower than 3 is useless");
         }
 
-        let median = {
-            if let Some(start) = height.checked_sub(size - 1) {
-                let even = size % 2 == 0;
-                let median_index = size / 2;
+        let mut ordered_vec = None;
+        let mut sorted_vec = None;
 
-                let mut vec = (start..=height)
-                    .map(|height| {
-                        OrderedFloat(source.get(&height).unwrap_or_else(|| {
-                            dbg!(height, &source.path_all, size);
-                            panic!()
-                        }))
-                    })
-                    .collect_vec();
+        heights.iter().for_each(|height| {
+            let height = *height;
 
-                vec.sort_unstable();
+            let value = {
+                if let Some(start) = block_time.map_or(Some(0), |size| height.checked_sub(size - 1))
+                {
+                    if ordered_vec.is_none() {
+                        let mut vec = (start..=height)
+                            .map(|height| OrderedFloat(source.get_or_import(&height)))
+                            .collect_vec();
 
-                if even {
-                    (vec.get(median_index)
-                        .unwrap_or_else(|| {
-                            dbg!(median_index, &self.path_all, &source.path_all, size);
-                            panic!()
-                        })
-                        .0
-                        + vec.get(median_index - 1).unwrap().0)
-                        / T::from(2.0).unwrap()
+                        if block_time.is_some() {
+                            ordered_vec.replace(VecDeque::from(vec.clone()));
+                        }
+
+                        vec.sort_unstable();
+                        sorted_vec.replace(vec);
+                    } else {
+                        let float_value = OrderedFloat(source.get_or_import(&height));
+
+                        if block_time.is_some() {
+                            let first = ordered_vec.as_mut().unwrap().pop_front().unwrap();
+                            let pos = sorted_vec.as_ref().unwrap().binary_search(&first).unwrap();
+                            sorted_vec.as_mut().unwrap().remove(pos);
+
+                            ordered_vec.as_mut().unwrap().push_back(float_value);
+                        }
+
+                        let pos = sorted_vec
+                            .as_ref()
+                            .unwrap()
+                            .binary_search(&float_value)
+                            .unwrap_or_else(|pos| pos);
+                        sorted_vec.as_mut().unwrap().insert(pos, float_value);
+                    }
+
+                    let vec = sorted_vec.as_ref().unwrap();
+
+                    let index = vec.len() as f32 * percentile;
+
+                    if index.fract() != 0.0 {
+                        (vec.get(index.ceil() as usize)
+                            .unwrap_or_else(|| {
+                                dbg!(index, &self.path_all, &source.path_all, block_time);
+                                panic!()
+                            })
+                            .0
+                            + vec
+                                .get(index.floor() as usize)
+                                .unwrap_or_else(|| {
+                                    dbg!(index, &self.path_all, &source.path_all, block_time);
+                                    panic!()
+                                })
+                                .0)
+                            / T::from(2.0).unwrap()
+                    } else {
+                        vec.get(index as usize).unwrap().0
+                    }
                 } else {
-                    vec.get(median_index).unwrap().0
+                    T::default()
                 }
-            } else {
-                T::default()
-            }
-        };
+            };
 
-        self.insert(height, median);
-
-        median
+            self.insert(height, value);
+        });
     }
+
+    // pub fn insert_cumulative(&mut self, height: usize, source: &HeightMap<T>) -> T
+    // where
+    //     T: Add<Output = T> + Sub<Output = T>,
+    // {
+    //     let previous_cum = height
+    //         .checked_sub(1)
+    //         .map(|previous_sum_height| {
+    //             self.get(&previous_sum_height).unwrap_or_else(|| {
+    //                 dbg!(previous_sum_height);
+    //                 panic!()
+    //             })
+    //         })
+    //         .unwrap_or_default();
+
+    //     let last_value = source.get(&height).unwrap();
+
+    //     let cum_value = previous_cum + last_value;
+
+    //     self.insert(height, cum_value);
+
+    //     cum_value
+    // }
+
+    // pub fn insert_last_x_sum(&mut self, height: usize, source: &HeightMap<T>, x: usize) -> T
+    // where
+    //     T: Add<Output = T> + Sub<Output = T>,
+    // {
+    //     let to_subtract = (height + 1)
+    //         .checked_sub(x)
+    //         .map(|previous_height| {
+    //             source.get(&previous_height).unwrap_or_else(|| {
+    //                 dbg!(&self.path_all, &source.path_all, previous_height);
+    //                 panic!()
+    //             })
+    //         })
+    //         .unwrap_or_default();
+
+    //     let previous_sum = height
+    //         .checked_sub(1)
+    //         .map(|previous_sum_height| self.get(&previous_sum_height).unwrap())
+    //         .unwrap_or_default();
+
+    //     let last_value = source.get(&height).unwrap();
+
+    //     let sum = previous_sum + last_value - to_subtract;
+
+    //     self.insert(height, sum);
+
+    //     sum
+    // }
+
+    // pub fn insert_simple_average(&mut self, height: usize, source: &HeightMap<T>, block_time: usize)
+    // where
+    //     T: Into<f32> + From<f32>,
+    // {
+    //     let to_subtract: f32 = (height + 1)
+    //         .checked_sub(block_time)
+    //         .map(|previous_height| source.get(&previous_height).unwrap())
+    //         .unwrap_or_default()
+    //         .into();
+
+    //     let previous_average: f32 = height
+    //         .checked_sub(1)
+    //         .map(|previous_average_height| self.get(&previous_average_height).unwrap())
+    //         .unwrap_or_default()
+    //         .into();
+
+    //     let last_value: f32 = source.get(&height).unwrap().into();
+
+    //     let sum = previous_average * block_time as f32 - to_subtract + last_value;
+
+    //     let average: T = (sum / block_time as f32).into();
+
+    //     self.insert(height, average);
+    // }
+
+    // pub fn insert_net_change(&mut self, height: usize, source: &HeightMap<T>, offset: usize) -> T
+    // where
+    //     T: Sub<Output = T>,
+    // {
+    //     let previous_value = height
+    //         .checked_sub(offset)
+    //         .map(|height| {
+    //             source.get(&height).unwrap_or_else(|| {
+    //                 dbg!(&self.path_all, &source.path_all, offset);
+    //                 panic!();
+    //             })
+    //         })
+    //         .unwrap_or_default();
+
+    //     let last_value = source.get(&height).unwrap();
+
+    //     let net = last_value - previous_value;
+
+    //     self.insert(height, net);
+
+    //     net
+    // }
+
+    // pub fn insert_median(&mut self, height: usize, source: &HeightMap<T>, size: usize) -> T
+    // where
+    //     T: FloatCore,
+    // {
+    //     if size < 3 {
+    //         panic!("Computing a median for a size lower than 3 is useless");
+    //     }
+
+    //     let median = {
+    //         if let Some(start) = height.checked_sub(size - 1) {
+    //             let even = size % 2 == 0;
+    //             let median_index = size / 2;
+
+    //             let mut vec = (start..=height)
+    //                 .map(|height| {
+    //                     OrderedFloat(source.get(&height).unwrap_or_else(|| {
+    //                         dbg!(height, &source.path_all, size);
+    //                         panic!()
+    //                     }))
+    //                 })
+    //                 .collect_vec();
+
+    //             vec.sort_unstable();
+
+    //             if even {
+    //                 (vec.get(median_index)
+    //                     .unwrap_or_else(|| {
+    //                         dbg!(median_index, &self.path_all, &source.path_all, size);
+    //                         panic!()
+    //                     })
+    //                     .0
+    //                     + vec.get(median_index - 1).unwrap().0)
+    //                     / T::from(2.0).unwrap()
+    //             } else {
+    //                 vec.get(median_index).unwrap().0
+    //             }
+    //         } else {
+    //             T::default()
+    //         }
+    //     };
+
+    //     self.insert(height, median);
+
+    //     median
+    // }
 }

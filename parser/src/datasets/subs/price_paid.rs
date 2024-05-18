@@ -2,18 +2,17 @@ use chrono::NaiveDate;
 use itertools::Itertools;
 
 use crate::{
-    datasets::{AnyDataset, MinInitialState, ProcessedBlockData},
+    datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
     states::PricePaidState,
     structs::{AnyBiMap, BiMap},
+    DateMap, HeightMap,
 };
 
 pub struct PricePaidSubDataset {
-    min_initial_state: MinInitialState,
+    min_initial_states: MinInitialStates,
 
+    // Inserted
     pub realized_cap: BiMap<f32>,
-    pub realized_price: BiMap<f32>,
-    pub mvrv: BiMap<f32>,
-
     pp_median: BiMap<f32>,
     pp_95p: BiMap<f32>,
     pp_90p: BiMap<f32>,
@@ -33,6 +32,10 @@ pub struct PricePaidSubDataset {
     pp_15p: BiMap<f32>,
     pp_10p: BiMap<f32>,
     pp_05p: BiMap<f32>,
+
+    // Computed
+    pub realized_price: BiMap<f32>,
+    pub mvrv: BiMap<f32>,
 }
 
 impl PricePaidSubDataset {
@@ -40,7 +43,7 @@ impl PricePaidSubDataset {
         let f = |s: &str| format!("{parent_path}/{s}");
 
         let mut s = Self {
-            min_initial_state: MinInitialState::default(),
+            min_initial_states: MinInitialStates::default(),
 
             realized_cap: BiMap::_new_bin(1, &f("realized_cap"), usize::MAX),
             realized_price: BiMap::_new_bin(1, &f("realized_price"), usize::MAX),
@@ -67,24 +70,21 @@ impl PricePaidSubDataset {
             pp_05p: BiMap::new_bin(1, &f("05p_price_paid")),
         };
 
-        s.min_initial_state
-            .consume(MinInitialState::compute_from_dataset(&s));
+        s.min_initial_states
+            .consume(MinInitialStates::compute_from_dataset(&s));
 
         Ok(s)
     }
 
     pub fn insert(
         &mut self,
-        &ProcessedBlockData {
+        &InsertData {
             height,
             is_date_last_block,
             date,
-            date_price,
-            block_price,
             ..
-        }: &ProcessedBlockData,
+        }: &InsertData,
         state: &PricePaidState,
-        supply: f32,
     ) {
         let PricePaidState {
             realized_cap,
@@ -114,23 +114,6 @@ impl PricePaidSubDataset {
 
         if is_date_last_block {
             self.realized_cap.date.insert(date, realized_cap);
-        }
-
-        let realized_price = self
-            .realized_price
-            .height
-            .insert(height, supply / realized_cap);
-
-        if is_date_last_block {
-            self.realized_price.date.insert(date, realized_price);
-        }
-
-        self.mvrv
-            .height
-            .insert(height, block_price / realized_price);
-
-        if is_date_last_block {
-            self.mvrv.date.insert(date, date_price / realized_price);
         }
 
         // Check if iter was empty
@@ -187,23 +170,45 @@ impl PricePaidSubDataset {
         }
     }
 
+    pub fn compute(
+        &mut self,
+        &ComputeData { heights, dates }: &ComputeData,
+        date_closes: &mut DateMap<f32>,
+        height_closes: &mut HeightMap<f32>,
+        cohort_supply: &mut BiMap<f32>,
+    ) {
+        self.realized_price.multiple_insert_divide(
+            heights,
+            dates,
+            cohort_supply,
+            &mut self.realized_cap,
+        );
+
+        self.mvrv.height.multiple_insert_divide(
+            heights,
+            height_closes,
+            &mut self.realized_price.height,
+        );
+        self.mvrv
+            .date
+            .multiple_insert_divide(dates, date_closes, &mut self.realized_price.date);
+    }
+
     fn insert_height_default(&mut self, height: usize) {
-        self.as_mut_vec().into_iter().for_each(|bi| {
+        self.inserted_as_mut_vec().into_iter().for_each(|bi| {
             bi.height.insert_default(height);
         })
     }
 
     fn insert_date_default(&mut self, date: NaiveDate) {
-        self.as_mut_vec().into_iter().for_each(|bi| {
+        self.inserted_as_mut_vec().into_iter().for_each(|bi| {
             bi.date.insert_default(date);
         })
     }
 
-    pub fn as_vec(&self) -> Vec<&BiMap<f32>> {
+    pub fn inserted_as_vec(&self) -> Vec<&BiMap<f32>> {
         vec![
             &self.realized_cap,
-            &self.realized_price,
-            &self.mvrv,
             &self.pp_95p,
             &self.pp_90p,
             &self.pp_85p,
@@ -226,11 +231,9 @@ impl PricePaidSubDataset {
         ]
     }
 
-    pub fn as_mut_vec(&mut self) -> Vec<&mut BiMap<f32>> {
+    pub fn inserted_as_mut_vec(&mut self) -> Vec<&mut BiMap<f32>> {
         vec![
             &mut self.realized_cap,
-            &mut self.realized_price,
-            &mut self.mvrv,
             &mut self.pp_95p,
             &mut self.pp_90p,
             &mut self.pp_85p,
@@ -255,21 +258,29 @@ impl PricePaidSubDataset {
 }
 
 impl AnyDataset for PricePaidSubDataset {
-    fn get_min_initial_state(&self) -> &MinInitialState {
-        &self.min_initial_state
+    fn get_min_initial_states(&self) -> &MinInitialStates {
+        &self.min_initial_states
     }
 
-    fn to_any_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        self.as_vec()
+    fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
+        self.inserted_as_vec()
             .into_iter()
             .map(|dataset| dataset as &(dyn AnyBiMap + Send + Sync))
             .collect_vec()
     }
 
-    fn to_any_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        self.as_mut_vec()
+    fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
+        self.inserted_as_mut_vec()
             .into_iter()
             .map(|dataset| dataset as &mut dyn AnyBiMap)
             .collect_vec()
+    }
+
+    fn to_computed_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
+        vec![&self.realized_price, &self.mvrv]
+    }
+
+    fn to_computed_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
+        vec![&mut self.realized_price, &mut self.mvrv]
     }
 }

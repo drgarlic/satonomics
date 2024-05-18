@@ -40,7 +40,7 @@ use crate::{
     structs::{AddressData, AddressRealizedData},
 };
 
-pub struct ProcessedBlockData<'a> {
+pub struct InsertData<'a> {
     pub address_cohorts_input_states: &'a Option<AddressCohortsInputStates>,
     pub address_cohorts_one_shot_states: &'a Option<AddressCohortsOneShotStates>,
     pub address_cohorts_output_states: &'a Option<AddressCohortsOutputStates>,
@@ -68,8 +68,13 @@ pub struct ProcessedBlockData<'a> {
     pub utxo_cohorts_sent_states: &'a UTXOCohortsSentStates,
 }
 
+pub struct ComputeData<'a> {
+    pub heights: &'a [usize],
+    pub dates: &'a [NaiveDate],
+}
+
 pub struct AllDatasets {
-    min_initial_state: MinInitialState,
+    min_initial_states: MinInitialStates,
 
     pub address: AddressDatasets,
     pub price: PriceDatasets,
@@ -106,7 +111,7 @@ impl AllDatasets {
         let price = PriceDatasets::import(path)?;
 
         let mut s = Self {
-            min_initial_state: MinInitialState::default(),
+            min_initial_states: MinInitialStates::default(),
 
             address,
             block_metadata,
@@ -119,51 +124,100 @@ impl AllDatasets {
             utxo,
         };
 
-        s.min_initial_state
-            .consume(MinInitialState::compute_from_datasets(&s));
+        s.min_initial_states
+            .consume(MinInitialStates::compute_from_datasets(&s));
 
         s.export_path_to_type()?;
 
         Ok(s)
     }
 
-    pub fn insert_data(&mut self, processed_block_data: ProcessedBlockData) {
-        let ProcessedBlockData { height, date, .. } = processed_block_data;
+    pub fn insert(&mut self, insert_data: InsertData) {
+        self.price.insert(&insert_data);
 
-        self.price.insert_data(&processed_block_data);
+        self.address.insert(&insert_data);
 
-        self.address.insert_data(&processed_block_data);
+        self.utxo.insert(&insert_data);
 
-        self.utxo.insert_data(&processed_block_data);
-
-        if self.block_metadata.should_insert(height, date) {
-            self.block_metadata.insert_data(&processed_block_data);
+        if self.block_metadata.should_insert(&insert_data) {
+            self.block_metadata.insert(&insert_data);
         }
 
-        if self.date_metadata.should_insert(height, date) {
-            self.date_metadata.insert_data(&processed_block_data);
+        if self.date_metadata.should_insert(&insert_data) {
+            self.date_metadata.insert(&insert_data);
         }
 
-        if self.coindays.should_insert(height, date) {
-            self.coindays.insert_data(&processed_block_data);
+        if self.coindays.should_insert(&insert_data) {
+            self.coindays.insert(&insert_data);
         }
 
-        if self.mining.should_insert(height, date) {
+        if self.mining.should_insert(&insert_data) {
+            self.mining.insert(&insert_data);
+        }
+
+        if self.transaction.should_insert(&insert_data) {
+            self.transaction.insert(&insert_data);
+        }
+
+        if self.cointime.should_insert(&insert_data) {
+            self.cointime.insert(&insert_data);
+        }
+    }
+
+    pub fn compute(&mut self, compute_data: ComputeData) {
+        // No compute needed for now
+        self.price.date.compute(&compute_data);
+
+        self.address.compute(
+            &compute_data,
+            &mut self.price.date.closes,
+            &mut self.price.height.closes,
+        );
+
+        self.utxo.compute(
+            &compute_data,
+            &mut self.price.date.closes,
+            &mut self.price.height.closes,
+        );
+
+        // No compute needed for now
+        // if self.block_metadata.should_compute(height, date) {
+        //     self.block_metadata.compute(&compute_data);
+        // }
+
+        // No compute needed for now
+        // if self.date_metadata.should_compute(height, date) {
+        //     self.date_metadata.compute(&compute_data);
+        // }
+
+        // No compute needed for now
+        // if self.coindays.should_compute(height, date) {
+        //     self.coindays.compute(&compute_data);
+        // }
+
+        if self.mining.should_compute(&compute_data) {
             self.mining
-                .insert_data(&processed_block_data, &self.address);
+                .compute(&compute_data, &mut self.address.all.all.supply.total);
         }
 
-        if self.transaction.should_insert(height, date) {
+        if self.transaction.should_compute(&compute_data) {
             self.transaction
-                .insert_data(&processed_block_data, &self.address);
+                .compute(&compute_data, &mut self.address.all.all.supply.total);
         }
 
-        if self.cointime.should_insert(height, date) {
-            self.cointime.insert_data(
-                &processed_block_data,
-                &self.address,
-                &self.mining,
-                &self.transaction,
+        if self.cointime.should_compute(&compute_data) {
+            self.cointime.compute(
+                &compute_data,
+                &mut self.date_metadata.first_height,
+                &mut self.date_metadata.last_height,
+                &mut self.price.date.closes,
+                &mut self.price.height.closes,
+                &mut self.address.all.all.supply.total,
+                &mut self.address.all.all.price_paid.realized_cap,
+                &mut self.address.all.all.price_paid.realized_price,
+                &mut self.mining.yearly_inflation_rate,
+                &mut self.transaction.annualized_volume,
+                &mut self.mining.cumulative_subsidy_in_dollars,
             );
         }
     }
@@ -174,7 +228,7 @@ impl AllDatasets {
             .into_iter()
             .flat_map(|dataset| {
                 dataset
-                    .to_any_map_vec()
+                    .to_all_map_vec()
                     .into_iter()
                     .flat_map(|map| map.exported_path_with_t_name())
             })
@@ -201,8 +255,8 @@ impl AllDatasets {
 }
 
 impl AnyDatasets for AllDatasets {
-    fn get_min_initial_state(&self) -> &MinInitialState {
-        &self.min_initial_state
+    fn get_min_initial_states(&self) -> &MinInitialStates {
+        &self.min_initial_states
     }
 
     fn to_any_dataset_vec(&self) -> Vec<&(dyn AnyDataset + Send + Sync)> {

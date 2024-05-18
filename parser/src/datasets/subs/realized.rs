@@ -1,13 +1,14 @@
 use crate::{
-    datasets::{AnyDataset, MinInitialState, ProcessedBlockData},
+    datasets::{AnyDataset, InsertData, MinInitialStates},
     states::RealizedState,
     structs::{AnyBiMap, BiMap},
 };
 
 /// TODO: Fix fees not taken into account ?
 pub struct RealizedSubDataset {
-    min_initial_state: MinInitialState,
+    min_initial_states: MinInitialStates,
 
+    // Inserted
     realized_profit: BiMap<f32>,
     realized_loss: BiMap<f32>,
 }
@@ -17,27 +18,27 @@ impl RealizedSubDataset {
         let f = |s: &str| format!("{parent_path}/{s}");
 
         let mut s = Self {
-            min_initial_state: MinInitialState::default(),
+            min_initial_states: MinInitialStates::default(),
 
             realized_profit: BiMap::new_bin(1, &f("realized_profit")),
             realized_loss: BiMap::new_bin(1, &f("realized_loss")),
         };
 
-        s.min_initial_state
-            .consume(MinInitialState::compute_from_dataset(&s));
+        s.min_initial_states
+            .consume(MinInitialStates::compute_from_dataset(&s));
 
         Ok(s)
     }
 
     pub fn insert(
         &mut self,
-        &ProcessedBlockData {
+        &InsertData {
             height,
             date,
             is_date_last_block,
             date_blocks_range,
             ..
-        }: &ProcessedBlockData,
+        }: &InsertData,
         height_state: &RealizedState,
     ) {
         self.realized_profit
@@ -59,15 +60,15 @@ impl RealizedSubDataset {
 }
 
 impl AnyDataset for RealizedSubDataset {
-    fn get_min_initial_state(&self) -> &MinInitialState {
-        &self.min_initial_state
+    fn get_min_initial_states(&self) -> &MinInitialStates {
+        &self.min_initial_states
     }
 
-    fn to_any_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
+    fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
         vec![&self.realized_loss, &self.realized_profit]
     }
 
-    fn to_any_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
+    fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
         vec![&mut self.realized_loss, &mut self.realized_profit]
     }
 }

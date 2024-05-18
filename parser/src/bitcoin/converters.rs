@@ -1,6 +1,5 @@
 use super::SATOSHIS_PER_BITCOIN;
 
-#[allow(unused)]
 #[inline(always)]
 pub fn sats_to_btc(sats: u64) -> f32 {
     sats as f32 / SATOSHIS_PER_BITCOIN as f32
