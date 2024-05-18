@@ -185,6 +185,7 @@ where
     {
         self.height
             .multiple_insert_cumulative(heights, &mut source.height);
+
         self.date
             .multiple_insert_cumulative(dates, &mut source.date);
     }

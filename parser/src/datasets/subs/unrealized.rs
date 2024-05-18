@@ -71,8 +71,8 @@ impl UnrealizedSubDataset {
                 .insert(date, date_state.unrealized_profit);
 
             self.unrealized_loss
-                .height
-                .insert(height, block_state.unrealized_loss);
+                .date
+                .insert(date, date_state.unrealized_loss);
         }
     }
 

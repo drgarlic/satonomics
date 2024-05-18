@@ -129,8 +129,6 @@ impl CointimeDataset {
         s.min_initial_states
             .consume(MinInitialStates::compute_from_dataset(&s));
 
-        dbg!(&s.min_initial_states);
-
         Ok(s)
     }
 
@@ -204,10 +202,11 @@ impl CointimeDataset {
             &mut self.cumulative_coinblocks_created,
         );
 
-        self.vaultedness.height.multiple_insert_simple_transform(
+        self.vaultedness.multiple_insert_simple_transform(
             heights,
-            &mut self.liveliness.height,
-            |liveliness| 1.0 - liveliness,
+            dates,
+            &mut self.liveliness,
+            &|liveliness| 1.0 - liveliness,
         );
 
         self.activity_to_vaultedness_ratio.multiple_insert_divide(
@@ -371,6 +370,7 @@ impl CointimeDataset {
             &mut self.vaulted_supply.height,
             height_closes,
         );
+
         self.vaulted_cap.date.multiple_insert_multiply(
             dates,
             &mut self.vaulted_supply.date,
@@ -409,7 +409,6 @@ impl CointimeDataset {
                 &mut self.active_cap.date,
                 |(active_cap, date)| {
                     let investor_cap = self.investor_cap.date.get(*date).unwrap();
-
                     (active_cap - investor_cap) / active_cap
                 },
             );
@@ -488,8 +487,6 @@ impl CointimeDataset {
             &mut self.cointime_price,
             circulating_supply,
         );
-
-        panic!("");
     }
 }
 

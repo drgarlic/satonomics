@@ -59,8 +59,6 @@ impl MiningDataset {
         s.min_initial_states
             .consume(MinInitialStates::compute_from_dataset(&s));
 
-        dbg!(&s.min_initial_states);
-
         Ok(s)
     }
 
