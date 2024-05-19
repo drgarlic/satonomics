@@ -3,7 +3,6 @@ charts
 dist
 dev-dist
 .DS_Store
-TODO.md
 visualizer
 # Local Netlify folder
 .netlify
