@@ -316,6 +316,10 @@ impl CohortDataset {
     }
 
     pub fn insert(&mut self, insert_data: &InsertData) {
+        if !insert_data.compute_addresses {
+            return;
+        }
+
         let liquidity_split_processed_address_state = insert_data
             .states
             .address_cohorts_durable_states

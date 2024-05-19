@@ -424,14 +424,31 @@ where
         + savefile::Deserialize
         + savefile::ReprC,
 {
-    pub fn multiple_insert_simple_transform<F>(
+    pub fn multiple_static_insert(&mut self, dates: &[NaiveDate], static_value: T) {
+        dates.iter().for_each(|date| {
+            let date = *date;
+
+            self.insert(date, static_value);
+        });
+    }
+
+    pub fn multiple_insert_simple_transform<K, F>(
         &mut self,
         dates: &[NaiveDate],
-        source: &mut DateMap<T>,
+        source: &mut DateMap<K>,
         transform: F,
     ) where
         T: Div<Output = T>,
-        F: Fn(T) -> T,
+        F: Fn(K) -> T,
+        K: Clone
+            + Copy
+            + Default
+            + Debug
+            + Serialize
+            + DeserializeOwned
+            + savefile::Serialize
+            + savefile::Deserialize
+            + savefile::ReprC,
     {
         dates.iter().for_each(|date| {
             let date = *date;
@@ -605,7 +622,11 @@ where
             + savefile::ReprC
             + ToF32,
     {
-        let x = days as f32;
+        if days <= 1 {
+            panic!("Average of 1 or less is not useful");
+        }
+
+        let days = days as f32;
 
         let mut average = None;
 
@@ -620,9 +641,15 @@ where
                 })
                 .into();
 
-            let last_value = source.get_or_import(date).unwrap().to_f32();
+            let last_value = source
+                .get_or_import(date)
+                .unwrap_or_else(|| {
+                    dbg!(date);
+                    panic!()
+                })
+                .to_f32();
 
-            average.replace(((previous_average * x - 1.0 + last_value) / x).into());
+            average.replace(((previous_average * (days - 1.0) + last_value) / days).into());
 
             self.insert(date, average.unwrap());
         });

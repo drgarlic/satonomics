@@ -4,7 +4,7 @@ use chrono::NaiveDate;
 use color_eyre::eyre::Error;
 
 use crate::{
-    datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
+    datasets::{AnyDataset, ComputeData, MinInitialStates},
     price::{Binance, Kraken},
     structs::{AnyDateMap, DateMap},
     utils::{ONE_MONTH_IN_DAYS, ONE_WEEK_IN_DAYS, ONE_YEAR_IN_DAYS},
@@ -95,52 +95,52 @@ impl DateDataset {
             .ok_or(Error::msg("Couldn't find date in daily kraken"))
     }
 
-    pub fn insert(
-        &mut self,
-        &InsertData {
-            is_date_last_block,
-            date,
-            ..
-        }: &InsertData,
-    ) {
-        if is_date_last_block {
-            self.closes
-                .insert(date, self.ohlcs.get(date).unwrap().close);
-        }
-    }
-
     pub fn compute(&mut self, &ComputeData { dates, .. }: &ComputeData) {
+        self.closes
+            .multiple_insert_simple_transform(dates, &mut self.ohlcs, |ohlc| ohlc.close);
+
         self.price_1w_sma
             .multiple_insert_simple_average(dates, &mut self.closes, ONE_WEEK_IN_DAYS);
+
         self.price_1m_sma.multiple_insert_simple_average(
             dates,
             &mut self.closes,
             ONE_MONTH_IN_DAYS,
         );
+
         self.price_1y_sma
             .multiple_insert_simple_average(dates, &mut self.closes, ONE_YEAR_IN_DAYS);
+
         self.price_2y_sma.multiple_insert_simple_average(
             dates,
             &mut self.closes,
             2 * ONE_YEAR_IN_DAYS,
         );
+
         self.price_4y_sma.multiple_insert_simple_average(
             dates,
             &mut self.closes,
             4 * ONE_YEAR_IN_DAYS,
         );
+
         self.price_8d_sma
             .multiple_insert_simple_average(dates, &mut self.closes, 8);
+
         self.price_13d_sma
             .multiple_insert_simple_average(dates, &mut self.closes, 13);
+
         self.price_21d_sma
             .multiple_insert_simple_average(dates, &mut self.closes, 21);
+
         self.price_34d_sma
             .multiple_insert_simple_average(dates, &mut self.closes, 34);
+
         self.price_55d_sma
             .multiple_insert_simple_average(dates, &mut self.closes, 55);
+
         self.price_89d_sma
             .multiple_insert_simple_average(dates, &mut self.closes, 89);
+
         self.price_144d_sma
             .multiple_insert_simple_average(dates, &mut self.closes, 144);
     }
@@ -152,8 +152,16 @@ impl AnyDataset for DateDataset {
     }
 
     fn to_inserted_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
+        vec![&self.ohlcs]
+    }
+
+    fn to_inserted_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
+        vec![&mut self.ohlcs]
+    }
+
+    fn to_computed_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
         vec![
-            &self.ohlcs,
+            &self.closes,
             &self.price_1w_sma,
             &self.price_1m_sma,
             &self.price_1y_sma,
@@ -169,9 +177,9 @@ impl AnyDataset for DateDataset {
         ]
     }
 
-    fn to_inserted_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
+    fn to_computed_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
         vec![
-            &mut self.ohlcs,
+            &mut self.closes,
             &mut self.price_1w_sma,
             &mut self.price_1m_sma,
             &mut self.price_1y_sma,

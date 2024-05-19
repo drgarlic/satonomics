@@ -80,11 +80,11 @@ export const applyPriceSeries = <
     chartState.priceSeries = series;
 
     // TODO: fix types
-    createEffect(() =>
+    createEffect(() => {
       series.setData(
         dataset?.values() || datasets[scale].price.values() || ([] as any),
-      ),
-    );
+      );
+    });
   }
 
   if (!lowerOpacity) {

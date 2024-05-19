@@ -49,6 +49,7 @@ pub struct InsertData<'a> {
     pub address_index_to_removed_address_data: &'a BTreeMap<u32, AddressData>,
     pub block_price: f32,
     pub coinbase: u64,
+    pub compute_addresses: bool,
     pub databases: &'a Databases,
     pub date: NaiveDate,
     pub date_first_height: usize,
@@ -133,8 +134,6 @@ impl AllDatasets {
     }
 
     pub fn insert(&mut self, insert_data: InsertData) {
-        self.price.insert(&insert_data);
-
         self.address.insert(&insert_data);
 
         self.utxo.insert(&insert_data);
@@ -166,7 +165,7 @@ impl AllDatasets {
 
     pub fn compute(&mut self, compute_data: ComputeData) {
         // No compute needed for now
-        self.price.date.compute(&compute_data);
+        self.price.compute(&compute_data);
 
         self.address.compute(
             &compute_data,

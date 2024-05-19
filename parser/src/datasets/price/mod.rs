@@ -6,7 +6,7 @@ use date::*;
 use height::*;
 pub use ohlc::*;
 
-use super::{AnyDataset, AnyDatasets, InsertData, MinInitialStates};
+use super::{AnyDataset, AnyDatasets, ComputeData, MinInitialStates};
 
 pub struct PriceDatasets {
     min_initial_states: MinInitialStates,
@@ -32,9 +32,10 @@ impl PriceDatasets {
         Ok(s)
     }
 
-    pub fn insert(&mut self, insert_data: &InsertData) {
-        self.date.insert(insert_data);
-        self.height.insert(insert_data);
+    pub fn compute(&mut self, compute_data: &ComputeData) {
+        self.height.compute(compute_data);
+
+        self.date.compute(compute_data);
     }
 }
 

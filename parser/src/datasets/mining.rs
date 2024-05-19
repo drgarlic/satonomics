@@ -23,6 +23,7 @@ pub struct MiningDataset {
     pub cumulative_subsidy_in_dollars: BiMap<f32>,
     pub annualized_issuance: BiMap<f32>,
     pub yearly_inflation_rate: BiMap<f32>,
+    pub blocks_mined_target: DateMap<f32>,
     pub blocks_mined_1w_sma: DateMap<f32>,
     pub blocks_mined_1m_sma: DateMap<f32>,
 }
@@ -52,6 +53,7 @@ impl MiningDataset {
             last_subsidy: DateMap::new_bin(1, &f("last_subsidy")),
             last_subsidy_in_dollars: DateMap::new_bin(1, &f("last_subsidy_in_dollars")),
 
+            blocks_mined_target: DateMap::new_bin(1, &f("blocks_mined_target")),
             blocks_mined_1w_sma: DateMap::new_bin(1, &f("blocks_mined_1w_sma")),
             blocks_mined_1m_sma: DateMap::new_bin(1, &f("blocks_mined_1m_sma")),
         };
@@ -136,6 +138,9 @@ impl MiningDataset {
             circulating_supply,
         );
 
+        self.blocks_mined_target
+            .multiple_static_insert(dates, 144.0);
+
         self.blocks_mined_1w_sma.multiple_insert_simple_average(
             dates,
             &mut self.blocks_mined,
@@ -206,10 +211,18 @@ impl AnyDataset for MiningDataset {
     }
 
     fn to_computed_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
-        vec![&self.blocks_mined_1w_sma, &self.blocks_mined_1m_sma]
+        vec![
+            &self.blocks_mined_target,
+            &self.blocks_mined_1w_sma,
+            &self.blocks_mined_1m_sma,
+        ]
     }
 
     fn to_computed_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
-        vec![&mut self.blocks_mined_1w_sma, &mut self.blocks_mined_1m_sma]
+        vec![
+            &mut self.blocks_mined_target,
+            &mut self.blocks_mined_1w_sma,
+            &mut self.blocks_mined_1m_sma,
+        ]
     }
 }

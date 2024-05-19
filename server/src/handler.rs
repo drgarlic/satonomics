@@ -9,7 +9,10 @@ use serde::Deserialize;
 
 use parser::{DateMap, HeightMap, HEIGHT_MAP_CHUNK_SIZE, OHLC};
 
-use crate::{chunk::Chunk, kind::Kind, response::typed_value_to_response, AppState};
+use crate::{
+    chunk::Chunk, headers::add_cors_to_headers, kind::Kind, response::typed_value_to_response,
+    AppState,
+};
 
 #[derive(Deserialize)]
 pub struct Params {
@@ -24,7 +27,14 @@ pub async fn file_handler(
 ) -> Response {
     match _file_handler(headers, path, query, app_state) {
         Ok(response) => response,
-        Err(error) => (StatusCode::INTERNAL_SERVER_ERROR, error.to_string()).into_response(),
+        Err(error) => {
+            let mut response =
+                (StatusCode::INTERNAL_SERVER_ERROR, error.to_string()).into_response();
+
+            add_cors_to_headers(response.headers_mut());
+
+            response
+        }
     }
 }
 
@@ -76,19 +86,17 @@ fn _file_handler(
             _ => panic!(),
         };
 
-        let (last_chunk_id, last_chunk_path) = datasets.last_key_value().unwrap();
+        let (last_chunk_id, _) = datasets.last_key_value().unwrap();
 
-        let mut chunk_id = query.chunk.unwrap_or(*last_chunk_id);
+        let chunk_id = query.chunk.unwrap_or(*last_chunk_id);
 
-        route.file_path = if let Some(path) = datasets.get(&chunk_id) {
-            path
-        } else {
-            chunk_id = *last_chunk_id;
-            last_chunk_path
+        let path = datasets.get(&chunk_id);
+
+        if path.is_none() {
+            return Err(eyre!("Couldn't find chunk"));
         }
-        .to_str()
-        .unwrap()
-        .to_string();
+
+        route.file_path = path.unwrap().to_str().unwrap().to_string();
 
         let offset = match kind {
             Kind::Date => 1,

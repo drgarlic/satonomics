@@ -1,3 +1,5 @@
+import { LineStyle } from "lightweight-charts";
+
 import { applyMultipleSeries, colors, SeriesType } from "/src/scripts";
 
 export function createPresets() {
@@ -24,10 +26,6 @@ export function createPresets() {
                 title: "New",
                 color: colors.darkBitcoin,
                 dataset: params.datasets.date.blocks_mined,
-                priceLine: {
-                  value: 144,
-                  color: colors.white,
-                },
               },
               {
                 id: "new-blocks",
@@ -35,15 +33,15 @@ export function createPresets() {
                 color: colors.bitcoin,
                 dataset: params.datasets.date.blocks_mined_1m_sma,
               },
-              // {
-              //   id: "target",
-              //   title: "Target",
-              //   color: colors.white,
-              //   dataset: params.datasets[scale].value144,
-              //   options: {
-              //     lineStyle: LineStyle.LargeDashed,
-              //   },
-              // },
+              {
+                id: "target",
+                title: "Target",
+                color: colors.white,
+                dataset: params.datasets.date.blocks_mined_target,
+                options: {
+                  lineStyle: LineStyle.LargeDashed,
+                },
+              },
             ],
           });
         },

@@ -10,6 +10,7 @@ use tower_http::compression::CompressionLayer;
 
 mod chunk;
 mod handler;
+mod headers;
 mod imports;
 mod kind;
 mod paths;

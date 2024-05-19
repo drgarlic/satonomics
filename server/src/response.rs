@@ -1,19 +1,15 @@
 use std::fmt::Debug;
 
-use axum::{
-    http::header,
-    response::{IntoResponse, Json, Response},
-};
+use axum::response::{IntoResponse, Json, Response};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
 use crate::{
     chunk::Chunk,
+    headers::{add_cache_control_to_headers, add_cors_to_headers, add_json_type_to_headers},
     imports::{import_map, import_value, import_vec},
     kind::Kind,
 };
-
-const STALE_IF_ERROR: u64 = 604800; // 1 Week
 
 #[derive(Serialize)]
 struct WrappedDataset<'a, T>
@@ -76,16 +72,9 @@ where
     let max_age = cache_time;
     let stale_while_revalidate = 2 * max_age;
 
-    headers.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*".parse().unwrap());
-    headers.insert(header::ACCESS_CONTROL_ALLOW_HEADERS, "*".parse().unwrap());
-    headers.insert(
-        header::CACHE_CONTROL,
-        format!(
-            "public, max-age={max_age}, stale-while-revalidate={stale_while_revalidate}, stale-if-error={STALE_IF_ERROR}")
-        .parse()
-        .unwrap(),
-    );
-    headers.insert(header::CONTENT_TYPE, "application/json".parse().unwrap());
+    add_cors_to_headers(headers);
+    add_json_type_to_headers(headers);
+    add_cache_control_to_headers(headers, max_age, stale_while_revalidate);
 
     response
 }

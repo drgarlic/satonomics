@@ -445,14 +445,23 @@ where
             .sum::<T>()
     }
 
-    pub fn multiple_insert_simple_transform<F>(
+    pub fn multiple_insert_simple_transform<K, F>(
         &mut self,
         heights: &[usize],
-        source: &mut HeightMap<T>,
+        source: &mut HeightMap<K>,
         transform: F,
     ) where
         T: Div<Output = T>,
-        F: Fn(T) -> T,
+        F: Fn(K) -> T,
+        K: Clone
+            + Copy
+            + Default
+            + Debug
+            + Serialize
+            + DeserializeOwned
+            + savefile::Serialize
+            + savefile::Deserialize
+            + savefile::ReprC,
     {
         heights.iter().for_each(|height| {
             self.insert(*height, transform(source.get_or_import(height)));

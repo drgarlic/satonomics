@@ -4,7 +4,7 @@ use chrono::{NaiveDateTime, NaiveTime, TimeZone, Timelike, Utc};
 use color_eyre::eyre::Error;
 
 use crate::{
-    datasets::{AnyDataset, InsertData, MinInitialStates},
+    datasets::{AnyDataset, ComputeData, MinInitialStates},
     price::{Binance, Kraken},
     structs::{AnyHeightMap, HeightMap},
 };
@@ -182,9 +182,9 @@ impl HeightDataset {
         Ok(final_ohlc)
     }
 
-    pub fn insert(&mut self, &InsertData { height, .. }: &InsertData) {
+    pub fn compute(&mut self, &ComputeData { heights, .. }: &ComputeData) {
         self.closes
-            .insert(height, self.ohlcs.get(&height).unwrap().close);
+            .multiple_insert_simple_transform(heights, &mut self.ohlcs, |ohlc| ohlc.close);
     }
 }
 

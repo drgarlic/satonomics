@@ -91,10 +91,12 @@ export function createResourceDataset<
 
     let cache: Cache | undefined;
 
+    const urlWithQuery = `${url}?chunk=${id}`;
+
     try {
       cache = await caches.open("resources");
 
-      const cachedResponse = await cache.match(url.toString());
+      const cachedResponse = await cache.match(urlWithQuery);
 
       if (cachedResponse) {
         const json = await convertResponseToJSON<Scale, Type>(cachedResponse);
@@ -108,7 +110,13 @@ export function createResourceDataset<
     } catch {}
 
     try {
-      const fetchedResponse = await fetch(`${url}?chunk=${id}`);
+      const fetchedResponse = await fetch(urlWithQuery);
+
+      console.log(fetchedResponse);
+
+      if (!fetchedResponse.ok) {
+        return;
+      }
 
       const clonedResponse = fetchedResponse.clone();
 
@@ -146,6 +154,11 @@ export function createResourceDataset<
       );
 
       const flat = fetchedJSONs.flatMap((fetched) => fetched.vec() || []);
+
+      console.log({
+        url,
+        fetchedJSONs: fetchedJSONs.map((fetched) => fetched.vec()),
+      });
 
       return flat;
     }),

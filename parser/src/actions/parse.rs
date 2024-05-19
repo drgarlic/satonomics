@@ -702,6 +702,7 @@ pub fn parse(
         address_index_to_removed_address_data: &address_index_to_removed_address_data,
         block_price,
         coinbase,
+        compute_addresses,
         databases,
         date,
         date_first_height: first_date_height,

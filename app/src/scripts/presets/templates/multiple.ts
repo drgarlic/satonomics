@@ -172,6 +172,12 @@ export const applyMultipleSeries = <Scale extends ResourceScale>({
     );
   }
 
+  console.log(
+    list.flatMap((config) =>
+      config.seriesType !== SeriesType.Stacked ? [config] : [],
+    ),
+  );
+
   list
     .flatMap((config) =>
       config.seriesType !== SeriesType.Stacked ? [config] : [],
