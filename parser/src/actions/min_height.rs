@@ -1,8 +1,7 @@
 use crate::{
     databases::Databases,
-    datasets::{AllDatasets, AnyDatasets, DateMetadataDataset, MinInitialState},
+    datasets::{AllDatasets, AnyDatasets},
     states::States,
-    structs::WNaiveDate,
 };
 
 #[derive(Default, Debug)]
@@ -55,55 +54,56 @@ pub fn find_first_inserted_unsafe_height(
                 return None;
             }
 
-            let first_inserted_min_height = compare_min_initial_state_with_date_metadata(
-                &datasets.get_min_initial_states().inserted,
-                &last_safe_date,
-                &datasets.date_metadata,
-            );
+            let datasets_min_initial_states = datasets.get_min_initial_states();
 
-            if let Some(first_inserted_min_height) = first_inserted_min_height {
-                let first_computed_min_height = compare_min_initial_state_with_date_metadata(
-                    &datasets.get_min_initial_states().computed,
-                    &last_safe_date,
-                    &datasets.date_metadata,
-                );
+            let min_datasets_inserted_last_height = datasets_min_initial_states.inserted.last_height;
+            let min_datasets_inserted_last_date = datasets_min_initial_states.inserted.last_date;
 
-                Some(Heights {
-                    inserted: first_inserted_min_height,
-                    computed: first_computed_min_height.unwrap_or_default(),
-                })
-            } else {
-                None
+            println!("min_datasets_inserted_last_height: {:?}", min_datasets_inserted_last_height);
+            println!("min_datasets_inserted_last_date: {:?}", min_datasets_inserted_last_date);
+
+            let inserted_last_date_is_older_than_saved_state = min_datasets_inserted_last_date.map_or(true, |min_datasets_last_date| min_datasets_last_date < *last_safe_date);
+
+            if inserted_last_date_is_older_than_saved_state {
+                dbg!(min_datasets_inserted_last_date , *last_safe_date);
+
+                return None;
             }
 
-            // let min_datasets_inserted_last_height = datasets.get_min_initial_states().inserted.last_height;
-            // let min_datasets_inserted_last_date = datasets.get_min_initial_states().inserted.last_date;
+            datasets
+                .date_metadata
+                .last_height
+                ._get(&last_safe_date)
+                .and_then(|last_safe_height| {
+                    let inserted_heights_and_dates_are_out_of_sync = min_datasets_inserted_last_height.map_or(true, |min_datasets_inserted_last_height| min_datasets_inserted_last_height < last_safe_height);
 
-            // println!("min_datasets_inserted_last_height: {:?}", min_datasets_inserted_last_height);
-            // println!("min_datasets_inserted_last_date: {:?}", min_datasets_inserted_last_date);
+                    if inserted_heights_and_dates_are_out_of_sync {
+                        println!("last_safe_height ({last_safe_height}) > min_datasets_height ({min_datasets_inserted_last_height:?})");
 
-            // if min_datasets_inserted_last_date.map_or(true, |min_datasets_last_date| min_datasets_last_date < *last_safe_date) {
-            //     dbg!(min_datasets_inserted_last_date , *last_safe_date);
-            //     return None;
-            // }
+                        None
+                    } else {
+                        let computed = datasets_min_initial_states.computed.last_date.and_then(
+                            |last_date| datasets.date_metadata
+                                .last_height
+                                .get(last_date)
+                                .and_then(|last_date_height| {
+                                    if datasets_min_initial_states.computed.last_height.map_or(true, |last_height| {
+                                        last_height < last_date_height
+                                    }) {
+                                        None
+                                    } else {
+                                        Some(last_date_height + 1)
+                                    }
+                                })
+                        ).unwrap_or_default();
 
-            // datasets
-            //     .date_metadata
-            //     .last_height
-            //     ._get(&last_safe_date)
-            //     .and_then(|last_safe_height| {
-            //         if min_datasets_inserted_last_height.map_or(true, |min_datasets_inserted_last_height| min_datasets_inserted_last_height < last_safe_height) {
-            //             println!("last_safe_height ({last_safe_height}) > min_datasets_height ({min_datasets_inserted_last_height:?})");
-
-            //             None
-            //         } else {
-            //             Some(Sizes {
-            //                 inserted: last_safe_height + 1,
-            //                 computed: 0
-            //             })
-            //         }
-            //     }
-            // )
+                        Some(Heights {
+                            inserted: last_safe_height + 1,
+                            computed,
+                        })
+                    }
+                }
+            )
         })
         .unwrap_or_else(|| {
             println!("Starting over...");
@@ -112,10 +112,10 @@ pub fn find_first_inserted_unsafe_height(
                 || min_initial_inserted_last_address_date.is_none()
                 || min_initial_inserted_last_address_height.is_none();
 
-            if true {
-                dbg!(include_addresses);
-                panic!("");
-            }
+            // if true {
+            //     dbg!(include_addresses);
+            //     panic!("");
+            // }
 
             states.reset(include_addresses);
 
@@ -123,43 +123,4 @@ pub fn find_first_inserted_unsafe_height(
 
             Heights::default()
         })
-}
-
-fn compare_min_initial_state_with_date_metadata(
-    min_initial_state: &MinInitialState,
-    last_safe_date: &WNaiveDate,
-    date_metadata: &DateMetadataDataset,
-) -> Option<usize> {
-    let min_datasets_inserted_last_height = min_initial_state.last_height;
-    let min_datasets_inserted_last_date = min_initial_state.last_date;
-
-    println!(
-        "min_datasets_inserted_last_height: {:?}",
-        min_datasets_inserted_last_height
-    );
-    println!(
-        "min_datasets_inserted_last_date: {:?}",
-        min_datasets_inserted_last_date
-    );
-
-    if min_datasets_inserted_last_date.map_or(true, |min_datasets_last_date| {
-        min_datasets_last_date < **last_safe_date
-    }) {
-        dbg!(min_datasets_inserted_last_date, *last_safe_date);
-        return None;
-    }
-
-    date_metadata
-        .last_height
-        ._get(last_safe_date)
-        .and_then(|last_safe_height| {
-            if min_datasets_inserted_last_height.map_or(true, |min_datasets_inserted_last_height| min_datasets_inserted_last_height < last_safe_height) {
-                println!("last_safe_height ({last_safe_height}) > min_datasets_height ({min_datasets_inserted_last_height:?})");
-
-                None
-            } else {
-                Some(last_safe_height + 1)
-            }
-        }
-    )
 }

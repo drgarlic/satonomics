@@ -20,6 +20,8 @@ pub struct HeightDataset {
 
     // Inserted
     pub ohlcs: HeightMap<OHLC>,
+
+    // Computed
     pub closes: HeightMap<f32>,
 }
 
@@ -194,10 +196,18 @@ impl AnyDataset for HeightDataset {
     }
 
     fn to_inserted_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
-        vec![&self.ohlcs, &self.closes]
+        vec![&self.ohlcs]
     }
 
     fn to_inserted_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
-        vec![&mut self.ohlcs, &mut self.closes]
+        vec![&mut self.ohlcs]
+    }
+
+    fn to_computed_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
+        vec![&self.closes]
+    }
+
+    fn to_computed_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
+        vec![&mut self.closes]
     }
 }

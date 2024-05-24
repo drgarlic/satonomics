@@ -9,7 +9,7 @@ use itertools::Itertools;
 use crate::{
     datasets::AnyDatasets,
     states::{SplitByUTXOCohort, UTXOCohortId},
-    DateMap, HeightMap,
+    structs::{DateMap, HeightMap},
 };
 
 use super::{AnyDataset, ComputeData, InsertData, MinInitialStates};

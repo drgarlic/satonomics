@@ -2,12 +2,12 @@
 //! View development note of iter_connected.rs for implementation
 //! details of iter_block.rs, which follows similar principles.
 //!
-
 use bitcoin::Block;
+use par_iter_sync::{IntoParallelIteratorSync, ParIterSync};
 
 use super::BitcoinDB;
 
-pub struct BlockIter(Box<dyn Iterator<Item = Result<Block, ()>>>);
+pub struct BlockIter(ParIterSync<Block>);
 
 impl BlockIter {
     /// the worker threads are dispatched in this `new` constructor!
@@ -18,12 +18,12 @@ impl BlockIter {
     {
         let db_ref = db.clone();
 
-        let map = heights.into_iter().map(move |h| match db_ref.get_block(h) {
-            Ok(blk) => Ok(blk),
-            Err(_) => Err(()),
-        });
-
-        BlockIter(Box::new(map))
+        BlockIter(
+            heights.into_par_iter_sync(move |h| match db_ref.get_block(h) {
+                Ok(blk) => Ok(blk),
+                Err(_) => Err(()),
+            }),
+        )
     }
 
     /// the worker threads are dispatched in this `new` constructor!
@@ -40,6 +40,6 @@ impl Iterator for BlockIter {
     type Item = Block;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().and_then(|res| res.ok())
+        self.0.next()
     }
 }

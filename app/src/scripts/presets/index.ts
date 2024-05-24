@@ -6,10 +6,10 @@ import { createPresets as createAveragesPresets } from "./averages";
 import { createPresets as createBlocksPresets } from "./blocks";
 import { createPresets as createCoinblocksPresets } from "./coinblocks";
 import { createPresets as createHodlersPresets } from "./hodlers";
+import { createPresets as createMarketPresets } from "./market";
 import { createPresets as createMinersPresets } from "./miners";
 import { createCohortPresetList } from "./templates";
 import { createPresets as createTransactionsPresets } from "./transactions";
-import { createPresets as createUSDPresets } from "./usd";
 
 export * from "./templates";
 
@@ -25,7 +25,7 @@ export function createPresets(datasets: Datasets): Presets {
       id: "date",
       name: "Date",
       tree: [
-        createUSDPresets("date"),
+        createMarketPresets("date"),
         createBlocksPresets(),
         createMinersPresets("date"),
         createTransactionsPresets("date"),
@@ -48,7 +48,7 @@ export function createPresets(datasets: Datasets): Presets {
       id: "height",
       name: "Height",
       tree: [
-        createUSDPresets("height"),
+        createMarketPresets("height"),
         createMinersPresets("height"),
         createTransactionsPresets("height"),
         ...createCohortPresetList({

@@ -34,6 +34,7 @@ pub struct DateDataset {
     pub price_55d_sma: DateMap<f32>,
     pub price_89d_sma: DateMap<f32>,
     pub price_144d_sma: DateMap<f32>,
+    pub price_200w_sma: DateMap<f32>,
 }
 
 impl DateDataset {
@@ -59,6 +60,7 @@ impl DateDataset {
             price_55d_sma: DateMap::new_bin(1, &f("price_55d_sma")),
             price_89d_sma: DateMap::new_bin(1, &f("price_89d_sma")),
             price_144d_sma: DateMap::new_bin(1, &f("price_144d_sma")),
+            price_200w_sma: DateMap::new_bin(1, &f("price_200w_sma")),
         };
 
         s.min_initial_states
@@ -143,6 +145,12 @@ impl DateDataset {
 
         self.price_144d_sma
             .multiple_insert_simple_average(dates, &mut self.closes, 144);
+
+        self.price_200w_sma.multiple_insert_simple_average(
+            dates,
+            &mut self.closes,
+            200 * ONE_WEEK_IN_DAYS,
+        );
     }
 }
 
@@ -174,6 +182,7 @@ impl AnyDataset for DateDataset {
             &self.price_55d_sma,
             &self.price_89d_sma,
             &self.price_144d_sma,
+            &self.price_200w_sma,
         ]
     }
 
@@ -192,12 +201,7 @@ impl AnyDataset for DateDataset {
             &mut self.price_55d_sma,
             &mut self.price_89d_sma,
             &mut self.price_144d_sma,
+            &mut self.price_200w_sma,
         ]
-    }
-
-    fn export(&self) -> color_eyre::Result<()> {
-        self.to_all_inserted_map_vec()
-            .into_iter()
-            .try_for_each(|map| -> color_eyre::Result<()> { map.export() })
     }
 }

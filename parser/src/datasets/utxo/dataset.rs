@@ -5,8 +5,7 @@ use crate::{
         AnyDataset, AnyDatasetGroup, ComputeData, InsertData, MinInitialStates, SubDataset,
     },
     states::UTXOCohortId,
-    structs::{AnyBiMap, AnyDateMap, AnyHeightMap},
-    DateMap, HeightMap,
+    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, DateMap, HeightMap},
 };
 
 pub struct UTXODataset {

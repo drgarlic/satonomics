@@ -1,11 +1,10 @@
-import { defaultSeriesOptions, showedLastValueConfig } from "/src/scripts";
+import { defaultSeriesOptions } from "/src/scripts";
 
 export const createLineSeries = (
   chart: IChartApi,
-  options?: DeepPartialLineOptions & { showPriceLine?: boolean },
+  options?: DeepPartialLineOptions,
 ) =>
   chart.addLineSeries({
     ...defaultSeriesOptions,
-    ...(options?.showPriceLine ? showedLastValueConfig : {}),
     ...options,
   });

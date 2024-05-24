@@ -116,6 +116,13 @@ pub fn parse(
         .unwrap_or_else(|_| panic!("Expect {date} to have a price"))
         .close;
 
+    let difficulty = block.header.difficulty_float();
+    let block_size = block.total_size();
+    let block_weight = block.weight().to_wu();
+    let block_vbytes = block.weight().to_vbytes_floor();
+    let block_interval =
+        previous_timestamp.map_or(0, |previous_timestamp| timestamp - previous_timestamp);
+
     states
         .date_data_vec
         .last_mut()
@@ -201,7 +208,7 @@ pub fn parse(
         // ---
 
         let mut utxos = BTreeMap::new();
-        let mut non_zero_amount = 0;
+        let mut spendable_sats = 0;
 
         let is_coinbase = tx.is_coinbase();
 
@@ -212,9 +219,17 @@ pub fn parse(
         tx.output
             .into_iter()
             .enumerate()
-            .filter_map(|(vout, _)| {
+            .filter_map(|(vout, tx_out)| {
                 if vout > (u16::MAX as usize) {
                     panic!("vout can indeed be bigger than u16::MAX !");
+                }
+
+                let sats = tx_out.value.to_sat();
+
+                if is_coinbase {
+                    coinbase += sats;
+                } else {
+                    outputs_sum += sats;
                 }
 
                 partial_txout_data_vec
@@ -234,7 +249,7 @@ pub fn parse(
                     sats,
                 } = partial_txout_data;
 
-                non_zero_amount += sats;
+                spendable_sats += sats;
 
                 utxos.insert(vout, sats);
 
@@ -337,15 +352,9 @@ pub fn parse(
                 }
             });
 
-        if is_coinbase {
-            coinbase = non_zero_amount;
-        } else {
-            outputs_sum += non_zero_amount;
-        }
-
         let last_block = states.date_data_vec.last_mut_block();
 
-        last_block.amount += non_zero_amount;
+        last_block.amount += spendable_sats;
 
         if !utxos.is_empty() {
             last_block.spendable_outputs += utxos.len() as u32;
@@ -562,6 +571,7 @@ pub fn parse(
         sats_sent += inputs_sum;
 
         let fee = inputs_sum - outputs_sum;
+
         fees_total += fee;
         fees.push(fee);
 
@@ -589,6 +599,7 @@ pub fn parse(
         scope.spawn(|| {
             if let Some(last_date_data) = states.date_data_vec.last() {
                 let last_block_data = last_date_data.blocks.last().unwrap();
+
                 let previous_last_block_data = states
                     .date_data_vec
                     .iter()
@@ -655,7 +666,7 @@ pub fn parse(
                             .iterate(address_realized_data, current_address_data);
 
                         // Realized == previous amount
-                        // If a whale sent all its sats to another address at a loss, it's the whale that realized the loss not the empty adress
+                        // If a whale sent all its sats to another address at a loss, it's the whale that realized the loss not the now empty adress
                         let liquidity_classification = address_realized_data
                             .initial_address_data
                             .compute_liquidity_classification();
@@ -695,19 +706,24 @@ pub fn parse(
 
     datasets.insert(InsertData {
         address_cohorts_input_states: &address_cohorts_input_states,
+        block_size,
+        block_vbytes,
+        block_weight,
         address_cohorts_one_shot_states: &address_cohorts_one_shot_states,
         address_cohorts_output_states: &address_cohorts_output_states,
         address_cohorts_realized_states: &address_cohorts_realized_states,
         address_index_to_address_realized_data: &address_index_to_address_realized_data,
         address_index_to_removed_address_data: &address_index_to_removed_address_data,
+        block_interval,
         block_price,
         coinbase,
         compute_addresses,
         databases,
         date,
-        date_first_height: first_date_height,
         date_blocks_range: &(first_date_height..=height),
+        date_first_height: first_date_height,
         date_price,
+        difficulty,
         fees: &fees,
         height,
         is_date_last_block,
@@ -747,10 +763,11 @@ fn parse_txouts(
             let script = &txout.script_pubkey;
             let value = txout.value.to_sat();
 
-            // 0 sats outputs are possible and allowed !
-            // https://mempool.space/tx/2f2442f68e38b980a6c4cec21e71851b0d8a5847d85208331a27321a9967bbd6
-            // https://bitcoin.stackexchange.com/questions/104937/transaction-outputs-with-value-0
-            if value == 0 {
+            // https://mempool.space/tx/fd0d23d88059dd3b285ede0c88a1246b880e9d8cbac8aa0077a37d70091769d1#flow=&vout=2
+            if script.is_op_return() {
+                // TODO: Count fee paid to write said OP_RETURN, beware of coinbase transactions
+                // For coinbase transactions, count miners
+                op_returns += 1;
                 return None;
             }
 
@@ -760,25 +777,20 @@ fn parse_txouts(
                 return None;
             }
 
-            // https://mempool.space/tx/fd0d23d88059dd3b285ede0c88a1246b880e9d8cbac8aa0077a37d70091769d1#flow=&vout=2
-            if script.is_op_return() {
-                // TODO: Count fee paid to write said OP_RETURN, beware of coinbase transactions
-                // For coinbase transactions, count miners
-                op_returns += 1;
+            // 0 sats outputs are possible and allowed !
+            // https://mempool.space/tx/2f2442f68e38b980a6c4cec21e71851b0d8a5847d85208331a27321a9967bbd6
+            // https://bitcoin.stackexchange.com/questions/104937/transaction-outputs-with-value-0
+            if value == 0 {
                 return None;
             }
 
-            let address_opt = {
-                if compute_addresses {
-                    let address = Address::from(txout, unknown_addresses, empty_addresses);
+            let address_opt = compute_addresses.then(|| {
+                let address = Address::from(txout, unknown_addresses, empty_addresses);
 
-                    address_to_address_index.open_db(&address);
+                address_to_address_index.open_db(&address);
 
-                    Some(address)
-                } else {
-                    None
-                }
-            };
+                address
+            });
 
             Some(PartialTxoutData::new(address_opt, value, None))
         })

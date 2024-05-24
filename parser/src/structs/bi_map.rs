@@ -167,12 +167,27 @@ where
         divided: &mut BiMap<T>,
         divider: &mut BiMap<T>,
     ) where
-        T: Div<Output = T>,
+        T: Div<Output = T> + Mul<Output = T> + From<u8>,
     {
         self.height
             .multiple_insert_divide(heights, &mut divided.height, &mut divider.height);
         self.date
             .multiple_insert_divide(dates, &mut divided.date, &mut divider.date);
+    }
+
+    pub fn multiple_insert_percentage(
+        &mut self,
+        heights: &[usize],
+        dates: &[NaiveDate],
+        divided: &mut BiMap<T>,
+        divider: &mut BiMap<T>,
+    ) where
+        T: Div<Output = T> + Mul<Output = T> + From<u8>,
+    {
+        self.height
+            .multiple_insert_percentage(heights, &mut divided.height, &mut divider.height);
+        self.date
+            .multiple_insert_percentage(dates, &mut divided.date, &mut divider.date);
     }
 
     pub fn multiple_insert_cumulative(

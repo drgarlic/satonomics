@@ -86,7 +86,6 @@ export function createMomentumPresetFolder<
                     dataset:
                       datasets[`${datasetKey}MomentumBLSHBitcoinReturns`],
                     color: colors.bitcoin,
-                    showPriceLine: true,
                   },
                 ],
               });
@@ -112,7 +111,6 @@ export function createMomentumPresetFolder<
                     title: "Dollar Returns",
                     dataset: datasets[`${datasetKey}MomentumBLSHDollarReturns`],
                     color: colors.dollars,
-                    showPriceLine: true,
                   },
                 ],
               });

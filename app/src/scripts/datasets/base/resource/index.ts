@@ -112,8 +112,6 @@ export function createResourceDataset<
     try {
       const fetchedResponse = await fetch(urlWithQuery);
 
-      console.log(fetchedResponse);
-
       if (!fetchedResponse.ok) {
         return;
       }
@@ -154,11 +152,6 @@ export function createResourceDataset<
       );
 
       const flat = fetchedJSONs.flatMap((fetched) => fetched.vec() || []);
-
-      console.log({
-        url,
-        fetchedJSONs: fetchedJSONs.map((fetched) => fetched.vec()),
-      });
 
       return flat;
     }),

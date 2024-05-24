@@ -1,7 +1,7 @@
 use std::{env::args, path::Path};
 
 use itertools::Itertools;
-use parser::{iter_blocks, time, BitcoinDB, BitcoinDaemon};
+use parser::{iter_blocks, BitcoinDB, BitcoinDaemon};
 
 fn main() -> color_eyre::Result<()> {
     let args = args().collect_vec();
@@ -9,45 +9,34 @@ fn main() -> color_eyre::Result<()> {
 
     color_eyre::install()?;
 
-    let bitcoin_db = BitcoinDB::new(Path::new(bitcoin_dir_path), true)?;
+    let deamon = BitcoinDaemon::new(bitcoin_dir_path);
 
-    time("iter block time", || {
-        bitcoin_db
-            .iter_block(0, 800_000)
-            .enumerate()
-            .for_each(|(height, _)| {
-                println!("height = {height}");
-            })
-    });
+    loop {
+        deamon.stop();
 
-    // let deamon = BitcoinDaemon::new(bitcoin_dir_path);
+        // Scoped to free bitcoin's lock
+        let block_count = {
+            let bitcoin_db = BitcoinDB::new(Path::new(bitcoin_dir_path), true)?;
 
-    // loop {
-    //     deamon.stop();
+            // let block_count = 200_000;
+            let block_count = bitcoin_db.get_block_count();
+            println!("{block_count} blocks found.");
 
-    //     // Scoped to free bitcoin's lock
-    //     let block_count = {
-    //         let bitcoin_db = BitcoinDB::new(Path::new(bitcoin_dir_path), true)?;
+            iter_blocks(&bitcoin_db, block_count)?;
 
-    //         // let block_count = 200_000;
-    //         let block_count = bitcoin_db.get_block_count();
-    //         println!("{block_count} blocks found.");
+            block_count
+        };
 
-    //         iter_blocks(&bitcoin_db, block_count)?;
+        deamon.start();
 
-    //         block_count
-    //     };
+        if deamon.check_if_fully_synced()? {
+            deamon.wait_for_new_block(block_count - 1)?;
+        } else {
+            deamon.wait_sync()?;
+        }
+    }
 
-    //     deamon.start();
-
-    //     if deamon.check_if_fully_synced()? {
-    //         deamon.wait_for_new_block(block_count - 1)?;
-    //     } else {
-    //         deamon.wait_sync()?;
-    //     }
-    // }
-
-    Ok(())
+    // Ok(())
 }
 
 // let vec = Json::import::<Vec<f32>>("./price/close/height.json")?;

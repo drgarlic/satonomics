@@ -1,4 +1,4 @@
-import { defaultSeriesOptions, showedLastValueConfig } from "/src/scripts";
+import { defaultSeriesOptions } from "/src/scripts";
 
 type AreaOptions = DeepPartial<AreaStyleOptions & SeriesOptionsCommon>;
 
@@ -6,7 +6,6 @@ export const createAreaSeries = (
   chart: IChartApi,
   options?: AreaOptions & {
     color?: string;
-    showPriceLine?: boolean;
   },
 ) => {
   const { color } = options || {};
@@ -20,7 +19,6 @@ export const createAreaSeries = (
     lineColor: color,
     topColor: fillColor,
     bottomColor: fillColor,
-    ...(options?.showPriceLine ? showedLastValueConfig : {}),
     ...options,
   };
 

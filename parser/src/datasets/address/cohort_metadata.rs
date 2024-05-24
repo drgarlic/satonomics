@@ -8,6 +8,9 @@ pub struct MetadataDataset {
 
     // Inserted
     address_count: BiMap<usize>,
+    // Sending addresses
+    // Receiving addresses
+    // Active addresses (Unique(Sending + Receiving))
 }
 
 impl MetadataDataset {

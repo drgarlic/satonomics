@@ -115,13 +115,12 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
                         // Do NOT change `blocks_loop_date` to `current_block_date` !!!
                         .map_or(true, |next_block_date| blocks_loop_date < next_block_date);
 
-                    processed_dates.insert(current_block_date);
                     processed_heights.insert(current_block_height);
 
                     if should_insert && first_unsafe_heights.inserted <= current_block_height {
                         let compute_addresses = databases.check_if_needs_to_compute_addresses(
                             current_block_height,
-                            current_block_date,
+                            blocks_loop_date,
                         );
 
                         parse(ParseData {
@@ -131,7 +130,7 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
                             compute_addresses,
                             databases: &mut databases,
                             datasets: &mut datasets,
-                            date: current_block_date,
+                            date: blocks_loop_date,
                             first_date_height: height,
                             height: current_block_height,
                             is_date_last_block,
@@ -143,6 +142,15 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
                     blocks_loop_i += 1;
 
                     if is_date_last_block {
+                        processed_dates.insert(blocks_loop_date);
+
+                        // dbg!(
+                        //     current_block_date,
+                        //     height,
+                        //     current_block_height,
+                        //     is_date_last_block
+                        // );
+
                         height += blocks_loop_i;
 
                         let is_new_month = next_block_date

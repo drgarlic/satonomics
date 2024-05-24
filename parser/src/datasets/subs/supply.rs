@@ -2,8 +2,7 @@ use crate::{
     bitcoin::sats_to_btc,
     datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
     states::SupplyState,
-    structs::{AnyBiMap, BiMap},
-    DateMap, HeightMap,
+    structs::{AnyBiMap, BiMap, DateMap, HeightMap},
 };
 
 pub struct SupplySubDataset {

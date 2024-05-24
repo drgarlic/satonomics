@@ -4,8 +4,7 @@ use itertools::Itertools;
 use crate::{
     datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
     states::PricePaidState,
-    structs::{AnyBiMap, BiMap},
-    DateMap, HeightMap,
+    structs::{AnyBiMap, BiMap, DateMap, HeightMap},
 };
 
 pub struct PricePaidSubDataset {

@@ -12,17 +12,21 @@ export function createSeriesLegend({
   title,
   color,
   series,
+  defaultVisible = true,
 }: {
   id: string;
   presetId: string;
   title: string;
   color: Accessor<string | string[]>;
   series: ISeriesApi<SeriesType>;
+  defaultVisible?: boolean;
 }) {
   const storageID = `${presetId}-${id}`;
 
   const visible = createASS(
-    readBooleanURLParam(id) ?? readBooleanFromStorage(storageID) ?? true,
+    readBooleanURLParam(id) ??
+      readBooleanFromStorage(storageID) ??
+      defaultVisible,
   );
 
   createEffect(() => {

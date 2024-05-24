@@ -876,7 +876,6 @@ export function createCohortPresetList<Scale extends ResourceScale>({
                           id: "supply-in-profit",
                           title: "Supply in profit",
                           color: colors.profit,
-                          showPriceLine: true,
                           dataset:
                             params.datasets[scale][
                               `${datasetKey}SupplyInProfit`
@@ -886,7 +885,6 @@ export function createCohortPresetList<Scale extends ResourceScale>({
                           id: "supply-in-loss",
                           title: "Supply in loss",
                           color: colors.loss,
-                          showPriceLine: true,
                           dataset:
                             params.datasets[scale][`${datasetKey}SupplyInLoss`],
                         },
@@ -966,7 +964,6 @@ export function createCohortPresetList<Scale extends ResourceScale>({
                           id: "supply-in-profit",
                           title: "Supply in profit",
                           color: colors.profit,
-                          showPriceLine: true,
                           dataset:
                             params.datasets[scale][
                               `${datasetKey}SupplyInProfit%All`
@@ -976,7 +973,6 @@ export function createCohortPresetList<Scale extends ResourceScale>({
                           id: "supply-in-loss",
                           title: "Supply in loss",
                           color: colors.loss,
-                          showPriceLine: true,
                           dataset:
                             params.datasets[scale][
                               `${datasetKey}SupplyInLoss%All`
@@ -1071,7 +1067,6 @@ export function createCohortPresetList<Scale extends ResourceScale>({
                               `${datasetKey}SupplyInProfit%Self`
                             ],
                           color: colors.profit,
-                          showPriceLine: true,
                         },
                         {
                           id: "supply-in-loss",
@@ -1081,7 +1076,6 @@ export function createCohortPresetList<Scale extends ResourceScale>({
                             params.datasets[scale][
                               `${datasetKey}SupplyInLoss%Self`
                             ],
-                          showPriceLine: true,
                         },
                       ],
                     });

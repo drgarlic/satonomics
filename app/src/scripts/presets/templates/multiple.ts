@@ -50,9 +50,9 @@ export const applyMultipleSeries = <Scale extends ResourceScale>({
         color?: string;
         colors?: undefined;
         seriesType: SeriesType.Based;
-        showPriceLine?: boolean;
         title: string;
         options?: BaselineSeriesOptions;
+        defaultVisible?: boolean;
         priceLine?: {
           value: number;
           color: string;
@@ -68,6 +68,7 @@ export const applyMultipleSeries = <Scale extends ResourceScale>({
         seriesType: SeriesType.Stacked;
         title: string;
         options?: BaselineSeriesOptions;
+        defaultVisible?: boolean;
         priceLine?: {
           value: number;
           color: string;
@@ -79,11 +80,11 @@ export const applyMultipleSeries = <Scale extends ResourceScale>({
         // dataset: Dataset<Scale>;
         color?: string;
         colors?: string[];
-        showPriceLine?: boolean;
         seriesType: SeriesType.Histogram;
         title: string;
         options?: DeepPartialHistogramOptions;
         priceLine?: undefined;
+        defaultVisible?: boolean;
       }
     | {
         id: string;
@@ -91,7 +92,6 @@ export const applyMultipleSeries = <Scale extends ResourceScale>({
         // dataset: Dataset<Scale>;
         color: string;
         colors?: undefined;
-        showPriceLine?: boolean;
         seriesType?: SeriesType.Normal | SeriesType.Area;
         title: string;
         options?: DeepPartialLineOptions;
@@ -99,6 +99,7 @@ export const applyMultipleSeries = <Scale extends ResourceScale>({
           value: number;
           color: string;
         };
+        defaultVisible?: boolean;
       }
   )[];
   datasets: Datasets;
@@ -172,12 +173,6 @@ export const applyMultipleSeries = <Scale extends ResourceScale>({
     );
   }
 
-  console.log(
-    list.flatMap((config) =>
-      config.seriesType !== SeriesType.Stacked ? [config] : [],
-    ),
-  );
-
   list
     .flatMap((config) =>
       config.seriesType !== SeriesType.Stacked ? [config] : [],
@@ -189,25 +184,21 @@ export const applyMultipleSeries = <Scale extends ResourceScale>({
         color,
         colors,
         seriesType: type,
-        showPriceLine: _showPriceLine,
         title,
         options,
         priceLine,
+        defaultVisible,
       }) => {
         let series: ISeriesApi<"Baseline" | "Line" | "Area" | "Histogram">;
-
-        const showPriceLine = halved && (_showPriceLine || list.length === 1);
 
         if (type === SeriesType.Based) {
           series = createBaseLineSeries(chart, {
             color,
-            showPriceLine,
             ...options,
           });
         } else if (type === SeriesType.Area) {
           series = createAreaSeries(chart, {
             color,
-            showPriceLine,
             autoscaleInfoProvider: (getInfo: () => AutoscaleInfo | null) => {
               const info = getInfo();
               if (info) {
@@ -225,7 +216,6 @@ export const applyMultipleSeries = <Scale extends ResourceScale>({
         } else {
           series = createLineSeries(chart, {
             color,
-            showPriceLine,
             ...options,
           });
         }
@@ -246,6 +236,7 @@ export const applyMultipleSeries = <Scale extends ResourceScale>({
             title,
             series,
             color: () => colors || color || DEFAULT_BASELINE_COLORS,
+            defaultVisible,
           }),
         );
 

@@ -14,6 +14,10 @@ impl LiquidityClassification {
     /// https://www.desmos.com/calculator/dutgni5rtj
     pub fn new(sent: u64, received: u64) -> Self {
         let liquidity = {
+            if sent > received {
+                panic!("Shouldn't be possible");
+            }
+
             let liquidity = sats_to_btc(sent) / sats_to_btc(received);
 
             if liquidity.is_nan() {

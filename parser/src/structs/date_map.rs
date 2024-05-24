@@ -152,6 +152,10 @@ where
             last_date.checked_sub_days(Days::new(offset as u64))
         });
 
+        if s.initial_first_unsafe_date.is_none() {
+            dbg!(path);
+        }
+
         s
     }
 
@@ -536,14 +540,40 @@ where
         divided: &mut DateMap<T>,
         divider: &mut DateMap<T>,
     ) where
-        T: Div<Output = T>,
+        T: Div<Output = T> + Mul<Output = T> + From<u8>,
     {
+        self._multiple_insert_divide(dates, divided, divider, false)
+    }
+
+    pub fn multiple_insert_percentage(
+        &mut self,
+        dates: &[NaiveDate],
+        divided: &mut DateMap<T>,
+        divider: &mut DateMap<T>,
+    ) where
+        T: Div<Output = T> + Mul<Output = T> + From<u8>,
+    {
+        self._multiple_insert_divide(dates, divided, divider, true)
+    }
+
+    pub fn _multiple_insert_divide(
+        &mut self,
+        dates: &[NaiveDate],
+        divided: &mut DateMap<T>,
+        divider: &mut DateMap<T>,
+        as_percentage: bool,
+    ) where
+        T: Div<Output = T> + Mul<Output = T> + From<u8>,
+    {
+        let multiplier = T::from(if as_percentage { 100 } else { 1 });
+
         dates.iter().for_each(|date| {
             let date = *date;
 
             self.insert(
                 date,
-                divided.get_or_import(date).unwrap() / divider.get_or_import(date).unwrap(),
+                divided.get_or_import(date).unwrap() / divider.get_or_import(date).unwrap()
+                    * multiplier,
             );
         });
     }

@@ -1,8 +1,7 @@
 use crate::{
     bitcoin::sats_to_btc,
-    structs::{AnyBiMap, BiMap},
+    structs::{AnyBiMap, BiMap, DateMap, HeightMap},
     utils::{ONE_DAY_IN_DAYS, ONE_YEAR_IN_DAYS, THREE_MONTHS_IN_DAYS, TWO_WEEK_IN_DAYS},
-    DateMap, HeightMap,
 };
 
 use super::{AnyDataset, ComputeData, InsertData, MinInitialStates};

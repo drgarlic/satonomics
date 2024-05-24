@@ -5,8 +5,7 @@ use crate::{
         AnyDataset, AnyDatasetGroup, ComputeData, InsertData, MinInitialStates, SubDataset,
     },
     states::AddressCohortDurableStates,
-    structs::{AddressSplit, AnyBiMap, AnyDateMap, AnyHeightMap},
-    DateMap, HeightMap,
+    structs::{AddressSplit, AnyBiMap, AnyDateMap, AnyHeightMap, DateMap, HeightMap},
 };
 
 use super::cohort_metadata::MetadataDataset;

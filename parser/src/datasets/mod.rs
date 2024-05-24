@@ -47,14 +47,19 @@ pub struct InsertData<'a> {
     pub address_cohorts_realized_states: &'a Option<AddressCohortsRealizedStates>,
     pub address_index_to_address_realized_data: &'a BTreeMap<u32, AddressRealizedData>,
     pub address_index_to_removed_address_data: &'a BTreeMap<u32, AddressData>,
+    pub block_interval: u32,
     pub block_price: f32,
+    pub block_size: usize,
+    pub block_vbytes: u64,
+    pub block_weight: u64,
     pub coinbase: u64,
     pub compute_addresses: bool,
     pub databases: &'a Databases,
     pub date: NaiveDate,
-    pub date_first_height: usize,
     pub date_blocks_range: &'a RangeInclusive<usize>,
+    pub date_first_height: usize,
     pub date_price: f32,
+    pub difficulty: f64,
     pub fees: &'a Vec<u64>,
     pub height: usize,
     pub is_date_last_block: bool,
@@ -195,13 +200,19 @@ impl AllDatasets {
         // }
 
         if self.mining.should_compute(&compute_data) {
-            self.mining
-                .compute(&compute_data, &mut self.address.all.all.supply.total);
+            self.mining.compute(
+                &compute_data,
+                &mut self.address.all.all.supply.total,
+                &mut self.date_metadata.last_height,
+            );
         }
 
         if self.transaction.should_compute(&compute_data) {
-            self.transaction
-                .compute(&compute_data, &mut self.address.all.all.supply.total);
+            self.transaction.compute(
+                &compute_data,
+                &mut self.address.all.all.supply.total,
+                &mut self.mining.block_interval,
+            );
         }
 
         if self.cointime.should_compute(&compute_data) {

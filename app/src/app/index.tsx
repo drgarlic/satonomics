@@ -163,16 +163,16 @@ export function App() {
         <Qrcode qrcode={qrcode} />
 
         <div class="flex size-full flex-col p-1 md:flex-row md:p-3">
-          <div class="flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-orange-500/10 to-orange-950/10 md:flex-row">
-            <div
-              class="hidden flex-col gap-3 border-b border-r border-white/10 bg-black/30 p-3 backdrop-blur-sm md:flex"
-              style={{
-                display:
-                  windowSizeIsAtLeastMedium() && fullscreen()
-                    ? "none"
-                    : undefined,
-              }}
-            >
+          <div
+            class="flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-orange-500/10 to-orange-950/10 md:flex-row"
+            style={{
+              display:
+                windowSizeIsAtLeastMedium() && fullscreen()
+                  ? "none"
+                  : undefined,
+            }}
+          >
+            <div class="hidden flex-col gap-3 border-r border-white/10 bg-black/30 p-3 backdrop-blur-sm md:flex">
               <StripDesktop
                 selected={selectedFrame}
                 setSelected={_selectedFrame.set}

@@ -10,7 +10,7 @@ pub struct CoindaysDataset {
     min_initial_states: MinInitialStates,
 
     // Inserted
-    pub destroyed: BiMap<f32>,
+    pub coindays_destroyed: BiMap<f32>,
 }
 
 impl CoindaysDataset {
@@ -20,7 +20,7 @@ impl CoindaysDataset {
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
-            destroyed: BiMap::new_bin(1, &f("coindays_destroyed")),
+            coindays_destroyed: BiMap::new_bin(1, &f("coindays_destroyed")),
         };
 
         s.min_initial_states
@@ -40,12 +40,12 @@ impl CoindaysDataset {
             ..
         }: &InsertData,
     ) {
-        self.destroyed
+        self.coindays_destroyed
             .height
             .insert(height, sats_to_btc(satdays_destroyed));
 
         if is_date_last_block {
-            self.destroyed
+            self.coindays_destroyed
                 .date_insert_sum_range(date, date_blocks_range)
         }
     }
@@ -53,11 +53,11 @@ impl CoindaysDataset {
 
 impl AnyDataset for CoindaysDataset {
     fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![&self.destroyed]
+        vec![&self.coindays_destroyed]
     }
 
     fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![&mut self.destroyed]
+        vec![&mut self.coindays_destroyed]
     }
 
     fn get_min_initial_states(&self) -> &MinInitialStates {

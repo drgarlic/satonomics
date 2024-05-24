@@ -221,7 +221,10 @@ where
                     .and_then(|serialized| serialized.map.get(height - chunk_start))
                     .cloned()
             })
-            .unwrap()
+            .unwrap_or_else(|| {
+                dbg!(height, self.path());
+                panic!();
+            })
     }
 
     #[inline(always)]
@@ -536,12 +539,37 @@ where
         divided: &mut HeightMap<T>,
         divider: &mut HeightMap<T>,
     ) where
-        T: Div<Output = T>,
+        T: Div<Output = T> + Mul<Output = T> + From<u8>,
     {
+        self._multiple_insert_divide(heights, divided, divider, false)
+    }
+
+    pub fn multiple_insert_percentage(
+        &mut self,
+        heights: &[usize],
+        divided: &mut HeightMap<T>,
+        divider: &mut HeightMap<T>,
+    ) where
+        T: Div<Output = T> + Mul<Output = T> + From<u8>,
+    {
+        self._multiple_insert_divide(heights, divided, divider, true)
+    }
+
+    pub fn _multiple_insert_divide(
+        &mut self,
+        heights: &[usize],
+        divided: &mut HeightMap<T>,
+        divider: &mut HeightMap<T>,
+        as_percentage: bool,
+    ) where
+        T: Div<Output = T> + Mul<Output = T> + From<u8>,
+    {
+        let multiplier = T::from(if as_percentage { 100 } else { 1 });
+
         heights.iter().for_each(|height| {
             self.insert(
                 *height,
-                divided.get_or_import(height) / divider.get_or_import(height),
+                divided.get_or_import(height) / divider.get_or_import(height) * multiplier,
             );
         });
     }

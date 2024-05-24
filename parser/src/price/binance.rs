@@ -10,7 +10,7 @@ use serde_json::Value;
 use crate::{
     datasets::OHLC,
     io::{Json, IMPORTS_FOLDER_PATH},
-    timestamp_to_naive_date,
+    utils::timestamp_to_naive_date,
 };
 
 pub struct Binance;

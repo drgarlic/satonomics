@@ -6,11 +6,11 @@ import description from "./description.md?raw";
 
 export function createPresets(scale: ResourceScale) {
   return {
-    id: `${scale}-currency-usd`,
-    name: "USD - United States Dollar",
+    id: `${scale}-market`,
+    name: "Market",
     tree: [
       {
-        id: `${scale}-price-usd`,
+        id: `${scale}-market-price`,
         icon: IconTablerCurrencyDollar,
         name: "Price",
         title: "Bitcoin Price In US Dollars - USD",
@@ -20,7 +20,7 @@ export function createPresets(scale: ResourceScale) {
         description,
       },
       {
-        id: `${scale}-performance-usd`,
+        id: `${scale}-market-performance`,
         icon: IconTablerPercentage,
         name: "Performance",
         title: "Bitcoin USD Performance",
@@ -40,9 +40,9 @@ export function createPresets(scale: ResourceScale) {
         description,
       },
       {
-        id: `${scale}-marketcap`,
+        id: `${scale}-market-cap`,
         icon: IconTablerInfinity,
-        name: "Marketcap",
+        name: "Capitalization",
         title: "Bitcoin USD Market Capitalization",
         applyPreset(params) {
           return applyMultipleSeries({
@@ -50,7 +50,7 @@ export function createPresets(scale: ResourceScale) {
             ...params,
             priceDataset: params.datasets[scale].market_cap,
             priceOptions: {
-              id: "marketcap",
+              id: "market-cap",
               title: "Market Cap.",
             },
           });
