@@ -13,17 +13,27 @@ impl LiquidityClassification {
     /// https://insights.glassnode.com/bitcoin-liquid-supply/
     /// https://www.desmos.com/calculator/dutgni5rtj
     pub fn new(sent: u64, received: u64) -> Self {
+        if received == 0 {
+            dbg!(sent, received);
+            panic!()
+        }
+
         let liquidity = {
             if sent > received {
                 panic!("Shouldn't be possible");
             }
 
-            let liquidity = sats_to_btc(sent) / sats_to_btc(received);
-
-            if liquidity.is_nan() {
+            if sent == 0 {
                 0.0
             } else {
-                liquidity
+                let liquidity = sats_to_btc(sent) / sats_to_btc(received);
+
+                if liquidity.is_nan() {
+                    dbg!(sent, received, sats_to_btc(sent) / sats_to_btc(received));
+                    unreachable!()
+                } else {
+                    liquidity
+                }
             }
         };
 

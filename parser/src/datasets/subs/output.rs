@@ -64,14 +64,14 @@ impl OutputSubDataset {
         &ComputeData { heights, dates }: &ComputeData,
         cohort_supply: &mut BiMap<f32>,
     ) {
-        self.annualized_volume.multiple_insert_last_x_sum(
+        self.annualized_volume.multi_insert_last_x_sum(
             heights,
             dates,
             &mut self.volume,
             ONE_YEAR_IN_DAYS,
         );
 
-        self.velocity.multiple_insert_divide(
+        self.velocity.multi_insert_divide(
             heights,
             dates,
             &mut self.annualized_volume,

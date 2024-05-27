@@ -45,6 +45,10 @@ pub struct MiningDataset {
     pub subsidy_in_dollars: BiMap<f32>,
     // pub cumulative_subsidy: BiMap<f32>,
     // pub cumulative_subsidy_in_dollars: BiMap<f32>,
+    // pub cumulative_coinbase: BiMap<f32>,
+    // pub cumulative_coinbase_in_dollars: BiMap<f32>,
+    // pub cumulative_fees: BiMap<f32>,
+    // pub cumulative_fees_in_dollars: BiMap<f32>,
     pub last_coinbase: DateMap<f32>,
     pub last_coinbase_in_dollars: DateMap<f32>,
     pub last_fees: DateMap<f32>,
@@ -233,17 +237,20 @@ impl MiningDataset {
         circulating_supply: &mut BiMap<f32>,
         last_height: &mut DateMap<usize>,
     ) {
-        self.cumulative_subsidy_in_dollars
-            .multiple_insert_cumulative(heights, dates, &mut self.subsidy_in_dollars);
+        self.cumulative_subsidy_in_dollars.multi_insert_cumulative(
+            heights,
+            dates,
+            &mut self.subsidy_in_dollars,
+        );
 
-        self.annualized_issuance.multiple_insert_last_x_sum(
+        self.annualized_issuance.multi_insert_last_x_sum(
             heights,
             dates,
             &mut self.subsidy,
             ONE_YEAR_IN_DAYS,
         );
 
-        self.yearly_inflation_rate.multiple_insert_percentage(
+        self.yearly_inflation_rate.multi_insert_percentage(
             heights,
             dates,
             &mut self.annualized_issuance,
@@ -253,13 +260,13 @@ impl MiningDataset {
         self.blocks_mined_target
             .multiple_static_insert(dates, 144.0);
 
-        self.blocks_mined_1w_sma.multiple_insert_simple_average(
+        self.blocks_mined_1w_sma.multi_insert_simple_average(
             dates,
             &mut self.blocks_mined,
             ONE_WEEK_IN_DAYS,
         );
 
-        self.blocks_mined_1m_sma.multiple_insert_simple_average(
+        self.blocks_mined_1m_sma.multi_insert_simple_average(
             dates,
             &mut self.blocks_mined,
             ONE_MONTH_IN_DAYS,
@@ -267,7 +274,7 @@ impl MiningDataset {
 
         self.cumulative_block_size
             .height
-            .multiple_insert_cumulative(heights, &mut self.block_size);
+            .multi_insert_cumulative(heights, &mut self.block_size);
 
         dates.iter().for_each(|date| {
             self.cumulative_block_size.date.insert(

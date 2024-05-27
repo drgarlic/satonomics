@@ -22,7 +22,7 @@ pub struct SplitByAddressCohort<T> {
 }
 
 impl<T> SplitByAddressCohort<T> {
-    pub fn get_state(&self, split: &AddressSplit) -> Option<&T> {
+    pub fn get(&self, split: &AddressSplit) -> Option<&T> {
         match &split {
             AddressSplit::All => Some(&self.all),
 
@@ -53,22 +53,22 @@ impl<T> SplitByAddressCohort<T> {
     }
 
     pub fn iterate(&mut self, address_data: &AddressData, iterate: impl Fn(&mut T)) {
-        if let Some(state) = self.get_mut_state(&AddressSplit::All) {
+        if let Some(state) = self.get_mut(&AddressSplit::All) {
             iterate(state);
         }
 
-        if let Some(state) = self.get_mut_state(&AddressSplit::Type(address_data.address_type)) {
+        if let Some(state) = self.get_mut(&AddressSplit::Type(address_data.address_type)) {
             iterate(state);
         }
 
-        if let Some(state) = self.get_mut_state(&AddressSplit::Size(AddressSize::from_amount(
+        if let Some(state) = self.get_mut(&AddressSplit::Size(AddressSize::from_amount(
             address_data.amount,
         ))) {
             iterate(state);
         }
     }
 
-    fn get_mut_state(&mut self, split: &AddressSplit) -> Option<&mut T> {
+    fn get_mut(&mut self, split: &AddressSplit) -> Option<&mut T> {
         match &split {
             AddressSplit::All => Some(&mut self.all),
 
@@ -96,5 +96,45 @@ impl<T> SplitByAddressCohort<T> {
                 AddressSize::Empty => None,
             },
         }
+    }
+
+    pub fn as_vec(&self) -> Vec<&T> {
+        vec![
+            &self.all,
+            // &self.plankton,
+            // &self.shrimp,
+            // &self.crab,
+            // &self.fish,
+            // &self.shark,
+            // &self.whale,
+            // &self.humpback,
+            // &self.megalodon,
+            // &self.p2pk,
+            // &self.p2pkh,
+            // &self.p2sh,
+            // &self.p2wpkh,
+            // &self.p2wsh,
+            // &self.p2tr,
+        ]
+    }
+
+    pub fn as_mut_vec(&mut self) -> Vec<&mut T> {
+        vec![
+            &mut self.all,
+            // &mut self.plankton,
+            // &mut self.shrimp,
+            // &mut self.crab,
+            &mut self.fish,
+            // &mut self.shark,
+            // &mut self.whale,
+            &mut self.humpback,
+            &mut self.megalodon,
+            &mut self.p2pk,
+            // &mut self.p2pkh,
+            // &mut self.p2sh,
+            // &mut self.p2wpkh,
+            // &mut self.p2wsh,
+            &mut self.p2tr,
+        ]
     }
 }

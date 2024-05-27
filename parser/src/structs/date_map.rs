@@ -436,7 +436,7 @@ where
         });
     }
 
-    pub fn multiple_insert_simple_transform<K, F>(
+    pub fn multi_insert_simple_transform<K, F>(
         &mut self,
         dates: &[NaiveDate],
         source: &mut DateMap<K>,
@@ -461,7 +461,7 @@ where
         });
     }
 
-    pub fn multiple_insert_complex_transform<F>(
+    pub fn multi_insert_complex_transform<F>(
         &mut self,
         dates: &[NaiveDate],
         source: &mut DateMap<T>,
@@ -480,7 +480,7 @@ where
         });
     }
 
-    pub fn multiple_insert_add(
+    pub fn multi_insert_add(
         &mut self,
         dates: &[NaiveDate],
         added: &mut DateMap<T>,
@@ -498,7 +498,7 @@ where
         });
     }
 
-    pub fn multiple_insert_subtract(
+    pub fn multi_insert_subtract(
         &mut self,
         dates: &[NaiveDate],
         subtracted: &mut DateMap<T>,
@@ -516,7 +516,7 @@ where
         });
     }
 
-    pub fn multiple_insert_multiply(
+    pub fn multi_insert_multiply(
         &mut self,
         dates: &[NaiveDate],
         multiplied: &mut DateMap<T>,
@@ -534,7 +534,7 @@ where
         });
     }
 
-    pub fn multiple_insert_divide(
+    pub fn multi_insert_divide(
         &mut self,
         dates: &[NaiveDate],
         divided: &mut DateMap<T>,
@@ -542,10 +542,10 @@ where
     ) where
         T: Div<Output = T> + Mul<Output = T> + From<u8>,
     {
-        self._multiple_insert_divide(dates, divided, divider, false)
+        self._multi_insert_divide(dates, divided, divider, false)
     }
 
-    pub fn multiple_insert_percentage(
+    pub fn multi_insert_percentage(
         &mut self,
         dates: &[NaiveDate],
         divided: &mut DateMap<T>,
@@ -553,10 +553,10 @@ where
     ) where
         T: Div<Output = T> + Mul<Output = T> + From<u8>,
     {
-        self._multiple_insert_divide(dates, divided, divider, true)
+        self._multi_insert_divide(dates, divided, divider, true)
     }
 
-    pub fn _multiple_insert_divide(
+    pub fn _multi_insert_divide(
         &mut self,
         dates: &[NaiveDate],
         divided: &mut DateMap<T>,
@@ -578,14 +578,14 @@ where
         });
     }
 
-    pub fn multiple_insert_cumulative(&mut self, range: &[NaiveDate], source: &mut DateMap<T>)
+    pub fn multi_insert_cumulative(&mut self, range: &[NaiveDate], source: &mut DateMap<T>)
     where
         T: Add<Output = T> + Sub<Output = T>,
     {
-        self._multiple_insert_last_x_sum(range, source, None)
+        self._multi_insert_last_x_sum(range, source, None)
     }
 
-    pub fn multiple_insert_last_x_sum(
+    pub fn multi_insert_last_x_sum(
         &mut self,
         range: &[NaiveDate],
         source: &mut DateMap<T>,
@@ -593,10 +593,10 @@ where
     ) where
         T: Add<Output = T> + Sub<Output = T>,
     {
-        self._multiple_insert_last_x_sum(range, source, Some(days))
+        self._multi_insert_last_x_sum(range, source, Some(days))
     }
 
-    fn _multiple_insert_last_x_sum(
+    fn _multi_insert_last_x_sum(
         &mut self,
         range: &[NaiveDate],
         source: &mut DateMap<T>,
@@ -633,7 +633,7 @@ where
         });
     }
 
-    pub fn multiple_insert_simple_average<K>(
+    pub fn multi_insert_simple_average<K>(
         &mut self,
         range: &[NaiveDate],
         source: &mut DateMap<K>,
@@ -685,7 +685,7 @@ where
         });
     }
 
-    pub fn multiple_insert_net_change(
+    pub fn multi_insert_net_change(
         &mut self,
         dates: &[NaiveDate],
         source: &mut DateMap<T>,
@@ -709,7 +709,7 @@ where
         });
     }
 
-    pub fn multiple_insert_median(
+    pub fn multi_insert_median(
         &mut self,
         dates: &[NaiveDate],
         source: &mut DateMap<T>,
@@ -717,10 +717,10 @@ where
     ) where
         T: FloatCore,
     {
-        self.multiple_insert_percentile(dates, source, 0.5, days);
+        self.multi_insert_percentile(dates, source, 0.5, days);
     }
 
-    pub fn multiple_insert_percentile(
+    pub fn multi_insert_percentile(
         &mut self,
         dates: &[NaiveDate],
         source: &mut DateMap<T>,

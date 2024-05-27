@@ -3,6 +3,7 @@ use std::thread;
 use derive_deref::{Deref, DerefMut};
 
 use crate::{
+    actions::SentData,
     states::{DateDataVec, DurableStates},
     structs::BlockData,
     utils::{
@@ -27,14 +28,33 @@ impl UTXOCohortsDurableStates {
                 .iter()
                 .flat_map(|date_data| &date_data.blocks)
                 .for_each(|block_data| {
-                    s.iterate(block_data, last_block_data, None);
+                    let amount = block_data.amount;
+                    let utxo_count = block_data.spendable_outputs as usize;
+
+                    // No need to either insert or remove if 0
+                    if amount == 0 {
+                        return;
+                    }
+
+                    let price_in_cents = convert_price_to_significant_cents(block_data.price);
+
+                    let increment_days_old = difference_in_days_between_timestamps(
+                        block_data.timestamp,
+                        last_block_data.timestamp,
+                    );
+
+                    let block_data_year = timestamp_to_year(block_data.timestamp);
+
+                    s.initial_filtered_apply(&increment_days_old, &block_data_year, |state| {
+                        state.increment(amount, utxo_count, price_in_cents);
+                    });
                 });
         }
 
         s
     }
 
-    pub fn iterate(
+    pub fn udpate_age_if_needed(
         &mut self,
         block_data: &BlockData,
         last_block_data: &BlockData,
@@ -53,50 +73,79 @@ impl UTXOCohortsDurableStates {
         let increment_days_old =
             difference_in_days_between_timestamps(block_data.timestamp, last_block_data.timestamp);
 
-        let increment_year = timestamp_to_year(block_data.timestamp);
+        let block_data_year = timestamp_to_year(block_data.timestamp);
 
-        if let Some(previous_last_block_data) = previous_last_block_data {
-            if block_data.height <= previous_last_block_data.height {
-                let previous_block_timestamp = block_data.timestamp
-                    - (last_block_data.timestamp - previous_last_block_data.timestamp);
+        if block_data.height == last_block_data.height {
+            self.initial_filtered_apply(&increment_days_old, &block_data_year, |state| {
+                state.increment(amount, utxo_count, price_in_cents);
+            })
+        } else {
+            let previous_last_block_data = previous_last_block_data.unwrap_or_else(|| {
+                dbg!(block_data, last_block_data, previous_last_block_data);
+                panic!()
+            });
 
-                let decrement_days_old = difference_in_days_between_timestamps(
-                    previous_block_timestamp,
-                    previous_last_block_data.timestamp,
-                );
+            // let re_org = last_block_data.has_lower_or_equal_timestamp(previous_last_block_data);
 
-                let decrement_year = timestamp_to_year(previous_block_timestamp);
+            // if re_org {
+            //     return;
+            // }
 
-                if increment_days_old == decrement_days_old && increment_year == decrement_year {
-                    return;
-                }
+            // if block_data.has_lower_or_equal_timestamp(previous_last_block_data) {
+            let decrement_days_old = difference_in_days_between_timestamps(
+                block_data.timestamp,
+                previous_last_block_data.timestamp,
+            );
 
-                let decrement_ids = self.filtered_ids(&decrement_days_old, &decrement_year);
-
-                let increment_ids = self.filtered_ids(&increment_days_old, &increment_year);
-
-                decrement_ids
-                    .iter()
-                    .filter(|id| !increment_ids.contains(id))
-                    .for_each(|id| {
-                        self.get_mut(id)
-                            .decrement(amount, utxo_count, price_in_cents)
-                    });
-
-                increment_ids
-                    .iter()
-                    .filter(|id| !decrement_ids.contains(id))
-                    .for_each(|id| {
-                        self.get_mut(id)
-                            .increment(amount, utxo_count, price_in_cents)
-                    });
-
+            if increment_days_old == decrement_days_old {
                 return;
             }
+
+            // dbg!(
+            //     block_data.timestamp,
+            //     last_block_data.timestamp,
+            //     previous_last_block_data.timestamp
+            // );
+
+            self.duo_filtered_apply(
+                &increment_days_old,
+                &decrement_days_old,
+                |state| {
+                    state.increment(amount, utxo_count, price_in_cents);
+                },
+                |state| {
+                    state.decrement(amount, utxo_count, price_in_cents);
+                },
+            );
+            // }
+        }
+    }
+
+    pub fn subtract_moved(
+        &mut self,
+        block_data: &BlockData,
+        sent_data: &SentData,
+        previous_last_block_data: &BlockData,
+    ) {
+        let amount = sent_data.volume;
+        let utxo_count = sent_data.count as usize;
+
+        // No need to either insert or remove if 0
+        if amount == 0 {
+            return;
         }
 
-        self.filtered_apply(&increment_days_old, &increment_year, |state| {
-            state.increment(amount, utxo_count, price_in_cents);
+        let price_in_cents = convert_price_to_significant_cents(block_data.price);
+
+        let days_old = difference_in_days_between_timestamps(
+            block_data.timestamp,
+            previous_last_block_data.timestamp,
+        );
+
+        let block_data_year = timestamp_to_year(block_data.timestamp);
+
+        self.initial_filtered_apply(&days_old, &block_data_year, |state| {
+            state.decrement(amount, utxo_count, price_in_cents);
         })
     }
 

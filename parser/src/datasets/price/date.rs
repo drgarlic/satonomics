@@ -99,54 +99,51 @@ impl DateDataset {
 
     pub fn compute(&mut self, &ComputeData { dates, .. }: &ComputeData) {
         self.closes
-            .multiple_insert_simple_transform(dates, &mut self.ohlcs, |ohlc| ohlc.close);
+            .multi_insert_simple_transform(dates, &mut self.ohlcs, |ohlc| ohlc.close);
 
         self.price_1w_sma
-            .multiple_insert_simple_average(dates, &mut self.closes, ONE_WEEK_IN_DAYS);
+            .multi_insert_simple_average(dates, &mut self.closes, ONE_WEEK_IN_DAYS);
 
-        self.price_1m_sma.multiple_insert_simple_average(
-            dates,
-            &mut self.closes,
-            ONE_MONTH_IN_DAYS,
-        );
+        self.price_1m_sma
+            .multi_insert_simple_average(dates, &mut self.closes, ONE_MONTH_IN_DAYS);
 
         self.price_1y_sma
-            .multiple_insert_simple_average(dates, &mut self.closes, ONE_YEAR_IN_DAYS);
+            .multi_insert_simple_average(dates, &mut self.closes, ONE_YEAR_IN_DAYS);
 
-        self.price_2y_sma.multiple_insert_simple_average(
+        self.price_2y_sma.multi_insert_simple_average(
             dates,
             &mut self.closes,
             2 * ONE_YEAR_IN_DAYS,
         );
 
-        self.price_4y_sma.multiple_insert_simple_average(
+        self.price_4y_sma.multi_insert_simple_average(
             dates,
             &mut self.closes,
             4 * ONE_YEAR_IN_DAYS,
         );
 
         self.price_8d_sma
-            .multiple_insert_simple_average(dates, &mut self.closes, 8);
+            .multi_insert_simple_average(dates, &mut self.closes, 8);
 
         self.price_13d_sma
-            .multiple_insert_simple_average(dates, &mut self.closes, 13);
+            .multi_insert_simple_average(dates, &mut self.closes, 13);
 
         self.price_21d_sma
-            .multiple_insert_simple_average(dates, &mut self.closes, 21);
+            .multi_insert_simple_average(dates, &mut self.closes, 21);
 
         self.price_34d_sma
-            .multiple_insert_simple_average(dates, &mut self.closes, 34);
+            .multi_insert_simple_average(dates, &mut self.closes, 34);
 
         self.price_55d_sma
-            .multiple_insert_simple_average(dates, &mut self.closes, 55);
+            .multi_insert_simple_average(dates, &mut self.closes, 55);
 
         self.price_89d_sma
-            .multiple_insert_simple_average(dates, &mut self.closes, 89);
+            .multi_insert_simple_average(dates, &mut self.closes, 89);
 
         self.price_144d_sma
-            .multiple_insert_simple_average(dates, &mut self.closes, 144);
+            .multi_insert_simple_average(dates, &mut self.closes, 144);
 
-        self.price_200w_sma.multiple_insert_simple_average(
+        self.price_200w_sma.multi_insert_simple_average(
             dates,
             &mut self.closes,
             200 * ONE_WEEK_IN_DAYS,

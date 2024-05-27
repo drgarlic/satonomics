@@ -31,9 +31,11 @@ impl AddressData {
     pub fn compute_liquidity_classification(&self) -> LiquidityClassification {
         LiquidityClassification::new(self.sent, self.received)
     }
-}
 
-impl AddressData {
+    pub fn is_new(&self) -> bool {
+        self.received == 0
+    }
+
     pub fn receive(&mut self, sat_amount: u64, price: f32) {
         let previous_mean_cents_paid = self.mean_cents_paid;
 
@@ -58,7 +60,7 @@ impl AddressData {
         self.outputs_len += 1;
     }
 
-    pub fn spend(&mut self, sat_amount: u64, price: f32) -> f32 {
+    pub fn send(&mut self, sat_amount: u64, price: f32) -> f32 {
         let previous_mean_cents_paid = self.mean_cents_paid;
 
         let previous_sat_amount = self.amount;

@@ -107,18 +107,18 @@ impl CohortDataset {
             .any(|sub| sub.input.should_insert(insert_data))
     }
 
-    fn should_insert_output(&self, insert_data: &InsertData) -> bool {
-        self.sub_datasets_vec()
-            .iter()
-            .any(|sub| sub.output.should_insert(insert_data))
-    }
+    // fn should_insert_output(&self, insert_data: &InsertData) -> bool {
+    //     self.sub_datasets_vec()
+    //         .iter()
+    //         .any(|sub| sub.output.should_insert(insert_data))
+    // }
 
     fn insert_realized_data(&mut self, insert_data: &InsertData) {
         let split_realized_state = insert_data
             .address_cohorts_realized_states
             .as_ref()
             .unwrap()
-            .get_state(&self.split)
+            .get(&self.split)
             .unwrap();
 
         self.all
@@ -142,7 +142,7 @@ impl CohortDataset {
         let address_count = insert_data
             .states
             .address_cohorts_durable_states
-            .get_state(&self.split)
+            .get(&self.split)
             .unwrap()
             .address_count;
 
@@ -203,7 +203,7 @@ impl CohortDataset {
             .address_cohorts_one_shot_states
             .as_ref()
             .unwrap()
-            .get_state(&self.split)
+            .get(&self.split)
             .unwrap();
 
         self.all.unrealized.insert(
@@ -236,7 +236,7 @@ impl CohortDataset {
             .address_cohorts_one_shot_states
             .as_ref()
             .unwrap()
-            .get_state(&self.split)
+            .get(&self.split)
             .unwrap();
 
         self.all
@@ -261,7 +261,7 @@ impl CohortDataset {
             .address_cohorts_input_states
             .as_ref()
             .unwrap()
-            .get_state(&self.split)
+            .get(&self.split)
             .unwrap();
 
         self.all.input.insert(insert_data, &state.all);
@@ -272,21 +272,21 @@ impl CohortDataset {
             .insert(insert_data, &state.highly_liquid);
     }
 
-    fn insert_output_data(&mut self, insert_data: &InsertData) {
-        let state = insert_data
-            .address_cohorts_output_states
-            .as_ref()
-            .unwrap()
-            .get_state(&self.split)
-            .unwrap();
+    // fn insert_output_data(&mut self, insert_data: &InsertData) {
+    //     let state = insert_data
+    //         .address_cohorts_output_states
+    //         .as_ref()
+    //         .unwrap()
+    //         .get(&self.split)
+    //         .unwrap();
 
-        self.all.output.insert(insert_data, &state.all);
-        self.illiquid.output.insert(insert_data, &state.illiquid);
-        self.liquid.output.insert(insert_data, &state.liquid);
-        self.highly_liquid
-            .output
-            .insert(insert_data, &state.highly_liquid);
-    }
+    //     self.all.output.insert(insert_data, &state.all);
+    //     self.illiquid.output.insert(insert_data, &state.illiquid);
+    //     self.liquid.output.insert(insert_data, &state.liquid);
+    //     self.highly_liquid
+    //         .output
+    //         .insert(insert_data, &state.highly_liquid);
+    // }
 
     fn as_vec(&self) -> Vec<&(dyn AnyDataset + Send + Sync)> {
         vec![
@@ -322,7 +322,7 @@ impl CohortDataset {
         let liquidity_split_processed_address_state = insert_data
             .states
             .address_cohorts_durable_states
-            .get_state(&self.split);
+            .get(&self.split);
 
         if liquidity_split_processed_address_state.is_none() {
             return; // TODO: Check if should panic instead
@@ -360,9 +360,9 @@ impl CohortDataset {
             self.insert_input_data(insert_data);
         }
 
-        if self.should_insert_output(insert_data) {
-            self.insert_output_data(insert_data);
-        }
+        // if self.should_insert_output(insert_data) {
+        //     self.insert_output_data(insert_data);
+        // }
     }
 
     // pub fn should_compute_metadata(&self, compute_data: &ComputeData) -> bool {
@@ -405,11 +405,11 @@ impl CohortDataset {
     //         .any(|sub| sub.input.should_compute(compute_data))
     // }
 
-    fn should_compute_output(&self, compute_data: &ComputeData) -> bool {
-        self.sub_datasets_vec()
-            .iter()
-            .any(|sub| sub.output.should_compute(compute_data))
-    }
+    // fn should_compute_output(&self, compute_data: &ComputeData) -> bool {
+    //     self.sub_datasets_vec()
+    //         .iter()
+    //         .any(|sub| sub.output.should_compute(compute_data))
+    // }
 
     fn compute_supply_data(
         &mut self,
@@ -487,23 +487,23 @@ impl CohortDataset {
         );
     }
 
-    fn compute_output_data(&mut self, compute_data: &ComputeData) {
-        self.all
-            .output
-            .compute(compute_data, &mut self.all.supply.total);
+    // fn compute_output_data(&mut self, compute_data: &ComputeData) {
+    //     self.all
+    //         .output
+    //         .compute(compute_data, &mut self.all.supply.total);
 
-        self.illiquid
-            .output
-            .compute(compute_data, &mut self.illiquid.supply.total);
+    //     self.illiquid
+    //         .output
+    //         .compute(compute_data, &mut self.illiquid.supply.total);
 
-        self.liquid
-            .output
-            .compute(compute_data, &mut self.liquid.supply.total);
+    //     self.liquid
+    //         .output
+    //         .compute(compute_data, &mut self.liquid.supply.total);
 
-        self.highly_liquid
-            .output
-            .compute(compute_data, &mut self.highly_liquid.supply.total);
-    }
+    //     self.highly_liquid
+    //         .output
+    //         .compute(compute_data, &mut self.highly_liquid.supply.total);
+    // }
 
     pub fn compute(
         &mut self,
@@ -524,9 +524,9 @@ impl CohortDataset {
             self.compute_price_paid_data(compute_data, date_closes, height_closes);
         }
 
-        if self.should_compute_output(compute_data) {
-            self.compute_output_data(compute_data);
-        }
+        // if self.should_compute_output(compute_data) {
+        //     self.compute_output_data(compute_data);
+        // }
     }
 }
 

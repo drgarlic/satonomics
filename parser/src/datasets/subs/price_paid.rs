@@ -176,21 +176,21 @@ impl PricePaidSubDataset {
         height_closes: &mut HeightMap<f32>,
         cohort_supply: &mut BiMap<f32>,
     ) {
-        self.realized_price.multiple_insert_divide(
+        self.realized_price.multi_insert_divide(
             heights,
             dates,
-            cohort_supply,
             &mut self.realized_cap,
+            cohort_supply,
         );
 
-        self.mvrv.height.multiple_insert_divide(
+        self.mvrv.height.multi_insert_divide(
             heights,
             height_closes,
             &mut self.realized_price.height,
         );
         self.mvrv
             .date
-            .multiple_insert_divide(dates, date_closes, &mut self.realized_price.date);
+            .multi_insert_divide(dates, date_closes, &mut self.realized_price.date);
     }
 
     fn insert_height_default(&mut self, height: usize) {

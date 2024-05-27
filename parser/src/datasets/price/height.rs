@@ -186,7 +186,7 @@ impl HeightDataset {
 
     pub fn compute(&mut self, &ComputeData { heights, .. }: &ComputeData) {
         self.closes
-            .multiple_insert_simple_transform(heights, &mut self.ohlcs, |ohlc| ohlc.close);
+            .multi_insert_simple_transform(heights, &mut self.ohlcs, |ohlc| ohlc.close);
     }
 }
 

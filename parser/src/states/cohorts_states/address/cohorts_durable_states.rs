@@ -44,19 +44,19 @@ impl AddressCohortsDurableStates {
     }
 
     fn _crement(&mut self, address_data: &AddressData, increment: bool) {
-        let amount = address_data.amount;
-        let utxo_count = address_data.outputs_len as usize;
-
-        // No need to either insert or remove if 0
-        if amount == 0 {
+        // No need to either insert or remove if empty
+        if address_data.is_empty() {
             return;
         }
+
+        let amount = address_data.amount;
+        let utxo_count = address_data.outputs_len as usize;
 
         let mean_cents_paid = convert_cents_to_significant_cents(address_data.mean_cents_paid);
 
         let liquidity_classification = address_data.compute_liquidity_classification();
 
-        let split_sat_amount_amount = liquidity_classification.split(amount as f32);
+        let split_sat_amount = liquidity_classification.split(amount as f32);
         let split_utxo_count = liquidity_classification.split(utxo_count as f32);
 
         self.0
@@ -66,7 +66,7 @@ impl AddressCohortsDurableStates {
                         amount,
                         utxo_count,
                         mean_cents_paid,
-                        &split_sat_amount_amount,
+                        &split_sat_amount,
                         &split_utxo_count,
                     );
                 } else {
@@ -74,7 +74,7 @@ impl AddressCohortsDurableStates {
                         amount,
                         utxo_count,
                         mean_cents_paid,
-                        &split_sat_amount_amount,
+                        &split_sat_amount,
                         &split_utxo_count,
                     )
                 }

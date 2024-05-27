@@ -81,7 +81,7 @@ impl UnrealizedSubDataset {
         &ComputeData { heights, dates }: &ComputeData,
         cohort_supply: &mut BiMap<f32>,
     ) {
-        self.supply_in_loss.multiple_insert_subtract(
+        self.supply_in_loss.multi_insert_subtract(
             heights,
             dates,
             cohort_supply,

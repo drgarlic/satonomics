@@ -1,5 +1,5 @@
 mod input;
-mod output;
+// mod output;
 mod price_paid;
 mod realized;
 mod supply;
@@ -7,7 +7,7 @@ mod unrealized;
 mod utxo;
 
 pub use input::*;
-pub use output::*;
+// pub use output::*;
 pub use price_paid::*;
 pub use realized::*;
 pub use supply::*;
@@ -20,7 +20,7 @@ use super::AnyDatasetGroup;
 
 pub struct SubDataset {
     pub input: InputSubDataset,
-    pub output: OutputSubDataset,
+    // pub output: OutputSubDataset,
     pub price_paid: PricePaidSubDataset,
     pub realized: RealizedSubDataset,
     pub supply: SupplySubDataset,
@@ -32,7 +32,7 @@ impl SubDataset {
     pub fn import(parent_path: &str) -> color_eyre::Result<Self> {
         let s = Self {
             input: InputSubDataset::import(parent_path)?,
-            output: OutputSubDataset::import(parent_path)?,
+            // output: OutputSubDataset::import(parent_path)?,
             price_paid: PricePaidSubDataset::import(parent_path)?,
             realized: RealizedSubDataset::import(parent_path)?,
             supply: SupplySubDataset::import(parent_path)?,
@@ -53,7 +53,7 @@ impl AnyDatasetGroup for SubDataset {
             &self.unrealized,
             &self.utxo,
             &self.input,
-            &self.output,
+            // &self.output,
         ]
     }
 
@@ -65,7 +65,7 @@ impl AnyDatasetGroup for SubDataset {
             &mut self.unrealized,
             &mut self.utxo,
             &mut self.input,
-            &mut self.output,
+            // &mut self.output,
         ]
     }
 }

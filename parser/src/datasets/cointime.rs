@@ -168,11 +168,11 @@ impl CointimeDataset {
         cumulative_subsidy_in_dollars: &mut BiMap<f32>,
     ) {
         self.cumulative_coinblocks_destroyed
-            .multiple_insert_cumulative(heights, dates, &mut self.coinblocks_destroyed);
+            .multi_insert_cumulative(heights, dates, &mut self.coinblocks_destroyed);
 
         self.coinblocks_created
             .height
-            .multiple_insert_simple_transform(
+            .multi_insert_simple_transform(
                 heights,
                 &mut circulating_supply.height,
                 |circulating_supply| circulating_supply,
@@ -180,10 +180,13 @@ impl CointimeDataset {
         self.coinblocks_created
             .multiple_date_insert_sum_range(dates, first_height, last_height);
 
-        self.cumulative_coinblocks_created
-            .multiple_insert_cumulative(heights, dates, &mut self.coinblocks_created);
+        self.cumulative_coinblocks_created.multi_insert_cumulative(
+            heights,
+            dates,
+            &mut self.coinblocks_created,
+        );
 
-        self.coinblocks_stored.height.multiple_insert_subtract(
+        self.coinblocks_stored.height.multi_insert_subtract(
             heights,
             &mut self.coinblocks_created.height,
             &mut self.coinblocks_destroyed.height,
@@ -191,45 +194,48 @@ impl CointimeDataset {
         self.coinblocks_stored
             .multiple_date_insert_sum_range(dates, first_height, last_height);
 
-        self.cumulative_coinblocks_stored
-            .multiple_insert_cumulative(heights, dates, &mut self.coinblocks_stored);
+        self.cumulative_coinblocks_stored.multi_insert_cumulative(
+            heights,
+            dates,
+            &mut self.coinblocks_stored,
+        );
 
-        self.liveliness.multiple_insert_divide(
+        self.liveliness.multi_insert_divide(
             heights,
             dates,
             &mut self.cumulative_coinblocks_destroyed,
             &mut self.cumulative_coinblocks_created,
         );
 
-        self.vaultedness.multiple_insert_simple_transform(
+        self.vaultedness.multi_insert_simple_transform(
             heights,
             dates,
             &mut self.liveliness,
             &|liveliness| 1.0 - liveliness,
         );
 
-        self.activity_to_vaultedness_ratio.multiple_insert_divide(
+        self.activity_to_vaultedness_ratio.multi_insert_divide(
             heights,
             dates,
             &mut self.liveliness,
             &mut self.vaultedness,
         );
 
-        self.concurrent_liveliness.multiple_insert_divide(
+        self.concurrent_liveliness.multi_insert_divide(
             heights,
             dates,
             &mut self.coinblocks_destroyed,
             &mut self.coinblocks_created,
         );
 
-        self.concurrent_liveliness_2w_median.multiple_insert_median(
+        self.concurrent_liveliness_2w_median.multi_insert_median(
             heights,
             dates,
             &mut self.concurrent_liveliness,
             Some(TWO_WEEK_IN_DAYS),
         );
 
-        self.liveliness_net_change.multiple_insert_net_change(
+        self.liveliness_net_change.multi_insert_net_change(
             heights,
             dates,
             &mut self.liveliness,
@@ -237,52 +243,51 @@ impl CointimeDataset {
         );
 
         self.liveliness_net_change_2w_median
-            .multiple_insert_net_change(heights, dates, &mut self.liveliness, TWO_WEEK_IN_DAYS);
+            .multi_insert_net_change(heights, dates, &mut self.liveliness, TWO_WEEK_IN_DAYS);
 
-        self.vaulted_supply.multiple_insert_multiply(
+        self.vaulted_supply.multi_insert_multiply(
             heights,
             dates,
             &mut self.vaultedness,
             circulating_supply,
         );
 
-        self.vaulted_supply_net_change.multiple_insert_net_change(
+        self.vaulted_supply_net_change.multi_insert_net_change(
             heights,
             dates,
             &mut self.vaulted_supply,
             ONE_DAY_IN_DAYS,
         );
 
-        self.vaulted_supply_3m_net_change
-            .multiple_insert_net_change(
-                heights,
-                dates,
-                &mut self.vaulted_supply,
-                THREE_MONTHS_IN_DAYS,
-            );
+        self.vaulted_supply_3m_net_change.multi_insert_net_change(
+            heights,
+            dates,
+            &mut self.vaulted_supply,
+            THREE_MONTHS_IN_DAYS,
+        );
 
-        self.vaulting_rate.multiple_insert_simple_transform(
+        self.vaulting_rate.multi_insert_simple_transform(
             heights,
             dates,
             &mut self.vaulted_supply,
             &|vaulted_supply| vaulted_supply * ONE_YEAR_IN_DAYS as f32,
         );
 
-        self.active_supply.multiple_insert_multiply(
+        self.active_supply.multi_insert_multiply(
             heights,
             dates,
             &mut self.liveliness,
             circulating_supply,
         );
 
-        self.active_supply_net_change.multiple_insert_net_change(
+        self.active_supply_net_change.multi_insert_net_change(
             heights,
             dates,
             &mut self.active_supply,
             ONE_DAY_IN_DAYS,
         );
 
-        self.active_supply_3m_net_change.multiple_insert_net_change(
+        self.active_supply_3m_net_change.multi_insert_net_change(
             heights,
             dates,
             &mut self.active_supply,
@@ -294,14 +299,14 @@ impl CointimeDataset {
         // let max_active_supply = ;
 
         self.cointime_adjusted_yearly_inflation_rate
-            .multiple_insert_multiply(
+            .multi_insert_multiply(
                 heights,
                 dates,
                 &mut self.activity_to_vaultedness_ratio,
                 yearly_inflation_rate,
             );
 
-        self.cointime_adjusted_velocity.multiple_insert_divide(
+        self.cointime_adjusted_velocity.multi_insert_divide(
             heights,
             dates,
             annualized_transaction_volume,
@@ -316,22 +321,22 @@ impl CointimeDataset {
         //     liveliness,
         //   );
 
-        self.thermo_cap.multiple_insert_simple_transform(
+        self.thermo_cap.multi_insert_simple_transform(
             heights,
             dates,
             cumulative_subsidy_in_dollars,
             &|cumulative_subsidy_in_dollars| cumulative_subsidy_in_dollars,
         );
 
-        self.investor_cap.multiple_insert_subtract(
+        self.investor_cap
+            .multi_insert_subtract(heights, dates, realized_cap, &mut self.thermo_cap);
+
+        self.thermo_cap_to_investor_cap_ratio.multi_insert_divide(
             heights,
             dates,
-            realized_cap,
             &mut self.thermo_cap,
+            &mut self.investor_cap,
         );
-
-        self.thermo_cap_to_investor_cap_ratio
-            .multiple_insert_divide(heights, dates, &mut self.thermo_cap, &mut self.investor_cap);
 
         // TODO:
         // const activeSupplyChangeFromIssuance90dChange = createNetChangeLazyDataset(
@@ -339,51 +344,47 @@ impl CointimeDataset {
         //   90,
         // );
 
-        self.active_price.multiple_insert_divide(
-            heights,
-            dates,
-            realized_price,
-            &mut self.liveliness,
-        );
+        self.active_price
+            .multi_insert_divide(heights, dates, realized_price, &mut self.liveliness);
 
-        self.active_cap.height.multiple_insert_multiply(
+        self.active_cap.height.multi_insert_multiply(
             heights,
             &mut self.active_supply.height,
             height_closes,
         );
-        self.active_cap.date.multiple_insert_multiply(
+        self.active_cap.date.multi_insert_multiply(
             dates,
             &mut self.active_supply.date,
             date_closes,
         );
 
-        self.vaulted_price.multiple_insert_divide(
+        self.vaulted_price.multi_insert_divide(
             heights,
             dates,
             realized_price,
             &mut self.vaultedness,
         );
 
-        self.vaulted_cap.height.multiple_insert_multiply(
+        self.vaulted_cap.height.multi_insert_multiply(
             heights,
             &mut self.vaulted_supply.height,
             height_closes,
         );
 
-        self.vaulted_cap.date.multiple_insert_multiply(
+        self.vaulted_cap.date.multi_insert_multiply(
             dates,
             &mut self.vaulted_supply.date,
             date_closes,
         );
 
-        self.true_market_mean.multiple_insert_divide(
+        self.true_market_mean.multi_insert_divide(
             heights,
             dates,
             &mut self.investor_cap,
             &mut self.active_supply,
         );
 
-        self.true_market_deviation.multiple_insert_divide(
+        self.true_market_deviation.multi_insert_divide(
             heights,
             dates,
             &mut self.active_cap,
@@ -392,7 +393,7 @@ impl CointimeDataset {
 
         self.true_market_net_unrealized_profit_and_loss
             .height
-            .multiple_insert_complex_transform(
+            .multi_insert_complex_transform(
                 heights,
                 &mut self.active_cap.height,
                 |(active_cap, height)| {
@@ -403,7 +404,7 @@ impl CointimeDataset {
             );
         self.true_market_net_unrealized_profit_and_loss
             .date
-            .multiple_insert_complex_transform(
+            .multi_insert_complex_transform(
                 dates,
                 &mut self.active_cap.date,
                 |(active_cap, date)| {
@@ -412,75 +413,71 @@ impl CointimeDataset {
                 },
             );
 
-        self.investorness.multiple_insert_divide(
-            heights,
-            dates,
-            &mut self.investor_cap,
-            realized_cap,
-        );
+        self.investorness
+            .multi_insert_divide(heights, dates, &mut self.investor_cap, realized_cap);
 
-        self.producerness.multiple_insert_divide(
-            heights,
-            dates,
-            &mut self.thermo_cap,
-            realized_cap,
-        );
+        self.producerness
+            .multi_insert_divide(heights, dates, &mut self.thermo_cap, realized_cap);
 
-        self.cointime_value_destroyed
-            .height
-            .multiple_insert_multiply(
-                heights,
-                &mut self.coinblocks_destroyed.height,
-                height_closes,
-            );
-        self.cointime_value_destroyed.date.multiple_insert_multiply(
+        self.cointime_value_destroyed.height.multi_insert_multiply(
+            heights,
+            &mut self.coinblocks_destroyed.height,
+            height_closes,
+        );
+        self.cointime_value_destroyed.date.multi_insert_multiply(
             dates,
             &mut self.coinblocks_destroyed.date,
             date_closes,
         );
 
-        self.cointime_value_created.height.multiple_insert_multiply(
+        self.cointime_value_created.height.multi_insert_multiply(
             heights,
             &mut self.coinblocks_created.height,
             height_closes,
         );
-        self.cointime_value_created.date.multiple_insert_multiply(
+        self.cointime_value_created.date.multi_insert_multiply(
             dates,
             &mut self.coinblocks_created.date,
             date_closes,
         );
 
-        self.cointime_value_stored.height.multiple_insert_multiply(
+        self.cointime_value_stored.height.multi_insert_multiply(
             heights,
             &mut self.coinblocks_stored.height,
             height_closes,
         );
-        self.cointime_value_stored.date.multiple_insert_multiply(
+        self.cointime_value_stored.date.multi_insert_multiply(
             dates,
             &mut self.coinblocks_stored.date,
             date_closes,
         );
 
-        self.total_cointime_value_created
-            .multiple_insert_cumulative(heights, dates, &mut self.cointime_value_created);
+        self.total_cointime_value_created.multi_insert_cumulative(
+            heights,
+            dates,
+            &mut self.cointime_value_created,
+        );
 
-        self.total_cointime_value_destroyed
-            .multiple_insert_cumulative(heights, dates, &mut self.cointime_value_destroyed);
+        self.total_cointime_value_destroyed.multi_insert_cumulative(
+            heights,
+            dates,
+            &mut self.cointime_value_destroyed,
+        );
 
-        self.total_cointime_value_stored.multiple_insert_cumulative(
+        self.total_cointime_value_stored.multi_insert_cumulative(
             heights,
             dates,
             &mut self.cointime_value_stored,
         );
 
-        self.cointime_price.multiple_insert_divide(
+        self.cointime_price.multi_insert_divide(
             heights,
             dates,
             &mut self.total_cointime_value_destroyed,
             &mut self.cumulative_coinblocks_stored,
         );
 
-        self.cointime_cap.multiple_insert_multiply(
+        self.cointime_cap.multi_insert_multiply(
             heights,
             dates,
             &mut self.cointime_price,

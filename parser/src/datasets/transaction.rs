@@ -2,7 +2,7 @@ use crate::{
     bitcoin::sats_to_btc,
     datasets::InsertData,
     structs::{AnyBiMap, BiMap},
-    utils::{ONE_DAY_IN_S, ONE_SECOND_IN_MS, ONE_YEAR_IN_DAYS},
+    utils::{ONE_DAY_IN_S, ONE_YEAR_IN_DAYS},
     HeightMap,
 };
 
@@ -92,17 +92,21 @@ impl TransactionDataset {
         circulating_supply: &mut BiMap<f32>,
         block_interval: &mut HeightMap<u32>,
     ) {
-        self.annualized_volume.multiple_insert_last_x_sum(
+        self.annualized_volume.multi_insert_last_x_sum(
             heights,
             dates,
             &mut self.volume,
             ONE_YEAR_IN_DAYS,
         );
 
-        self.annualized_volume_in_dollars
-            .multiple_insert_last_x_sum(heights, dates, &mut self.volume, ONE_YEAR_IN_DAYS);
+        self.annualized_volume_in_dollars.multi_insert_last_x_sum(
+            heights,
+            dates,
+            &mut self.volume,
+            ONE_YEAR_IN_DAYS,
+        );
 
-        self.velocity.multiple_insert_divide(
+        self.velocity.multi_insert_divide(
             heights,
             dates,
             &mut self.annualized_volume,
@@ -113,13 +117,13 @@ impl TransactionDataset {
             self.transactions_per_second.height.insert(
                 *height,
                 self.count.height.get_or_import(height) as f32
-                    / (block_interval.get_or_import(height) * ONE_SECOND_IN_MS as u32) as f32,
+                    / (block_interval.get_or_import(height)) as f32,
             );
         });
 
         self.transactions_per_second
             .date
-            .multiple_insert_simple_transform(dates, &mut self.count.date, |count| {
+            .multi_insert_simple_transform(dates, &mut self.count.date, |count| {
                 count as f32 / ONE_DAY_IN_S as f32
             });
     }

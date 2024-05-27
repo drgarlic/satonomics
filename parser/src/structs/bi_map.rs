@@ -91,7 +91,7 @@ where
         })
     }
 
-    pub fn multiple_insert_simple_transform<F>(
+    pub fn multi_insert_simple_transform<F>(
         &mut self,
         heights: &[usize],
         dates: &[NaiveDate],
@@ -102,13 +102,13 @@ where
         F: Fn(T) -> T,
     {
         self.height
-            .multiple_insert_simple_transform(heights, &mut source.height, transform);
+            .multi_insert_simple_transform(heights, &mut source.height, transform);
         self.date
-            .multiple_insert_simple_transform(dates, &mut source.date, transform);
+            .multi_insert_simple_transform(dates, &mut source.date, transform);
     }
 
     #[allow(unused)]
-    pub fn multiple_insert_add(
+    pub fn multi_insert_add(
         &mut self,
         heights: &[usize],
         dates: &[NaiveDate],
@@ -118,12 +118,12 @@ where
         T: Add<Output = T>,
     {
         self.height
-            .multiple_insert_add(heights, &mut added.height, &mut adder.height);
+            .multi_insert_add(heights, &mut added.height, &mut adder.height);
         self.date
-            .multiple_insert_add(dates, &mut added.date, &mut adder.date);
+            .multi_insert_add(dates, &mut added.date, &mut adder.date);
     }
 
-    pub fn multiple_insert_subtract(
+    pub fn multi_insert_subtract(
         &mut self,
         heights: &[usize],
         dates: &[NaiveDate],
@@ -132,17 +132,14 @@ where
     ) where
         T: Sub<Output = T>,
     {
-        self.height.multiple_insert_subtract(
-            heights,
-            &mut subtracted.height,
-            &mut subtracter.height,
-        );
+        self.height
+            .multi_insert_subtract(heights, &mut subtracted.height, &mut subtracter.height);
 
         self.date
-            .multiple_insert_subtract(dates, &mut subtracted.date, &mut subtracter.date);
+            .multi_insert_subtract(dates, &mut subtracted.date, &mut subtracter.date);
     }
 
-    pub fn multiple_insert_multiply(
+    pub fn multi_insert_multiply(
         &mut self,
         heights: &[usize],
         dates: &[NaiveDate],
@@ -151,16 +148,13 @@ where
     ) where
         T: Mul<Output = T>,
     {
-        self.height.multiple_insert_multiply(
-            heights,
-            &mut multiplied.height,
-            &mut multiplier.height,
-        );
+        self.height
+            .multi_insert_multiply(heights, &mut multiplied.height, &mut multiplier.height);
         self.date
-            .multiple_insert_multiply(dates, &mut multiplied.date, &mut multiplier.date);
+            .multi_insert_multiply(dates, &mut multiplied.date, &mut multiplier.date);
     }
 
-    pub fn multiple_insert_divide(
+    pub fn multi_insert_divide(
         &mut self,
         heights: &[usize],
         dates: &[NaiveDate],
@@ -170,12 +164,12 @@ where
         T: Div<Output = T> + Mul<Output = T> + From<u8>,
     {
         self.height
-            .multiple_insert_divide(heights, &mut divided.height, &mut divider.height);
+            .multi_insert_divide(heights, &mut divided.height, &mut divider.height);
         self.date
-            .multiple_insert_divide(dates, &mut divided.date, &mut divider.date);
+            .multi_insert_divide(dates, &mut divided.date, &mut divider.date);
     }
 
-    pub fn multiple_insert_percentage(
+    pub fn multi_insert_percentage(
         &mut self,
         heights: &[usize],
         dates: &[NaiveDate],
@@ -185,12 +179,12 @@ where
         T: Div<Output = T> + Mul<Output = T> + From<u8>,
     {
         self.height
-            .multiple_insert_percentage(heights, &mut divided.height, &mut divider.height);
+            .multi_insert_percentage(heights, &mut divided.height, &mut divider.height);
         self.date
-            .multiple_insert_percentage(dates, &mut divided.date, &mut divider.date);
+            .multi_insert_percentage(dates, &mut divided.date, &mut divider.date);
     }
 
-    pub fn multiple_insert_cumulative(
+    pub fn multi_insert_cumulative(
         &mut self,
         heights: &[usize],
         dates: &[NaiveDate],
@@ -199,13 +193,12 @@ where
         T: Add<Output = T> + Sub<Output = T>,
     {
         self.height
-            .multiple_insert_cumulative(heights, &mut source.height);
+            .multi_insert_cumulative(heights, &mut source.height);
 
-        self.date
-            .multiple_insert_cumulative(dates, &mut source.date);
+        self.date.multi_insert_cumulative(dates, &mut source.date);
     }
 
-    pub fn multiple_insert_last_x_sum(
+    pub fn multi_insert_last_x_sum(
         &mut self,
         heights: &[usize],
         dates: &[NaiveDate],
@@ -214,17 +207,17 @@ where
     ) where
         T: Add<Output = T> + Sub<Output = T>,
     {
-        self.height.multiple_insert_last_x_sum(
+        self.height.multi_insert_last_x_sum(
             heights,
             &mut source.height,
             TARGET_BLOCKS_PER_DAY * days,
         );
 
         self.date
-            .multiple_insert_last_x_sum(dates, &mut source.date, days);
+            .multi_insert_last_x_sum(dates, &mut source.date, days);
     }
 
-    pub fn multiple_insert_net_change(
+    pub fn multi_insert_net_change(
         &mut self,
         heights: &[usize],
         dates: &[NaiveDate],
@@ -233,16 +226,16 @@ where
     ) where
         T: Sub<Output = T>,
     {
-        self.height.multiple_insert_net_change(
+        self.height.multi_insert_net_change(
             heights,
             &mut source.height,
             TARGET_BLOCKS_PER_DAY * days,
         );
         self.date
-            .multiple_insert_net_change(dates, &mut source.date, days);
+            .multi_insert_net_change(dates, &mut source.date, days);
     }
 
-    pub fn multiple_insert_median(
+    pub fn multi_insert_median(
         &mut self,
         heights: &[usize],
         dates: &[NaiveDate],
@@ -251,17 +244,16 @@ where
     ) where
         T: FloatCore,
     {
-        self.height.multiple_insert_median(
+        self.height.multi_insert_median(
             heights,
             &mut source.height,
             days.map(|days| TARGET_BLOCKS_PER_DAY * days),
         );
-        self.date
-            .multiple_insert_median(dates, &mut source.date, days);
+        self.date.multi_insert_median(dates, &mut source.date, days);
     }
 
     #[allow(unused)]
-    pub fn multiple_insert_percentile(
+    pub fn multi_insert_percentile(
         &mut self,
         heights: &[usize],
         dates: &[NaiveDate],
@@ -271,14 +263,14 @@ where
     ) where
         T: FloatCore,
     {
-        self.height.multiple_insert_percentile(
+        self.height.multi_insert_percentile(
             heights,
             &mut source.height,
             percentile,
             days.map(|days| TARGET_BLOCKS_PER_DAY * days),
         );
         self.date
-            .multiple_insert_percentile(dates, &mut source.date, percentile, days);
+            .multi_insert_percentile(dates, &mut source.date, percentile, days);
     }
 }
 

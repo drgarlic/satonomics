@@ -38,7 +38,7 @@ impl UTXODataset {
         let &InsertData {
             states,
             utxo_cohorts_one_shot_states,
-            utxo_cohorts_received_states,
+            // utxo_cohorts_received_states,
             utxo_cohorts_sent_states,
             ..
         } = insert_data;
@@ -92,11 +92,12 @@ impl UTXODataset {
                 .insert(insert_data, &utxo_cohorts_sent_states.get(&self.id).input);
         }
 
-        if self.subs.output.should_insert(insert_data) {
-            self.subs
-                .output
-                .insert(insert_data, utxo_cohorts_received_states.get(&self.id));
-        }
+        // TODO: move output from common to address
+        // if self.subs.output.should_insert(insert_data) {
+        //     self.subs
+        //         .output
+        //         .insert(insert_data, utxo_cohorts_received_states.get(&self.id));
+        // }
     }
 
     pub fn compute(
@@ -126,11 +127,11 @@ impl UTXODataset {
             );
         }
 
-        if self.subs.output.should_compute(compute_data) {
-            self.subs
-                .output
-                .compute(compute_data, &mut self.subs.supply.total);
-        }
+        // if self.subs.output.should_compute(compute_data) {
+        //     self.subs
+        //         .output
+        //         .compute(compute_data, &mut self.subs.supply.total);
+        // }
     }
 }
 

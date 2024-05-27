@@ -55,14 +55,14 @@ impl SupplySubDataset {
         date_closes: &mut DateMap<f32>,
         height_closes: &mut HeightMap<f32>,
     ) {
-        self.market_cap.height.multiple_insert_multiply(
+        self.market_cap.height.multi_insert_multiply(
             heights,
             &mut self.total.height,
             height_closes,
         );
         self.market_cap
             .date
-            .multiple_insert_multiply(dates, &mut self.total.date, date_closes);
+            .multi_insert_multiply(dates, &mut self.total.date, date_closes);
     }
 }
 

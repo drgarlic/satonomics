@@ -4,7 +4,12 @@ mod cohort_metadata;
 
 use std::thread;
 
-use crate::structs::{AddressSize, AddressSplit, AddressType, DateMap, HeightMap};
+use itertools::Itertools;
+
+use crate::{
+    states::SplitByAddressCohort,
+    structs::{AddressSize, AddressSplit, AddressType, DateMap, HeightMap},
+};
 
 use self::{all_metadata::AllAddressesMetadataDataset, cohort::CohortDataset};
 
@@ -15,23 +20,7 @@ pub struct AddressDatasets {
 
     metadata: AllAddressesMetadataDataset,
 
-    pub all: CohortDataset,
-
-    plankton: CohortDataset,
-    shrimp: CohortDataset,
-    crab: CohortDataset,
-    fish: CohortDataset,
-    shark: CohortDataset,
-    whale: CohortDataset,
-    humpback: CohortDataset,
-    megalodon: CohortDataset,
-
-    p2pk: CohortDataset,
-    p2pkh: CohortDataset,
-    p2sh: CohortDataset,
-    p2wpkh: CohortDataset,
-    p2wsh: CohortDataset,
-    p2tr: CohortDataset,
+    pub cohorts: SplitByAddressCohort<CohortDataset>,
 }
 
 impl AddressDatasets {
@@ -144,23 +133,25 @@ impl AddressDatasets {
 
                 metadata: AllAddressesMetadataDataset::import(parent_path)?,
 
-                all: all_handle.join().unwrap()?,
+                cohorts: SplitByAddressCohort {
+                    all: all_handle.join().unwrap()?,
 
-                plankton: plankton_handle.join().unwrap()?,
-                shrimp: shrimp_handle.join().unwrap()?,
-                crab: crab_handle.join().unwrap()?,
-                fish: fish_handle.join().unwrap()?,
-                shark: shark_handle.join().unwrap()?,
-                whale: whale_handle.join().unwrap()?,
-                humpback: humpback_handle.join().unwrap()?,
-                megalodon: megalodon_handle.join().unwrap()?,
+                    plankton: plankton_handle.join().unwrap()?,
+                    shrimp: shrimp_handle.join().unwrap()?,
+                    crab: crab_handle.join().unwrap()?,
+                    fish: fish_handle.join().unwrap()?,
+                    shark: shark_handle.join().unwrap()?,
+                    whale: whale_handle.join().unwrap()?,
+                    humpback: humpback_handle.join().unwrap()?,
+                    megalodon: megalodon_handle.join().unwrap()?,
 
-                p2pk: p2pk_handle.join().unwrap()?,
-                p2pkh: p2pkh_handle.join().unwrap()?,
-                p2sh: p2sh_handle.join().unwrap()?,
-                p2wpkh: p2wpkh_handle.join().unwrap()?,
-                p2wsh: p2wsh_handle.join().unwrap()?,
-                p2tr,
+                    p2pk: p2pk_handle.join().unwrap()?,
+                    p2pkh: p2pkh_handle.join().unwrap()?,
+                    p2sh: p2sh_handle.join().unwrap()?,
+                    p2wpkh: p2wpkh_handle.join().unwrap()?,
+                    p2wsh: p2wsh_handle.join().unwrap()?,
+                    p2tr,
+                },
             };
 
             s.min_initial_states
@@ -173,23 +164,28 @@ impl AddressDatasets {
     pub fn insert(&mut self, insert_data: &InsertData) {
         self.metadata.insert(insert_data);
 
-        self.all.insert(insert_data);
+        // self.all.insert(insert_data);
 
-        self.plankton.insert(insert_data);
-        self.shrimp.insert(insert_data);
-        self.crab.insert(insert_data);
-        self.fish.insert(insert_data);
-        self.shark.insert(insert_data);
-        self.whale.insert(insert_data);
-        self.humpback.insert(insert_data);
-        self.megalodon.insert(insert_data);
+        // self.plankton.insert(insert_data);
+        // self.shrimp.insert(insert_data);
+        // self.crab.insert(insert_data);
+        // self.fish.insert(insert_data);
+        // self.shark.insert(insert_data);
+        // self.whale.insert(insert_data);
+        // self.humpback.insert(insert_data);
+        // self.megalodon.insert(insert_data);
 
-        self.p2pk.insert(insert_data);
-        self.p2pkh.insert(insert_data);
-        self.p2sh.insert(insert_data);
-        self.p2wpkh.insert(insert_data);
-        self.p2wsh.insert(insert_data);
-        self.p2tr.insert(insert_data);
+        // self.p2pk.insert(insert_data);
+        // self.p2pkh.insert(insert_data);
+        // self.p2sh.insert(insert_data);
+        // self.p2wpkh.insert(insert_data);
+        // self.p2wsh.insert(insert_data);
+        // self.p2tr.insert(insert_data);
+        //
+        self.cohorts
+            .as_mut_vec()
+            .into_iter()
+            .for_each(|cohort| cohort.insert(insert_data))
     }
 
     pub fn compute(
@@ -200,28 +196,33 @@ impl AddressDatasets {
     ) {
         self.metadata.compute(compute_data);
 
-        self.all.compute(compute_data, date_closes, height_closes);
+        // self.all.compute(compute_data, date_closes, height_closes);
 
-        self.plankton
-            .compute(compute_data, date_closes, height_closes);
-        self.shrimp
-            .compute(compute_data, date_closes, height_closes);
-        self.crab.compute(compute_data, date_closes, height_closes);
-        self.fish.compute(compute_data, date_closes, height_closes);
-        self.shark.compute(compute_data, date_closes, height_closes);
-        self.whale.compute(compute_data, date_closes, height_closes);
-        self.humpback
-            .compute(compute_data, date_closes, height_closes);
-        self.megalodon
-            .compute(compute_data, date_closes, height_closes);
+        // self.plankton
+        //     .compute(compute_data, date_closes, height_closes);
+        // self.shrimp
+        //     .compute(compute_data, date_closes, height_closes);
+        // self.crab.compute(compute_data, date_closes, height_closes);
+        // self.fish.compute(compute_data, date_closes, height_closes);
+        // self.shark.compute(compute_data, date_closes, height_closes);
+        // self.whale.compute(compute_data, date_closes, height_closes);
+        // self.humpback
+        //     .compute(compute_data, date_closes, height_closes);
+        // self.megalodon
+        //     .compute(compute_data, date_closes, height_closes);
 
-        self.p2pk.compute(compute_data, date_closes, height_closes);
-        self.p2pkh.compute(compute_data, date_closes, height_closes);
-        self.p2sh.compute(compute_data, date_closes, height_closes);
-        self.p2wpkh
-            .compute(compute_data, date_closes, height_closes);
-        self.p2wsh.compute(compute_data, date_closes, height_closes);
-        self.p2tr.compute(compute_data, date_closes, height_closes);
+        // self.p2pk.compute(compute_data, date_closes, height_closes);
+        // self.p2pkh.compute(compute_data, date_closes, height_closes);
+        // self.p2sh.compute(compute_data, date_closes, height_closes);
+        // self.p2wpkh
+        //     .compute(compute_data, date_closes, height_closes);
+        // self.p2wsh.compute(compute_data, date_closes, height_closes);
+        // self.p2tr.compute(compute_data, date_closes, height_closes);
+        //
+        self.cohorts
+            .as_mut_vec()
+            .into_iter()
+            .for_each(|cohort| cohort.compute(compute_data, date_closes, height_closes))
     }
 }
 
@@ -231,44 +232,20 @@ impl AnyDatasets for AddressDatasets {
     }
 
     fn to_any_dataset_vec(&self) -> Vec<&(dyn AnyDataset + Send + Sync)> {
-        vec![
-            &self.all,
-            &self.plankton,
-            &self.shrimp,
-            &self.crab,
-            &self.fish,
-            &self.shark,
-            &self.whale,
-            &self.humpback,
-            &self.megalodon,
-            &self.p2pk,
-            &self.p2pkh,
-            &self.p2sh,
-            &self.p2wpkh,
-            &self.p2wsh,
-            &self.p2tr,
-            &self.metadata,
-        ]
+        self.cohorts
+            .as_vec()
+            .into_iter()
+            .map(|d| d as &(dyn AnyDataset + Send + Sync))
+            .chain(vec![&self.metadata as &(dyn AnyDataset + Send + Sync)])
+            .collect_vec()
     }
 
     fn to_mut_any_dataset_vec(&mut self) -> Vec<&mut dyn AnyDataset> {
-        vec![
-            &mut self.all,
-            &mut self.plankton,
-            &mut self.shrimp,
-            &mut self.crab,
-            &mut self.fish,
-            &mut self.shark,
-            &mut self.whale,
-            &mut self.humpback,
-            &mut self.megalodon,
-            &mut self.p2pk,
-            &mut self.p2pkh,
-            &mut self.p2sh,
-            &mut self.p2wpkh,
-            &mut self.p2wsh,
-            &mut self.p2tr,
-            &mut self.metadata,
-        ]
+        self.cohorts
+            .as_mut_vec()
+            .into_iter()
+            .map(|d| d as &mut dyn AnyDataset)
+            .chain(vec![&mut self.metadata as &mut dyn AnyDataset])
+            .collect_vec()
     }
 }

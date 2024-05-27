@@ -211,7 +211,10 @@ where
                 #[allow(clippy::map_entry)] // Can't be mut and then use read_dir()
                 if !self.imported.contains_key(&chunk_start) {
                     let dir_content = self.read_dir();
-                    let path = dir_content.get(&chunk_start).unwrap();
+                    let path = dir_content.get(&chunk_start).unwrap_or_else(|| {
+                        dbg!(self.path(), chunk_start, &dir_content);
+                        panic!();
+                    });
                     let serialized = self.import(path).unwrap();
                     self.imported.insert(chunk_start, serialized);
                 }
@@ -448,7 +451,7 @@ where
             .sum::<T>()
     }
 
-    pub fn multiple_insert_simple_transform<K, F>(
+    pub fn multi_insert_simple_transform<K, F>(
         &mut self,
         heights: &[usize],
         source: &mut HeightMap<K>,
@@ -471,7 +474,7 @@ where
         });
     }
 
-    pub fn multiple_insert_complex_transform<F>(
+    pub fn multi_insert_complex_transform<F>(
         &mut self,
         heights: &[usize],
         source: &mut HeightMap<T>,
@@ -485,7 +488,7 @@ where
         });
     }
 
-    pub fn multiple_insert_add(
+    pub fn multi_insert_add(
         &mut self,
         heights: &[usize],
         added: &mut HeightMap<T>,
@@ -501,7 +504,7 @@ where
         });
     }
 
-    pub fn multiple_insert_subtract(
+    pub fn multi_insert_subtract(
         &mut self,
         heights: &[usize],
         subtracted: &mut HeightMap<T>,
@@ -517,7 +520,7 @@ where
         });
     }
 
-    pub fn multiple_insert_multiply(
+    pub fn multi_insert_multiply(
         &mut self,
         heights: &[usize],
         multiplied: &mut HeightMap<T>,
@@ -533,7 +536,7 @@ where
         });
     }
 
-    pub fn multiple_insert_divide(
+    pub fn multi_insert_divide(
         &mut self,
         heights: &[usize],
         divided: &mut HeightMap<T>,
@@ -541,10 +544,10 @@ where
     ) where
         T: Div<Output = T> + Mul<Output = T> + From<u8>,
     {
-        self._multiple_insert_divide(heights, divided, divider, false)
+        self._multi_insert_divide(heights, divided, divider, false)
     }
 
-    pub fn multiple_insert_percentage(
+    pub fn multi_insert_percentage(
         &mut self,
         heights: &[usize],
         divided: &mut HeightMap<T>,
@@ -552,10 +555,10 @@ where
     ) where
         T: Div<Output = T> + Mul<Output = T> + From<u8>,
     {
-        self._multiple_insert_divide(heights, divided, divider, true)
+        self._multi_insert_divide(heights, divided, divider, true)
     }
 
-    pub fn _multiple_insert_divide(
+    pub fn _multi_insert_divide(
         &mut self,
         heights: &[usize],
         divided: &mut HeightMap<T>,
@@ -574,14 +577,14 @@ where
         });
     }
 
-    pub fn multiple_insert_cumulative(&mut self, heights: &[usize], source: &mut HeightMap<T>)
+    pub fn multi_insert_cumulative(&mut self, heights: &[usize], source: &mut HeightMap<T>)
     where
         T: Add<Output = T> + Sub<Output = T>,
     {
-        self._multiple_insert_last_x_sum(heights, source, None)
+        self._multi_insert_last_x_sum(heights, source, None)
     }
 
-    pub fn multiple_insert_last_x_sum(
+    pub fn multi_insert_last_x_sum(
         &mut self,
         heights: &[usize],
         source: &mut HeightMap<T>,
@@ -589,10 +592,10 @@ where
     ) where
         T: Add<Output = T> + Sub<Output = T>,
     {
-        self._multiple_insert_last_x_sum(heights, source, Some(block_time))
+        self._multi_insert_last_x_sum(heights, source, Some(block_time))
     }
 
-    fn _multiple_insert_last_x_sum(
+    fn _multi_insert_last_x_sum(
         &mut self,
         heights: &[usize],
         source: &mut HeightMap<T>,
@@ -626,7 +629,7 @@ where
         });
     }
 
-    pub fn multiple_insert_net_change(
+    pub fn multi_insert_net_change(
         &mut self,
         heights: &[usize],
         source: &mut HeightMap<T>,
@@ -650,7 +653,7 @@ where
         });
     }
 
-    pub fn multiple_insert_median(
+    pub fn multi_insert_median(
         &mut self,
         heights: &[usize],
         source: &mut HeightMap<T>,
@@ -658,10 +661,10 @@ where
     ) where
         T: FloatCore,
     {
-        self.multiple_insert_percentile(heights, source, 0.5, block_time);
+        self.multi_insert_percentile(heights, source, 0.5, block_time);
     }
 
-    pub fn multiple_insert_percentile(
+    pub fn multi_insert_percentile(
         &mut self,
         heights: &[usize],
         source: &mut HeightMap<T>,

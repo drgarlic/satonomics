@@ -10,16 +10,20 @@ use super::{OneShotStates, UnrealizedState};
 pub struct PriceInCentsToSats(BTreeMap<u32, u64>);
 
 impl PriceInCentsToSats {
-    pub fn increment(&mut self, mean_cents_paid: u32, amount: u64) {
-        *self.entry(mean_cents_paid).or_default() += amount;
+    pub fn increment(&mut self, cents: u32, amount: u64) {
+        *self.entry(cents).or_default() += amount;
     }
 
-    pub fn decrement(&mut self, mean_cents_paid: u32, amount: u64) {
+    pub fn decrement(&mut self, cents: u32, amount: u64) {
         let delete = {
-            let _amount = self.get_mut(&mean_cents_paid).unwrap_or_else(|| {
-                dbg!(mean_cents_paid, amount);
+            let _amount = self.get_mut(&cents);
+
+            if _amount.is_none() {
+                dbg!(&self.0, cents, amount);
                 panic!();
-            });
+            }
+
+            let _amount = _amount.unwrap();
 
             *_amount -= amount;
 
@@ -27,7 +31,7 @@ impl PriceInCentsToSats {
         };
 
         if delete {
-            self.remove(&mean_cents_paid).unwrap();
+            self.remove(&cents).unwrap();
         }
     }
 
@@ -47,38 +51,35 @@ impl PriceInCentsToSats {
 
         let mut processed_amount = 0;
 
-        self.iter()
-            .for_each(|(mean_price_paid_in_cent, sat_amount)| {
-                processed_amount += sat_amount;
+        self.iter().for_each(|(cents, sats)| {
+            let sats = *sats;
 
-                let mean_price_paid = (*mean_price_paid_in_cent as f32) / 100.0;
+            processed_amount += sats;
 
-                let btc_amount = sats_to_btc(*sat_amount);
+            let mean_price_paid = (*cents as f32) / 100.0;
 
-                one_shot_states.price_paid_state.iterate(
+            let btc_amount = sats_to_btc(sats);
+
+            one_shot_states
+                .price_paid_state
+                .iterate(mean_price_paid, btc_amount, sats, supply);
+
+            one_shot_states.unrealized_block_state.iterate(
+                mean_price_paid,
+                block_price,
+                sats,
+                btc_amount,
+            );
+
+            if let Some(unrealized_date_state) = one_shot_states.unrealized_date_state.as_mut() {
+                unrealized_date_state.iterate(
                     mean_price_paid,
-                    btc_amount,
-                    *sat_amount,
-                    supply,
-                );
-
-                one_shot_states.unrealized_block_state.iterate(
-                    mean_price_paid,
-                    block_price,
-                    *sat_amount,
+                    date_price.unwrap(),
+                    sats,
                     btc_amount,
                 );
-
-                if let Some(unrealized_date_state) = one_shot_states.unrealized_date_state.as_mut()
-                {
-                    unrealized_date_state.iterate(
-                        mean_price_paid,
-                        date_price.unwrap(),
-                        *sat_amount,
-                        btc_amount,
-                    );
-                }
-            });
+            }
+        });
 
         if processed_amount != supply {
             dbg!(processed_amount, supply);

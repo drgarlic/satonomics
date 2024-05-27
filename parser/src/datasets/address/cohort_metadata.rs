@@ -8,6 +8,7 @@ pub struct MetadataDataset {
 
     // Inserted
     address_count: BiMap<usize>,
+    // pub output: OutputSubDataset,
     // Sending addresses
     // Receiving addresses
     // Active addresses (Unique(Sending + Receiving))
@@ -21,6 +22,7 @@ impl MetadataDataset {
             min_initial_states: MinInitialStates::default(),
 
             address_count: BiMap::new_bin(1, &f("address_count")),
+            // output: OutputSubDataset::import(parent_path)?,
         };
 
         s.min_initial_states

@@ -33,8 +33,13 @@ use crate::{
     databases::Databases,
     io::Json,
     states::{
-        AddressCohortsInputStates, AddressCohortsOneShotStates, AddressCohortsOutputStates,
-        AddressCohortsRealizedStates, States, UTXOCohortsOneShotStates, UTXOCohortsReceivedStates,
+        AddressCohortsInputStates,
+        AddressCohortsOneShotStates,
+        AddressCohortsOutputStates,
+        AddressCohortsRealizedStates,
+        States,
+        UTXOCohortsOneShotStates,
+        // UTXOCohortsReceivedStates,
         UTXOCohortsSentStates,
     },
     structs::{AddressData, AddressRealizedData},
@@ -70,7 +75,7 @@ pub struct InsertData<'a> {
     pub timestamp: u32,
     pub transaction_count: usize,
     pub utxo_cohorts_one_shot_states: &'a UTXOCohortsOneShotStates,
-    pub utxo_cohorts_received_states: &'a UTXOCohortsReceivedStates,
+    // pub utxo_cohorts_received_states: &'a UTXOCohortsReceivedStates,
     pub utxo_cohorts_sent_states: &'a UTXOCohortsSentStates,
 }
 
@@ -202,7 +207,7 @@ impl AllDatasets {
         if self.mining.should_compute(&compute_data) {
             self.mining.compute(
                 &compute_data,
-                &mut self.address.all.all.supply.total,
+                &mut self.address.cohorts.all.all.supply.total,
                 &mut self.date_metadata.last_height,
             );
         }
@@ -210,7 +215,7 @@ impl AllDatasets {
         if self.transaction.should_compute(&compute_data) {
             self.transaction.compute(
                 &compute_data,
-                &mut self.address.all.all.supply.total,
+                &mut self.address.cohorts.all.all.supply.total,
                 &mut self.mining.block_interval,
             );
         }
@@ -222,9 +227,9 @@ impl AllDatasets {
                 &mut self.date_metadata.last_height,
                 &mut self.price.date.closes,
                 &mut self.price.height.closes,
-                &mut self.address.all.all.supply.total,
-                &mut self.address.all.all.price_paid.realized_cap,
-                &mut self.address.all.all.price_paid.realized_price,
+                &mut self.address.cohorts.all.all.supply.total,
+                &mut self.address.cohorts.all.all.price_paid.realized_cap,
+                &mut self.address.cohorts.all.all.price_paid.realized_price,
                 &mut self.mining.yearly_inflation_rate,
                 &mut self.transaction.annualized_volume,
                 &mut self.mining.cumulative_subsidy_in_dollars,
