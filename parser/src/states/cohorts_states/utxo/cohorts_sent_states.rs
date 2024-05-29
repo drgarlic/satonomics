@@ -45,10 +45,10 @@ impl UTXOCohortsSentStates {
                     let btc_sent = sats_to_btc(sent_data.volume);
 
                     self.initial_filtered_apply(&days_old, &year, |state| {
-                        state.input.iterate(sent_data.count as f32, btc_sent);
+                        state.input.iterate(sent_data.count as f64, btc_sent);
 
-                        let previous_dollar_amount = previous_price * btc_sent;
-                        let current_dollar_amount = current_price * btc_sent;
+                        let previous_dollar_amount = previous_price * btc_sent as f32;
+                        let current_dollar_amount = current_price * btc_sent as f32;
 
                         if previous_dollar_amount < current_dollar_amount {
                             state.realized.realized_profit +=

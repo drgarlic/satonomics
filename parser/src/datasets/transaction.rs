@@ -13,7 +13,7 @@ pub struct TransactionDataset {
 
     // Inserted
     pub count: BiMap<usize>,
-    pub volume: BiMap<f32>,
+    pub volume: BiMap<f64>,
     pub volume_in_dollars: BiMap<f32>,
     // Average sent
     // Average sent in dollars
@@ -74,7 +74,7 @@ impl TransactionDataset {
 
         self.volume_in_dollars
             .height
-            .insert(height, volume * block_price);
+            .insert(height, volume as f32 * block_price);
 
         if is_date_last_block {
             self.count.date_insert_sum_range(date, date_blocks_range);
@@ -89,7 +89,7 @@ impl TransactionDataset {
     pub fn compute(
         &mut self,
         &ComputeData { heights, dates }: &ComputeData,
-        circulating_supply: &mut BiMap<f32>,
+        circulating_supply: &mut BiMap<f64>,
         block_interval: &mut HeightMap<u32>,
     ) {
         self.annualized_volume.multi_insert_last_x_sum(

@@ -1,5 +1,5 @@
 use crate::{
-    bitcoin::{sats_to_btc, TARGET_BLOCKS_PER_DAY},
+    bitcoin::TARGET_BLOCKS_PER_DAY,
     datasets::AnyDataset,
     structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, DateMap},
     utils::{BYTES_IN_MB, ONE_MONTH_IN_DAYS, ONE_WEEK_IN_DAYS, ONE_YEAR_IN_DAYS},
@@ -14,11 +14,11 @@ pub struct MiningDataset {
     // Inserted
     pub blocks_mined: DateMap<usize>,
     pub total_blocks_mined: DateMap<usize>,
-    pub coinbase: BiMap<f32>,
+    pub coinbase: BiMap<u64>,
     pub coinbase_in_dollars: BiMap<f32>,
     // pub cumulative_coinbase: BiMap<f32>,
     // pub cumulative_coinbase_in_dollars: BiMap<f32>,
-    pub fees: BiMap<f32>,
+    pub fees: BiMap<u64>,
     pub fees_in_dollars: BiMap<f32>,
     // pub cumulative_fees: BiMap<f32>,
     // pub cumulative_fees_in_dollars: BiMap<f32>,
@@ -41,19 +41,19 @@ pub struct MiningDataset {
     // pub _10th_percentile_fee_price: BiMap<f32>,
     // pub min_fee_price: BiMap<f32>,
     // -
-    pub subsidy: BiMap<f32>,
+    pub subsidy: BiMap<u64>,
     pub subsidy_in_dollars: BiMap<f32>,
-    // pub cumulative_subsidy: BiMap<f32>,
+    pub cumulative_subsidy: BiMap<u64>,
     // pub cumulative_subsidy_in_dollars: BiMap<f32>,
-    // pub cumulative_coinbase: BiMap<f32>,
+    pub cumulative_coinbase: BiMap<u64>,
     // pub cumulative_coinbase_in_dollars: BiMap<f32>,
-    // pub cumulative_fees: BiMap<f32>,
+    pub cumulative_fees: BiMap<u64>,
     // pub cumulative_fees_in_dollars: BiMap<f32>,
-    pub last_coinbase: DateMap<f32>,
+    pub last_coinbase: DateMap<u64>,
     pub last_coinbase_in_dollars: DateMap<f32>,
-    pub last_fees: DateMap<f32>,
+    pub last_fees: DateMap<u64>,
     pub last_fees_in_dollars: DateMap<f32>,
-    pub last_subsidy: DateMap<f32>,
+    pub last_subsidy: DateMap<u64>,
     pub last_subsidy_in_dollars: DateMap<f32>,
     pub difficulty: BiMap<f64>,
     pub block_size: HeightMap<f32>,   // in MB
@@ -64,8 +64,8 @@ pub struct MiningDataset {
     // Computed
     pub cumulative_block_size: BiMap<f32>,
     pub cumulative_subsidy_in_dollars: BiMap<f32>,
-    pub annualized_issuance: BiMap<f32>,
-    pub yearly_inflation_rate: BiMap<f32>,
+    pub annualized_issuance: BiMap<u64>,
+    pub yearly_inflation_rate: BiMap<f64>,
     pub blocks_mined_target: DateMap<f32>,
     pub blocks_mined_1w_sma: DateMap<f32>,
     pub blocks_mined_1m_sma: DateMap<f32>,
@@ -99,10 +99,13 @@ impl MiningDataset {
             blocks_mined: DateMap::new_bin(1, &f("blocks_mined")),
             coinbase: BiMap::new_bin(1, &f("coinbase")),
             coinbase_in_dollars: BiMap::new_bin(1, &f("coinbase_in_dollars")),
+            cumulative_coinbase: BiMap::new_bin(1, &f("cumulative_coinbase")),
             fees: BiMap::new_bin(1, &f("fees")),
             fees_in_dollars: BiMap::new_bin(1, &f("fees_in_dollars")),
+            cumulative_fees: BiMap::new_bin(1, &f("cumulative_fees")),
             subsidy: BiMap::_new_bin(1, &f("subsidy"), 5),
             subsidy_in_dollars: BiMap::new_bin(1, &f("subsidy_in_dollars")),
+            cumulative_subsidy: BiMap::_new_bin(1, &f("cumulative_subsidy"), 5),
             cumulative_subsidy_in_dollars: BiMap::_new_bin(
                 1,
                 &f("cumulative_subsidy_in_dollars"),
@@ -158,29 +161,26 @@ impl MiningDataset {
             ..
         }: &InsertData,
     ) {
-        let coinbase = self.coinbase.height.insert(height, sats_to_btc(coinbase));
+        self.coinbase.height.insert(height, coinbase);
 
         let coinbase_in_dollars = self
             .coinbase_in_dollars
             .height
-            .insert(height, coinbase * block_price);
+            .insert(height, coinbase as f32 * block_price);
 
-        let sumed_fees = self
-            .fees
-            .height
-            .insert(height, sats_to_btc(fees.iter().sum()));
+        let sumed_fees = self.fees.height.insert(height, fees.iter().sum());
 
         let sumed_fees_in_dollars = self
             .fees_in_dollars
             .height
-            .insert(height, sumed_fees * block_price);
+            .insert(height, sumed_fees as f32 * block_price);
 
         let subsidy = self.subsidy.height.insert(height, coinbase - sumed_fees);
 
         let subsidy_in_dollars = self
             .subsidy_in_dollars
             .height
-            .insert(height, subsidy * block_price);
+            .insert(height, subsidy as f32 * block_price);
 
         self.difficulty.height.insert(height, difficulty);
 
@@ -234,9 +234,18 @@ impl MiningDataset {
     pub fn compute(
         &mut self,
         &ComputeData { heights, dates }: &ComputeData,
-        circulating_supply: &mut BiMap<f32>,
+        circulating_supply: &mut BiMap<f64>,
         last_height: &mut DateMap<usize>,
     ) {
+        self.cumulative_subsidy
+            .multi_insert_cumulative(heights, dates, &mut self.subsidy);
+
+        self.cumulative_fees
+            .multi_insert_cumulative(heights, dates, &mut self.fees);
+
+        self.cumulative_coinbase
+            .multi_insert_cumulative(heights, dates, &mut self.coinbase);
+
         self.cumulative_subsidy_in_dollars.multi_insert_cumulative(
             heights,
             dates,
@@ -373,6 +382,9 @@ impl AnyDataset for MiningDataset {
 
     fn to_computed_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
         vec![
+            &self.cumulative_coinbase,
+            &self.cumulative_fees,
+            &self.cumulative_subsidy,
             &self.cumulative_subsidy_in_dollars,
             &self.annualized_issuance,
             &self.yearly_inflation_rate,
@@ -382,6 +394,9 @@ impl AnyDataset for MiningDataset {
 
     fn to_computed_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
         vec![
+            &mut self.cumulative_coinbase,
+            &mut self.cumulative_fees,
+            &mut self.cumulative_subsidy,
             &mut self.cumulative_subsidy_in_dollars,
             &mut self.annualized_issuance,
             &mut self.yearly_inflation_rate,

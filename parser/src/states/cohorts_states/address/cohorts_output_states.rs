@@ -16,8 +16,8 @@ impl AddressCohortsOutputStates {
         realized_data: &AddressRealizedData,
         liquidity_classification: &LiquidityClassification,
     ) {
-        let count = realized_data.utxos_created as f32;
-        let volume = realized_data.received as f32;
+        let count = realized_data.utxos_created as f64;
+        let volume = realized_data.received as f64;
 
         let split_count = liquidity_classification.split(count);
         let split_volume = liquidity_classification.split(volume);

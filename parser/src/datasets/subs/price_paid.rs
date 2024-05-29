@@ -174,7 +174,7 @@ impl PricePaidSubDataset {
         &ComputeData { heights, dates }: &ComputeData,
         date_closes: &mut DateMap<f32>,
         height_closes: &mut HeightMap<f32>,
-        cohort_supply: &mut BiMap<f32>,
+        cohort_supply: &mut BiMap<f64>,
     ) {
         self.realized_price.multi_insert_divide(
             heights,

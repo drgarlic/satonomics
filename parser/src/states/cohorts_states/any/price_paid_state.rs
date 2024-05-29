@@ -26,7 +26,7 @@ pub struct PricePaidState {
 }
 
 impl PricePaidState {
-    pub fn iterate(&mut self, price: f32, btc_amount: f32, sat_amount: u64, total_supply: u64) {
+    pub fn iterate(&mut self, price: f32, btc_amount: f64, sat_amount: u64, total_supply: u64) {
         let PricePaidState {
             processed_amount,
             realized_cap,
@@ -51,7 +51,7 @@ impl PricePaidState {
             pp_95p,
         } = self;
 
-        *realized_cap += btc_amount * price;
+        *realized_cap += btc_amount as f32 * price;
 
         *processed_amount += sat_amount;
 

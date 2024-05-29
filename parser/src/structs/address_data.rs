@@ -43,12 +43,12 @@ impl AddressData {
         let new_sat_amount = previous_sat_amount + sat_amount;
 
         let btc_amount = sats_to_btc(sat_amount);
-        let priced_btc_value = btc_amount * price;
+        let priced_btc_value = btc_amount * price as f64;
 
         let previous_btc_amount = sats_to_btc(previous_sat_amount);
         let new_btc_amount = sats_to_btc(new_sat_amount);
 
-        self.mean_cents_paid = ((previous_mean_cents_paid as f32 / 100.0 * previous_btc_amount
+        self.mean_cents_paid = ((previous_mean_cents_paid as f64 / 100.0 * previous_btc_amount
             + priced_btc_value)
             / new_btc_amount
             * 100.0) as u32;
@@ -67,12 +67,12 @@ impl AddressData {
         let new_sat_amount = previous_sat_amount - sat_amount;
 
         let btc_value = sats_to_btc(sat_amount);
-        let priced_btc_value = btc_value * price;
+        let priced_btc_value = btc_value * price as f64;
 
         let previous_btc_amount = sats_to_btc(previous_sat_amount);
         let new_btc_amount = sats_to_btc(new_sat_amount);
 
-        self.mean_cents_paid = (((previous_mean_cents_paid as f32 / 100.0 * previous_btc_amount)
+        self.mean_cents_paid = (((previous_mean_cents_paid as f64 / 100.0 * previous_btc_amount)
             - priced_btc_value)
             / new_btc_amount
             * 100.0) as u32;
@@ -84,7 +84,7 @@ impl AddressData {
         self.outputs_len -= 1;
 
         // realized_profit_or_loss
-        priced_btc_value - (btc_value * previous_mean_cents_paid as f32 * 100.0)
+        (priced_btc_value - (btc_value * previous_mean_cents_paid as f64 * 100.0)) as f32
     }
 
     #[inline(always)]

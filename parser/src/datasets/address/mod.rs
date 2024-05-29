@@ -164,24 +164,6 @@ impl AddressDatasets {
     pub fn insert(&mut self, insert_data: &InsertData) {
         self.metadata.insert(insert_data);
 
-        // self.all.insert(insert_data);
-
-        // self.plankton.insert(insert_data);
-        // self.shrimp.insert(insert_data);
-        // self.crab.insert(insert_data);
-        // self.fish.insert(insert_data);
-        // self.shark.insert(insert_data);
-        // self.whale.insert(insert_data);
-        // self.humpback.insert(insert_data);
-        // self.megalodon.insert(insert_data);
-
-        // self.p2pk.insert(insert_data);
-        // self.p2pkh.insert(insert_data);
-        // self.p2sh.insert(insert_data);
-        // self.p2wpkh.insert(insert_data);
-        // self.p2wsh.insert(insert_data);
-        // self.p2tr.insert(insert_data);
-        //
         self.cohorts
             .as_mut_vec()
             .into_iter()
@@ -196,29 +178,6 @@ impl AddressDatasets {
     ) {
         self.metadata.compute(compute_data);
 
-        // self.all.compute(compute_data, date_closes, height_closes);
-
-        // self.plankton
-        //     .compute(compute_data, date_closes, height_closes);
-        // self.shrimp
-        //     .compute(compute_data, date_closes, height_closes);
-        // self.crab.compute(compute_data, date_closes, height_closes);
-        // self.fish.compute(compute_data, date_closes, height_closes);
-        // self.shark.compute(compute_data, date_closes, height_closes);
-        // self.whale.compute(compute_data, date_closes, height_closes);
-        // self.humpback
-        //     .compute(compute_data, date_closes, height_closes);
-        // self.megalodon
-        //     .compute(compute_data, date_closes, height_closes);
-
-        // self.p2pk.compute(compute_data, date_closes, height_closes);
-        // self.p2pkh.compute(compute_data, date_closes, height_closes);
-        // self.p2sh.compute(compute_data, date_closes, height_closes);
-        // self.p2wpkh
-        //     .compute(compute_data, date_closes, height_closes);
-        // self.p2wsh.compute(compute_data, date_closes, height_closes);
-        // self.p2tr.compute(compute_data, date_closes, height_closes);
-        //
         self.cohorts
             .as_mut_vec()
             .into_iter()

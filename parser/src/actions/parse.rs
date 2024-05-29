@@ -162,6 +162,8 @@ pub fn parse(
             let mut txouts_parsing_results = parse_txouts(
                 &block,
                 compute_addresses,
+                &mut states.address_counters.op_return_addresses,
+                &mut states.address_counters.push_only_addresses,
                 &mut states.address_counters.unknown_addresses,
                 &mut states.address_counters.empty_addresses,
                 &mut databases.address_to_address_index,
@@ -771,6 +773,8 @@ pub struct TxoutsParsingResults {
 fn parse_txouts(
     block: &Block,
     compute_addresses: bool,
+    op_return_addresses: &mut Counter,
+    push_only_addresses: &mut Counter,
     unknown_addresses: &mut Counter,
     empty_addresses: &mut Counter,
     address_to_address_index: &mut AddressToAddressIndex,
@@ -781,8 +785,15 @@ fn parse_txouts(
     let mut partial_txout_data_vec = block
         .txdata
         .iter()
-        .flat_map(|tx| &tx.output)
+        .flat_map(|tx| {
+            // dbg!(tx.txid());
+
+            &tx.output
+        })
+        // .enumerate()
         .map(|txout| {
+            // dbg!(txout_index);
+
             let script = &txout.script_pubkey;
             let value = txout.value.to_sat();
 
@@ -798,17 +809,24 @@ fn parse_txouts(
                 // TODO: Count fee paid to write said OP_RETURN, beware of coinbase transactions
                 // For coinbase transactions, count miners
                 op_returns += 1;
+                provably_unspendable += value;
+
                 // return None;
             }
-
             // https://mempool.space/tx/8a68c461a2473653fe0add786f0ca6ebb99b257286166dfb00707be24716af3a#flow=&vout=0
-            if script.is_provably_unspendable() {
+            else if script.is_provably_unspendable() {
                 provably_unspendable += value;
                 // return None;
             }
 
             let address_opt = compute_addresses.then(|| {
-                let address = Address::from(txout, unknown_addresses, empty_addresses);
+                let address = Address::from(
+                    txout,
+                    op_return_addresses,
+                    push_only_addresses,
+                    unknown_addresses,
+                    empty_addresses,
+                );
 
                 address_to_address_index.open_db(&address);
 
@@ -820,13 +838,15 @@ fn parse_txouts(
         .collect_vec();
 
     if compute_addresses {
-        partial_txout_data_vec.par_iter_mut().for_each(|opt| {
-            if let Some(partial_tx_out_data) = opt {
-                partial_tx_out_data.address_index_opt = address_to_address_index
-                    .unsafe_get(partial_tx_out_data.address.as_ref().unwrap())
-                    .cloned();
-            }
-        });
+        partial_txout_data_vec
+            .par_iter_mut()
+            .for_each(|partial_tx_out_data| {
+                if let Some(partial_tx_out_data) = partial_tx_out_data {
+                    partial_tx_out_data.address_index_opt = address_to_address_index
+                        .unsafe_get(partial_tx_out_data.address.as_ref().unwrap())
+                        .cloned();
+                }
+            });
     }
 
     TxoutsParsingResults {

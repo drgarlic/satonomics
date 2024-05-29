@@ -12,14 +12,15 @@ use chrono::{Datelike, Days, NaiveDate};
 use itertools::Itertools;
 use ordered_float::{FloatCore, OrderedFloat};
 use savefile_derive::Savefile;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     io::{format_path, Serialization},
-    utils::ToF32,
+    utils::LossyFrom,
+    // utils::ToF32,
 };
 
-use super::{AnyMap, WNaiveDate};
+use super::{AnyMap, MapValue, WNaiveDate};
 
 const NUMBER_OF_UNSAFE_DATES: usize = 2;
 const MIN_YEAR: usize = 2009;
@@ -49,15 +50,7 @@ pub struct DateMap<T> {
 
 impl<T> DateMap<T>
 where
-    T: Clone
-        + Copy
-        + Default
-        + Debug
-        + Serialize
-        + DeserializeOwned
-        + savefile::Serialize
-        + savefile::Deserialize
-        + savefile::ReprC,
+    T: MapValue,
 {
     pub fn new_bin(version: u32, path: &str) -> Self {
         Self::new(version, path, Serialization::Binary, 1, true)
@@ -275,15 +268,7 @@ where
 
 impl<T> AnyMap for DateMap<T>
 where
-    T: Clone
-        + Copy
-        + Default
-        + Debug
-        + Serialize
-        + DeserializeOwned
-        + savefile::Serialize
-        + savefile::Deserialize
-        + savefile::ReprC,
+    T: MapValue,
 {
     fn path(&self) -> &str {
         &self.path_all
@@ -385,17 +370,7 @@ pub trait AnyDateMap: AnyMap {
 
 impl<T> AnyDateMap for DateMap<T>
 where
-    T: Clone
-        + Copy
-        + Default
-        + Debug
-        + Serialize
-        + DeserializeOwned
-        + Sync
-        + Send
-        + savefile::Serialize
-        + savefile::Deserialize
-        + savefile::ReprC,
+    T: MapValue,
 {
     #[inline(always)]
     fn get_initial_first_unsafe_date(&self) -> Option<NaiveDate> {
@@ -418,15 +393,7 @@ where
 
 impl<T> DateMap<T>
 where
-    T: Clone
-        + Copy
-        + Default
-        + Debug
-        + Serialize
-        + DeserializeOwned
-        + savefile::Serialize
-        + savefile::Deserialize
-        + savefile::ReprC,
+    T: MapValue,
 {
     pub fn multiple_static_insert(&mut self, dates: &[NaiveDate], static_value: T) {
         dates.iter().for_each(|date| {
@@ -442,17 +409,8 @@ where
         source: &mut DateMap<K>,
         transform: F,
     ) where
-        T: Div<Output = T>,
         F: Fn(K) -> T,
-        K: Clone
-            + Copy
-            + Default
-            + Debug
-            + Serialize
-            + DeserializeOwned
-            + savefile::Serialize
-            + savefile::Deserialize
-            + savefile::ReprC,
+        K: MapValue,
     {
         dates.iter().for_each(|date| {
             let date = *date;
@@ -461,14 +419,14 @@ where
         });
     }
 
-    pub fn multi_insert_complex_transform<F>(
+    pub fn multi_insert_complex_transform<K, F>(
         &mut self,
         dates: &[NaiveDate],
-        source: &mut DateMap<T>,
+        source: &mut DateMap<K>,
         transform: F,
     ) where
-        T: Div<Output = T>,
-        F: Fn((T, &NaiveDate)) -> T,
+        K: MapValue,
+        F: Fn((K, &NaiveDate)) -> T,
     {
         dates.iter().for_each(|date| {
             let date = *date;
@@ -480,12 +438,15 @@ where
         });
     }
 
-    pub fn multi_insert_add(
+    pub fn multi_insert_add<A, B>(
         &mut self,
         dates: &[NaiveDate],
-        added: &mut DateMap<T>,
-        adder: &mut DateMap<T>,
+        added: &mut DateMap<A>,
+        adder: &mut DateMap<B>,
     ) where
+        A: MapValue,
+        B: MapValue,
+        T: LossyFrom<A> + LossyFrom<B>,
         T: Add<Output = T>,
     {
         dates.iter().for_each(|date| {
@@ -493,17 +454,21 @@ where
 
             self.insert(
                 date,
-                added.get_or_import(date).unwrap() + adder.get_or_import(date).unwrap(),
+                T::lossy_from(added.get_or_import(date).unwrap())
+                    + T::lossy_from(adder.get_or_import(date).unwrap()),
             );
         });
     }
 
-    pub fn multi_insert_subtract(
+    pub fn multi_insert_subtract<A, B>(
         &mut self,
         dates: &[NaiveDate],
-        subtracted: &mut DateMap<T>,
-        subtracter: &mut DateMap<T>,
+        subtracted: &mut DateMap<A>,
+        subtracter: &mut DateMap<B>,
     ) where
+        A: MapValue,
+        B: MapValue,
+        T: LossyFrom<A> + LossyFrom<B>,
         T: Sub<Output = T>,
     {
         dates.iter().for_each(|date| {
@@ -511,17 +476,21 @@ where
 
             self.insert(
                 date,
-                subtracted.get_or_import(date).unwrap() - subtracter.get_or_import(date).unwrap(),
+                T::lossy_from(subtracted.get_or_import(date).unwrap())
+                    - T::lossy_from(subtracter.get_or_import(date).unwrap()),
             );
         });
     }
 
-    pub fn multi_insert_multiply(
+    pub fn multi_insert_multiply<A, B>(
         &mut self,
         dates: &[NaiveDate],
-        multiplied: &mut DateMap<T>,
-        multiplier: &mut DateMap<T>,
+        multiplied: &mut DateMap<A>,
+        multiplier: &mut DateMap<B>,
     ) where
+        A: MapValue,
+        B: MapValue,
+        T: LossyFrom<A> + LossyFrom<B>,
         T: Mul<Output = T>,
     {
         dates.iter().for_each(|date| {
@@ -529,40 +498,50 @@ where
 
             self.insert(
                 date,
-                multiplied.get_or_import(date).unwrap() * multiplier.get_or_import(date).unwrap(),
+                T::lossy_from(multiplied.get_or_import(date).unwrap())
+                    * T::lossy_from(multiplier.get_or_import(date).unwrap()),
             );
         });
     }
 
-    pub fn multi_insert_divide(
+    pub fn multi_insert_divide<A, B>(
         &mut self,
         dates: &[NaiveDate],
-        divided: &mut DateMap<T>,
-        divider: &mut DateMap<T>,
+        divided: &mut DateMap<A>,
+        divider: &mut DateMap<B>,
     ) where
+        A: MapValue,
+        B: MapValue,
+        T: LossyFrom<A> + LossyFrom<B>,
         T: Div<Output = T> + Mul<Output = T> + From<u8>,
     {
         self._multi_insert_divide(dates, divided, divider, false)
     }
 
-    pub fn multi_insert_percentage(
+    pub fn multi_insert_percentage<A, B>(
         &mut self,
         dates: &[NaiveDate],
-        divided: &mut DateMap<T>,
-        divider: &mut DateMap<T>,
+        divided: &mut DateMap<A>,
+        divider: &mut DateMap<B>,
     ) where
+        A: MapValue,
+        B: MapValue,
+        T: LossyFrom<A> + LossyFrom<B>,
         T: Div<Output = T> + Mul<Output = T> + From<u8>,
     {
         self._multi_insert_divide(dates, divided, divider, true)
     }
 
-    pub fn _multi_insert_divide(
+    pub fn _multi_insert_divide<A, B>(
         &mut self,
         dates: &[NaiveDate],
-        divided: &mut DateMap<T>,
-        divider: &mut DateMap<T>,
+        divided: &mut DateMap<A>,
+        divider: &mut DateMap<B>,
         as_percentage: bool,
     ) where
+        A: MapValue,
+        B: MapValue,
+        T: LossyFrom<A> + LossyFrom<B>,
         T: Div<Output = T> + Mul<Output = T> + From<u8>,
     {
         let multiplier = T::from(if as_percentage { 100 } else { 1 });
@@ -572,36 +551,43 @@ where
 
             self.insert(
                 date,
-                divided.get_or_import(date).unwrap() / divider.get_or_import(date).unwrap()
+                T::lossy_from(divided.get_or_import(date).unwrap())
+                    / T::lossy_from(divider.get_or_import(date).unwrap())
                     * multiplier,
             );
         });
     }
 
-    pub fn multi_insert_cumulative(&mut self, range: &[NaiveDate], source: &mut DateMap<T>)
+    pub fn multi_insert_cumulative<K>(&mut self, range: &[NaiveDate], source: &mut DateMap<K>)
     where
+        K: MapValue,
+        T: LossyFrom<K>,
         T: Add<Output = T> + Sub<Output = T>,
     {
         self._multi_insert_last_x_sum(range, source, None)
     }
 
-    pub fn multi_insert_last_x_sum(
+    pub fn multi_insert_last_x_sum<K>(
         &mut self,
         range: &[NaiveDate],
-        source: &mut DateMap<T>,
+        source: &mut DateMap<K>,
         days: usize,
     ) where
+        K: MapValue,
+        T: LossyFrom<K>,
         T: Add<Output = T> + Sub<Output = T>,
     {
         self._multi_insert_last_x_sum(range, source, Some(days))
     }
 
-    fn _multi_insert_last_x_sum(
+    fn _multi_insert_last_x_sum<K>(
         &mut self,
         range: &[NaiveDate],
-        source: &mut DateMap<T>,
+        source: &mut DateMap<K>,
         days: Option<usize>,
     ) where
+        K: MapValue,
+        T: LossyFrom<K>,
         T: Add<Output = T> + Sub<Output = T>,
     {
         let mut sum = None;
@@ -627,7 +613,7 @@ where
                 panic!();
             });
 
-            sum.replace(previous_sum - to_subtract + last_value);
+            sum.replace(previous_sum - T::lossy_from(to_subtract) + T::lossy_from(last_value));
 
             self.insert(date, sum.unwrap());
         });
@@ -640,17 +626,8 @@ where
         days: usize,
     ) where
         T: Into<f32> + From<f32>,
-        K: Clone
-            + Copy
-            + Default
-            + Debug
-            + Serialize
-            + DeserializeOwned
-            + Sum
-            + savefile::Serialize
-            + savefile::Deserialize
-            + savefile::ReprC
-            + ToF32,
+        K: MapValue + Sum,
+        f32: LossyFrom<K>,
     {
         if days <= 1 {
             panic!("Average of 1 or less is not useful");
@@ -671,13 +648,10 @@ where
                 })
                 .into();
 
-            let last_value = source
-                .get_or_import(date)
-                .unwrap_or_else(|| {
-                    dbg!(date);
-                    panic!()
-                })
-                .to_f32();
+            let last_value = f32::lossy_from(source.get_or_import(date).unwrap_or_else(|| {
+                dbg!(date);
+                panic!()
+            }));
 
             average.replace(((previous_average * (days - 1.0) + last_value) / days).into());
 

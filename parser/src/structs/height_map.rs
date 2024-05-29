@@ -12,14 +12,15 @@ use std::{
 use itertools::Itertools;
 use ordered_float::{FloatCore, OrderedFloat};
 use savefile_derive::Savefile;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     bitcoin::{BLOCKS_PER_HAVLING_EPOCH, NUMBER_OF_UNSAFE_BLOCKS},
     io::{format_path, Serialization},
+    utils::LossyFrom,
 };
 
-use super::AnyMap;
+use super::{AnyMap, MapValue};
 
 pub const HEIGHT_MAP_CHUNK_SIZE: usize = BLOCKS_PER_HAVLING_EPOCH / 16;
 
@@ -31,7 +32,7 @@ pub struct SerializedHeightMap<T> {
 
 pub struct HeightMap<T>
 where
-    T: Clone + Default + Debug + savefile::Serialize + savefile::Deserialize,
+    T: MapValue,
 {
     version: u32,
 
@@ -51,15 +52,7 @@ where
 
 impl<T> HeightMap<T>
 where
-    T: Clone
-        + Copy
-        + Default
-        + Debug
-        + Serialize
-        + DeserializeOwned
-        + savefile::Serialize
-        + savefile::Deserialize
-        + savefile::ReprC,
+    T: MapValue,
 {
     pub fn new_bin(version: u32, path: &str) -> Self {
         Self::new(version, path, Serialization::Binary, 1, true)
@@ -273,15 +266,7 @@ where
 
 impl<T> AnyMap for HeightMap<T>
 where
-    T: Clone
-        + Copy
-        + Default
-        + Debug
-        + Serialize
-        + DeserializeOwned
-        + savefile::Serialize
-        + savefile::Deserialize
-        + savefile::ReprC,
+    T: MapValue,
 {
     fn path(&self) -> &str {
         &self.path_all
@@ -398,17 +383,7 @@ pub trait AnyHeightMap: AnyMap {
 
 impl<T> AnyHeightMap for HeightMap<T>
 where
-    T: Clone
-        + Copy
-        + Default
-        + Debug
-        + Serialize
-        + DeserializeOwned
-        + Send
-        + savefile::Serialize
-        + savefile::Deserialize
-        + savefile::ReprC
-        + Sync,
+    T: MapValue,
 {
     #[inline(always)]
     fn get_initial_first_unsafe_height(&self) -> Option<usize> {
@@ -431,15 +406,7 @@ where
 
 impl<T> HeightMap<T>
 where
-    T: Clone
-        + Copy
-        + Default
-        + Debug
-        + Serialize
-        + DeserializeOwned
-        + savefile::Serialize
-        + savefile::Deserialize
-        + savefile::ReprC,
+    T: MapValue,
 {
     pub fn sum_range(&self, range: &RangeInclusive<usize>) -> T
     where
@@ -457,114 +424,126 @@ where
         source: &mut HeightMap<K>,
         transform: F,
     ) where
-        T: Div<Output = T>,
+        K: MapValue,
         F: Fn(K) -> T,
-        K: Clone
-            + Copy
-            + Default
-            + Debug
-            + Serialize
-            + DeserializeOwned
-            + savefile::Serialize
-            + savefile::Deserialize
-            + savefile::ReprC,
     {
         heights.iter().for_each(|height| {
             self.insert(*height, transform(source.get_or_import(height)));
         });
     }
 
-    pub fn multi_insert_complex_transform<F>(
+    pub fn multi_insert_complex_transform<K, F>(
         &mut self,
         heights: &[usize],
-        source: &mut HeightMap<T>,
+        source: &mut HeightMap<K>,
         transform: F,
     ) where
-        T: Div<Output = T>,
-        F: Fn((T, &usize)) -> T,
+        K: MapValue,
+        F: Fn((K, &usize)) -> T,
     {
         heights.iter().for_each(|height| {
             self.insert(*height, transform((source.get_or_import(height), height)));
         });
     }
 
-    pub fn multi_insert_add(
+    pub fn multi_insert_add<A, B>(
         &mut self,
         heights: &[usize],
-        added: &mut HeightMap<T>,
-        adder: &mut HeightMap<T>,
+        added: &mut HeightMap<A>,
+        adder: &mut HeightMap<B>,
     ) where
+        A: MapValue,
+        B: MapValue,
+        T: LossyFrom<A> + LossyFrom<B>,
         T: Add<Output = T>,
     {
         heights.iter().for_each(|height| {
             self.insert(
                 *height,
-                added.get_or_import(height) + adder.get_or_import(height),
+                T::lossy_from(added.get_or_import(height))
+                    + T::lossy_from(adder.get_or_import(height)),
             );
         });
     }
 
-    pub fn multi_insert_subtract(
+    pub fn multi_insert_subtract<A, B>(
         &mut self,
         heights: &[usize],
-        subtracted: &mut HeightMap<T>,
-        subtracter: &mut HeightMap<T>,
+        subtracted: &mut HeightMap<A>,
+        subtracter: &mut HeightMap<B>,
     ) where
+        A: MapValue,
+        B: MapValue,
+        T: LossyFrom<A> + LossyFrom<B>,
         T: Sub<Output = T>,
     {
         heights.iter().for_each(|height| {
             self.insert(
                 *height,
-                subtracted.get_or_import(height) - subtracter.get_or_import(height),
+                T::lossy_from(subtracted.get_or_import(height))
+                    - T::lossy_from(subtracter.get_or_import(height)),
             );
         });
     }
 
-    pub fn multi_insert_multiply(
+    pub fn multi_insert_multiply<A, B>(
         &mut self,
         heights: &[usize],
-        multiplied: &mut HeightMap<T>,
-        multiplier: &mut HeightMap<T>,
+        multiplied: &mut HeightMap<A>,
+        multiplier: &mut HeightMap<B>,
     ) where
+        A: MapValue,
+        B: MapValue,
+        T: LossyFrom<A> + LossyFrom<B>,
         T: Mul<Output = T>,
     {
         heights.iter().for_each(|height| {
             self.insert(
                 *height,
-                multiplied.get_or_import(height) * multiplier.get_or_import(height),
+                T::lossy_from(multiplied.get_or_import(height))
+                    * T::lossy_from(multiplier.get_or_import(height)),
             );
         });
     }
 
-    pub fn multi_insert_divide(
+    pub fn multi_insert_divide<A, B>(
         &mut self,
         heights: &[usize],
-        divided: &mut HeightMap<T>,
-        divider: &mut HeightMap<T>,
+        divided: &mut HeightMap<A>,
+        divider: &mut HeightMap<B>,
     ) where
+        A: MapValue,
+        B: MapValue,
+        T: LossyFrom<A> + LossyFrom<B>,
         T: Div<Output = T> + Mul<Output = T> + From<u8>,
     {
         self._multi_insert_divide(heights, divided, divider, false)
     }
 
-    pub fn multi_insert_percentage(
+    pub fn multi_insert_percentage<A, B>(
         &mut self,
         heights: &[usize],
-        divided: &mut HeightMap<T>,
-        divider: &mut HeightMap<T>,
+        divided: &mut HeightMap<A>,
+        divider: &mut HeightMap<B>,
     ) where
+        A: MapValue,
+        B: MapValue,
+        T: LossyFrom<A> + LossyFrom<B>,
         T: Div<Output = T> + Mul<Output = T> + From<u8>,
     {
         self._multi_insert_divide(heights, divided, divider, true)
     }
 
-    pub fn _multi_insert_divide(
+    pub fn _multi_insert_divide<A, B>(
         &mut self,
         heights: &[usize],
-        divided: &mut HeightMap<T>,
-        divider: &mut HeightMap<T>,
+        divided: &mut HeightMap<A>,
+        divider: &mut HeightMap<B>,
         as_percentage: bool,
     ) where
+        A: MapValue,
+        B: MapValue,
+        T: LossyFrom<A> + LossyFrom<B>,
         T: Div<Output = T> + Mul<Output = T> + From<u8>,
     {
         let multiplier = T::from(if as_percentage { 100 } else { 1 });
@@ -572,35 +551,43 @@ where
         heights.iter().for_each(|height| {
             self.insert(
                 *height,
-                divided.get_or_import(height) / divider.get_or_import(height) * multiplier,
+                T::lossy_from(divided.get_or_import(height))
+                    / T::lossy_from(divider.get_or_import(height))
+                    * multiplier,
             );
         });
     }
 
-    pub fn multi_insert_cumulative(&mut self, heights: &[usize], source: &mut HeightMap<T>)
+    pub fn multi_insert_cumulative<K>(&mut self, heights: &[usize], source: &mut HeightMap<K>)
     where
+        K: MapValue,
+        T: LossyFrom<K>,
         T: Add<Output = T> + Sub<Output = T>,
     {
         self._multi_insert_last_x_sum(heights, source, None)
     }
 
-    pub fn multi_insert_last_x_sum(
+    pub fn multi_insert_last_x_sum<K>(
         &mut self,
         heights: &[usize],
-        source: &mut HeightMap<T>,
+        source: &mut HeightMap<K>,
         block_time: usize,
     ) where
+        K: MapValue,
+        T: LossyFrom<K>,
         T: Add<Output = T> + Sub<Output = T>,
     {
         self._multi_insert_last_x_sum(heights, source, Some(block_time))
     }
 
-    fn _multi_insert_last_x_sum(
+    fn _multi_insert_last_x_sum<K>(
         &mut self,
         heights: &[usize],
-        source: &mut HeightMap<T>,
+        source: &mut HeightMap<K>,
         block_time: Option<usize>,
     ) where
+        K: MapValue,
+        T: LossyFrom<K>,
         T: Add<Output = T> + Sub<Output = T>,
     {
         let mut sum = None;
@@ -623,7 +610,7 @@ where
 
             let last_value = source.get_or_import(height);
 
-            sum.replace(previous_sum + last_value - to_subtract);
+            sum.replace(previous_sum + T::lossy_from(last_value) - T::lossy_from(to_subtract));
 
             self.insert(*height, sum.unwrap());
         });

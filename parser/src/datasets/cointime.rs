@@ -144,7 +144,7 @@ impl CointimeDataset {
     ) {
         self.coinblocks_destroyed
             .height
-            .insert(height, sats_to_btc(satblocks_destroyed));
+            .insert(height, sats_to_btc(satblocks_destroyed) as f32);
 
         if is_date_last_block {
             self.coinblocks_destroyed
@@ -160,10 +160,10 @@ impl CointimeDataset {
         last_height: &mut DateMap<usize>,
         date_closes: &mut DateMap<f32>,
         height_closes: &mut HeightMap<f32>,
-        circulating_supply: &mut BiMap<f32>,
+        circulating_supply: &mut BiMap<f64>,
         realized_cap: &mut BiMap<f32>,
         realized_price: &mut BiMap<f32>,
-        yearly_inflation_rate: &mut BiMap<f32>,
+        yearly_inflation_rate: &mut BiMap<f64>,
         annualized_transaction_volume: &mut BiMap<f32>,
         cumulative_subsidy_in_dollars: &mut BiMap<f32>,
     ) {
@@ -175,7 +175,7 @@ impl CointimeDataset {
             .multi_insert_simple_transform(
                 heights,
                 &mut circulating_supply.height,
-                |circulating_supply| circulating_supply,
+                |circulating_supply| circulating_supply as f32,
             );
         self.coinblocks_created
             .multiple_date_insert_sum_range(dates, first_height, last_height);

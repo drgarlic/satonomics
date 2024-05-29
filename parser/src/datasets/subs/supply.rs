@@ -9,7 +9,7 @@ pub struct SupplySubDataset {
     min_initial_states: MinInitialStates,
 
     // Inserted
-    pub total: BiMap<f32>,
+    pub total: BiMap<f64>,
 
     // Computed
     pub market_cap: BiMap<f32>,

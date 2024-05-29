@@ -9,12 +9,12 @@ pub struct UnrealizedState {
 
 impl UnrealizedState {
     #[inline]
-    pub fn iterate(&mut self, price_then: f32, price_now: f32, sat_amount: u64, btc_amount: f32) {
+    pub fn iterate(&mut self, price_then: f32, price_now: f32, sat_amount: u64, btc_amount: f64) {
         if price_then < price_now {
-            self.unrealized_profit += btc_amount * (price_now - price_then);
+            self.unrealized_profit += btc_amount as f32 * (price_now - price_then);
             self.supply_in_profit += sat_amount;
         } else if price_then > price_now {
-            self.unrealized_loss += btc_amount * (price_then - price_now);
+            self.unrealized_loss += btc_amount as f32 * (price_then - price_now);
         }
     }
 }

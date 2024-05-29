@@ -56,8 +56,8 @@ impl AddressCohortsDurableStates {
 
         let liquidity_classification = address_data.compute_liquidity_classification();
 
-        let split_sat_amount = liquidity_classification.split(amount as f32);
-        let split_utxo_count = liquidity_classification.split(utxo_count as f32);
+        let split_sat_amount = liquidity_classification.split(amount as f64);
+        let split_utxo_count = liquidity_classification.split(utxo_count as f64);
 
         self.0
             .iterate(address_data, |state: &mut AddressCohortDurableStates| {

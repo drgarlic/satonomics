@@ -24,6 +24,8 @@ type P2WPKHDatabase = U8x19Database;
 type P2WSHDatabase = U8x31Database;
 type P2TRDatabase = U8x31Database;
 type UnknownDatabase = U32Database;
+type OpReturnDatabase = U32Database;
+type PushOnlyDatabase = U32Database;
 type EmptyDatabase = U32Database;
 type MultisigDatabase = UnsizedDatabase;
 
@@ -36,6 +38,8 @@ pub struct AddressToAddressIndex {
     p2wpkh: BTreeMap<u16, P2WPKHDatabase>,
     p2wsh: BTreeMap<u16, P2WSHDatabase>,
     p2tr: BTreeMap<u16, P2TRDatabase>,
+    op_return: Option<OpReturnDatabase>,
+    push_only: Option<PushOnlyDatabase>,
     unknown: Option<UnknownDatabase>,
     empty: Option<EmptyDatabase>,
     multisig: Option<MultisigDatabase>,
@@ -63,6 +67,12 @@ impl AddressToAddressIndex {
             }
             Address::Unknown(_) => {
                 self.open_unknown();
+            }
+            Address::OpReturn(_) => {
+                self.open_op_return();
+            }
+            Address::PushOnly(_) => {
+                self.open_push_only();
             }
             Address::MultiSig(_) => {
                 self.open_multisig();
@@ -94,6 +104,8 @@ impl AddressToAddressIndex {
         match address {
             Address::Empty(key) => self.empty.as_ref().unwrap().get(key),
             Address::Unknown(key) => self.unknown.as_ref().unwrap().get(key),
+            Address::OpReturn(key) => self.op_return.as_ref().unwrap().get(key),
+            Address::PushOnly(key) => self.push_only.as_ref().unwrap().get(key),
             Address::MultiSig(key) => self.multisig.as_ref().unwrap().get(key),
             Address::P2PK((prefix, key)) => self.p2pk.get(prefix).unwrap().get(key),
             Address::P2PKH((prefix, key)) => self.p2pkh.get(prefix).unwrap().get(key),
@@ -108,6 +120,8 @@ impl AddressToAddressIndex {
         match address {
             Address::Empty(key) => self.empty.as_ref().unwrap().get_from_puts(key),
             Address::Unknown(key) => self.unknown.as_ref().unwrap().get_from_puts(key),
+            Address::OpReturn(key) => self.op_return.as_ref().unwrap().get_from_puts(key),
+            Address::PushOnly(key) => self.push_only.as_ref().unwrap().get_from_puts(key),
             Address::MultiSig(key) => self.multisig.as_ref().unwrap().get_from_puts(key),
             Address::P2PK((prefix, key)) => self.p2pk.get(prefix).unwrap().get_from_puts(key),
             Address::P2PKH((prefix, key)) => self.p2pkh.get(prefix).unwrap().get_from_puts(key),
@@ -124,6 +138,8 @@ impl AddressToAddressIndex {
         match address {
             Address::Empty(key) => self.open_empty().insert(key, value),
             Address::Unknown(key) => self.open_unknown().insert(key, value),
+            Address::OpReturn(key) => self.open_op_return().insert(key, value),
+            Address::PushOnly(key) => self.open_push_only().insert(key, value),
             Address::MultiSig(key) => self.open_multisig().insert(key, value),
             Address::P2PK((prefix, rest)) => self.open_p2pk(prefix).insert(rest, value),
             Address::P2PKH((prefix, rest)) => self.open_p2pkh(prefix).insert(rest, value),
@@ -205,6 +221,16 @@ impl AddressToAddressIndex {
             .get_or_insert_with(|| Database::open(Self::folder(), "unknown", |key| key).unwrap())
     }
 
+    pub fn open_op_return(&mut self) -> &mut UnknownDatabase {
+        self.op_return
+            .get_or_insert_with(|| Database::open(Self::folder(), "op_return", |key| key).unwrap())
+    }
+
+    pub fn open_push_only(&mut self) -> &mut UnknownDatabase {
+        self.push_only
+            .get_or_insert_with(|| Database::open(Self::folder(), "push_only", |key| key).unwrap())
+    }
+
     pub fn open_empty(&mut self) -> &mut UnknownDatabase {
         self.empty
             .get_or_insert_with(|| Database::open(Self::folder(), "empty", |key| key).unwrap())
@@ -226,6 +252,8 @@ impl AnyDatabaseGroup for AddressToAddressIndex {
             p2wpkh: BTreeMap::default(),
             p2wsh: BTreeMap::default(),
             p2tr: BTreeMap::default(),
+            op_return: None,
+            push_only: None,
             unknown: None,
             empty: None,
             multisig: None,
@@ -267,6 +295,8 @@ impl AnyDatabaseGroup for AddressToAddressIndex {
             });
 
             s.spawn(|| self.unknown.take().map(|db| db.export()));
+            s.spawn(|| self.op_return.take().map(|db| db.export()));
+            s.spawn(|| self.push_only.take().map(|db| db.export()));
             s.spawn(|| self.empty.take().map(|db| db.export()));
             s.spawn(|| self.multisig.take().map(|db| db.export()));
         });

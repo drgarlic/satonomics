@@ -4,6 +4,8 @@ use savefile_derive::Savefile;
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default, Savefile)]
 pub enum AddressType {
     Empty,
+    OpReturn,
+    PushOnly,
     #[default]
     Unknown,
     MultiSig,

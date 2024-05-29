@@ -7,8 +7,8 @@ use crate::{
 pub struct InputSubDataset {
     min_initial_states: MinInitialStates,
 
-    pub count: BiMap<f32>,
-    pub volume: BiMap<f32>,
+    pub count: BiMap<u64>,
+    pub volume: BiMap<f64>,
     // add inputs_per_second
 }
 
@@ -40,7 +40,7 @@ impl InputSubDataset {
         }: &InsertData,
         state: &InputState,
     ) {
-        let count = self.count.height.insert(height, state.count);
+        let count = self.count.height.insert(height, state.count.round() as u64);
 
         self.volume.height.insert(height, state.volume);
 

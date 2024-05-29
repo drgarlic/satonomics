@@ -13,6 +13,8 @@ use super::{AddressType, Counter};
 pub enum Address {
     // https://mempool.space/tx/7bd54def72825008b4ca0f4aeff13e6be2c5fe0f23430629a9d484a1ac2a29b8
     Empty(u32),
+    OpReturn(u32),
+    PushOnly(u32),
     Unknown(u32),
     // https://mempool.space/tx/274f8be3b7b9b1a220285f5f71f61e2691dd04df9d69bb02a8b3b85f91fb1857
     MultiSig(Box<[u8]>),
@@ -28,6 +30,8 @@ impl Address {
     pub fn to_type(&self) -> AddressType {
         match self {
             Self::Empty(_) => AddressType::Empty,
+            Self::OpReturn(_) => AddressType::OpReturn,
+            Self::PushOnly(_) => AddressType::PushOnly,
             Self::Unknown(_) => AddressType::Unknown,
             Self::MultiSig(_) => AddressType::MultiSig,
             Self::P2PK(_) => AddressType::P2PK,
@@ -41,6 +45,8 @@ impl Address {
 
     pub fn from(
         txout: &TxOut,
+        op_return_addresses: &mut Counter,
+        push_only_addresses: &mut Counter,
         unknown_addresses: &mut Counter,
         empty_addresses: &mut Counter,
     ) -> Self {
@@ -84,8 +90,14 @@ impl Address {
                     empty_addresses.increment();
 
                     Self::Empty(index)
-                } else if script.is_op_return() || script.is_provably_unspendable() {
-                    unreachable!()
+                } else if script.is_op_return() {
+                    let index = op_return_addresses.inner();
+
+                    op_return_addresses.increment();
+
+                    Self::OpReturn(index)
+                // } else if script.is_provably_unspendable() {
+                //     panic!()
                 } else if script.is_multisig() {
                     let vec = multisig_addresses(script);
 
@@ -103,6 +115,12 @@ impl Address {
                     }
 
                     Self::MultiSig(vec.into())
+                } else if script.is_push_only() {
+                    let index = push_only_addresses.inner();
+
+                    push_only_addresses.increment();
+
+                    Self::PushOnly(index)
                 } else {
                     Self::new_unknown(unknown_addresses)
                 }

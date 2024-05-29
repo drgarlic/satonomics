@@ -1,11 +1,11 @@
-use std::f32::EPSILON;
+use std::f64::EPSILON;
 
 use crate::bitcoin::sats_to_btc;
 
 pub struct LiquidityClassification {
-    illiquid: f32,
-    liquid: f32,
-    highly_liquid: f32,
+    illiquid: f64,
+    liquid: f64,
+    highly_liquid: f64,
 }
 
 impl LiquidityClassification {
@@ -48,7 +48,7 @@ impl LiquidityClassification {
     }
 
     #[inline(always)]
-    pub fn split(&self, value: f32) -> LiquiditySplitResult {
+    pub fn split(&self, value: f64) -> LiquiditySplitResult {
         LiquiditySplitResult {
             all: value,
             illiquid: value * self.illiquid,
@@ -59,18 +59,18 @@ impl LiquidityClassification {
 
     /// Returns value in range 0.0..1.0
     #[inline(always)]
-    fn compute_illiquid(x: f32) -> f32 {
+    fn compute_illiquid(x: f64) -> f64 {
         Self::compute_ratio(x, 0.25)
     }
 
     /// Returns value in range 0.0..1.0
     #[inline(always)]
-    fn compute_liquid(x: f32) -> f32 {
+    fn compute_liquid(x: f64) -> f64 {
         Self::compute_ratio(x, 0.75)
     }
 
     #[inline(always)]
-    fn compute_ratio(x: f32, x0: f32) -> f32 {
+    fn compute_ratio(x: f64, x0: f64) -> f64 {
         let l = 1.0;
         let k = 25.0;
 
@@ -80,10 +80,10 @@ impl LiquidityClassification {
 
 #[derive(Debug, Default)]
 pub struct LiquiditySplitResult {
-    pub all: f32,
-    pub illiquid: f32,
-    pub liquid: f32,
-    pub highly_liquid: f32,
+    pub all: f64,
+    pub illiquid: f64,
+    pub liquid: f64,
+    pub highly_liquid: f64,
 }
 
 #[derive(Debug, Default)]

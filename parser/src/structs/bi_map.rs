@@ -1,28 +1,18 @@
 use std::{
-    fmt::Debug,
     iter::Sum,
     ops::{Add, Div, Mul, RangeInclusive, Sub},
 };
 
 use chrono::NaiveDate;
 use ordered_float::FloatCore;
-use serde::{de::DeserializeOwned, Serialize};
 
-use crate::bitcoin::TARGET_BLOCKS_PER_DAY;
+use crate::{bitcoin::TARGET_BLOCKS_PER_DAY, utils::LossyFrom};
 
-use super::{AnyDateMap, AnyHeightMap, AnyMap, DateMap, HeightMap};
+use super::{AnyDateMap, AnyHeightMap, AnyMap, DateMap, HeightMap, MapValue};
 
 pub struct BiMap<T>
 where
-    T: Clone
-        + Copy
-        + Default
-        + Debug
-        + Serialize
-        + DeserializeOwned
-        + savefile::Serialize
-        + savefile::Deserialize
-        + savefile::ReprC,
+    T: MapValue,
 {
     pub height: HeightMap<T>,
     pub date: DateMap<T>,
@@ -30,15 +20,7 @@ where
 
 impl<T> BiMap<T>
 where
-    T: Clone
-        + Copy
-        + Default
-        + Debug
-        + Serialize
-        + DeserializeOwned
-        + savefile::Serialize
-        + savefile::Deserialize
-        + savefile::ReprC,
+    T: MapValue,
 {
     pub fn new_bin(version: u32, path: &str) -> Self {
         Self {
@@ -108,13 +90,16 @@ where
     }
 
     #[allow(unused)]
-    pub fn multi_insert_add(
+    pub fn multi_insert_add<A, B>(
         &mut self,
         heights: &[usize],
         dates: &[NaiveDate],
-        added: &mut BiMap<T>,
-        adder: &mut BiMap<T>,
+        added: &mut BiMap<A>,
+        adder: &mut BiMap<B>,
     ) where
+        A: MapValue,
+        B: MapValue,
+        T: LossyFrom<A> + LossyFrom<B>,
         T: Add<Output = T>,
     {
         self.height
@@ -123,13 +108,16 @@ where
             .multi_insert_add(dates, &mut added.date, &mut adder.date);
     }
 
-    pub fn multi_insert_subtract(
+    pub fn multi_insert_subtract<A, B>(
         &mut self,
         heights: &[usize],
         dates: &[NaiveDate],
-        subtracted: &mut BiMap<T>,
-        subtracter: &mut BiMap<T>,
+        subtracted: &mut BiMap<A>,
+        subtracter: &mut BiMap<B>,
     ) where
+        A: MapValue,
+        B: MapValue,
+        T: LossyFrom<A> + LossyFrom<B>,
         T: Sub<Output = T>,
     {
         self.height
@@ -139,13 +127,16 @@ where
             .multi_insert_subtract(dates, &mut subtracted.date, &mut subtracter.date);
     }
 
-    pub fn multi_insert_multiply(
+    pub fn multi_insert_multiply<A, B>(
         &mut self,
         heights: &[usize],
         dates: &[NaiveDate],
-        multiplied: &mut BiMap<T>,
-        multiplier: &mut BiMap<T>,
+        multiplied: &mut BiMap<A>,
+        multiplier: &mut BiMap<B>,
     ) where
+        A: MapValue,
+        B: MapValue,
+        T: LossyFrom<A> + LossyFrom<B>,
         T: Mul<Output = T>,
     {
         self.height
@@ -154,13 +145,16 @@ where
             .multi_insert_multiply(dates, &mut multiplied.date, &mut multiplier.date);
     }
 
-    pub fn multi_insert_divide(
+    pub fn multi_insert_divide<A, B>(
         &mut self,
         heights: &[usize],
         dates: &[NaiveDate],
-        divided: &mut BiMap<T>,
-        divider: &mut BiMap<T>,
+        divided: &mut BiMap<A>,
+        divider: &mut BiMap<B>,
     ) where
+        A: MapValue,
+        B: MapValue,
+        T: LossyFrom<A> + LossyFrom<B>,
         T: Div<Output = T> + Mul<Output = T> + From<u8>,
     {
         self.height
@@ -169,13 +163,16 @@ where
             .multi_insert_divide(dates, &mut divided.date, &mut divider.date);
     }
 
-    pub fn multi_insert_percentage(
+    pub fn multi_insert_percentage<A, B>(
         &mut self,
         heights: &[usize],
         dates: &[NaiveDate],
-        divided: &mut BiMap<T>,
-        divider: &mut BiMap<T>,
+        divided: &mut BiMap<A>,
+        divider: &mut BiMap<B>,
     ) where
+        A: MapValue,
+        B: MapValue,
+        T: LossyFrom<A> + LossyFrom<B>,
         T: Div<Output = T> + Mul<Output = T> + From<u8>,
     {
         self.height
@@ -184,12 +181,14 @@ where
             .multi_insert_percentage(dates, &mut divided.date, &mut divider.date);
     }
 
-    pub fn multi_insert_cumulative(
+    pub fn multi_insert_cumulative<K>(
         &mut self,
         heights: &[usize],
         dates: &[NaiveDate],
-        source: &mut BiMap<T>,
+        source: &mut BiMap<K>,
     ) where
+        K: MapValue,
+        T: LossyFrom<K>,
         T: Add<Output = T> + Sub<Output = T>,
     {
         self.height
@@ -198,13 +197,15 @@ where
         self.date.multi_insert_cumulative(dates, &mut source.date);
     }
 
-    pub fn multi_insert_last_x_sum(
+    pub fn multi_insert_last_x_sum<K>(
         &mut self,
         heights: &[usize],
         dates: &[NaiveDate],
-        source: &mut BiMap<T>,
+        source: &mut BiMap<K>,
         days: usize,
     ) where
+        K: MapValue,
+        T: LossyFrom<K>,
         T: Add<Output = T> + Sub<Output = T>,
     {
         self.height.multi_insert_last_x_sum(
@@ -295,17 +296,7 @@ pub trait AnyBiMap {
 
 impl<T> AnyBiMap for BiMap<T>
 where
-    T: Clone
-        + Copy
-        + Default
-        + Debug
-        + Serialize
-        + DeserializeOwned
-        + savefile::Serialize
-        + savefile::Deserialize
-        + savefile::ReprC
-        + Send
-        + Sync,
+    T: MapValue,
 {
     // #[inline(always)]
     // fn are_date_and_height_safe(&self, date: NaiveDate, height: usize) -> bool {

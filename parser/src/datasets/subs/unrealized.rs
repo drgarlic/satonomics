@@ -9,12 +9,12 @@ pub struct UnrealizedSubDataset {
     min_initial_states: MinInitialStates,
 
     // Inserted
-    supply_in_profit: BiMap<f32>,
+    supply_in_profit: BiMap<f64>,
     unrealized_profit: BiMap<f32>,
     unrealized_loss: BiMap<f32>,
 
     // Computed
-    supply_in_loss: BiMap<f32>,
+    supply_in_loss: BiMap<f64>,
 }
 
 impl UnrealizedSubDataset {
@@ -79,7 +79,7 @@ impl UnrealizedSubDataset {
     pub fn compute(
         &mut self,
         &ComputeData { heights, dates }: &ComputeData,
-        cohort_supply: &mut BiMap<f32>,
+        cohort_supply: &mut BiMap<f64>,
     ) {
         self.supply_in_loss.multi_insert_subtract(
             heights,

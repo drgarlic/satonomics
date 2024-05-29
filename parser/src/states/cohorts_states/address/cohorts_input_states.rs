@@ -1,6 +1,7 @@
 use derive_deref::{Deref, DerefMut};
 
 use crate::{
+    bitcoin::sats_to_btc,
     states::InputState,
     structs::{AddressRealizedData, LiquidityClassification, SplitByLiquidity},
 };
@@ -16,8 +17,8 @@ impl AddressCohortsInputStates {
         realized_data: &AddressRealizedData,
         liquidity_classification: &LiquidityClassification,
     ) {
-        let count = realized_data.utxos_destroyed as f32;
-        let volume = realized_data.sent as f32;
+        let count = realized_data.utxos_destroyed as f64;
+        let volume = sats_to_btc(realized_data.sent);
 
         let split_count = liquidity_classification.split(count);
         let split_volume = liquidity_classification.split(volume);

@@ -42,7 +42,7 @@ impl CoindaysDataset {
     ) {
         self.coindays_destroyed
             .height
-            .insert(height, sats_to_btc(satdays_destroyed));
+            .insert(height, sats_to_btc(satdays_destroyed) as f32);
 
         if is_date_last_block {
             self.coindays_destroyed
