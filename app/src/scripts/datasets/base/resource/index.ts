@@ -44,6 +44,8 @@ export function createResourceDataset<
         vec: createMemo(() => {
           const map = json()?.dataset.map || null;
 
+          const chunkId = json()?.chunk.id!;
+
           if (!map) {
             return null;
           }
@@ -52,8 +54,8 @@ export function createResourceDataset<
             return map.map(
               (value, index) =>
                 ({
-                  number: index,
-                  time: index as Time,
+                  number: chunkId + index,
+                  time: (chunkId + index) as Time,
                   ...(typeof value !== "number"
                     ? { ...(value as OHLC), value: value.close }
                     : { value: value as number }),

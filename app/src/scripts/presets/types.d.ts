@@ -41,26 +41,20 @@ type PresetTree = (PartialPreset | PresetFolder)[];
 type PresetList = Preset[];
 type FavoritePresets = Accessor<Preset[]>;
 
-interface PresetsHistory {
-  undo: ASS<Preset[]>;
-  redo: ASS<Preset[]>;
-}
+type PresetsHistory = { date: Date; preset: Preset }[];
+type PresetsHistorySignal = ASS<PresetsHistory>;
+type SerializedPresetsHistory = { p: string; d: number }[];
 
 interface Presets {
   tree: PresetTree;
   list: PresetList;
   favorites: FavoritePresets;
+  history: PresetsHistorySignal;
 
   selected: ASS<Preset>;
   openedFolders: ASS<Set<string>>;
 
-  undoPossible: Accessor<boolean>;
-  redoPossible: Accessor<boolean>;
-
   select(preset: Preset): void;
-  selectRandom: VoidFunction;
-  undo: VoidFunction;
-  redo: VoidFunction;
 }
 
 type PresetLegend = SeriesLegend[];

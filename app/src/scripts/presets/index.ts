@@ -14,9 +14,10 @@ import { createPresets as createTransactionsPresets } from "./transactions";
 export * from "./templates";
 
 export const LOCAL_STORAGE_FAVORITES_KEY = "favorites";
-export const LOCAL_STORAGE_VISITED_KEY = "visited";
-export const LOCAL_STORAGE_SELECTED_KEY = "preset";
 export const LOCAL_STORAGE_FOLDERS_KEY = "folders";
+export const LOCAL_STORAGE_HISTORY_KEY = "history";
+export const LOCAL_STORAGE_SELECTED_KEY = "preset";
+export const LOCAL_STORAGE_VISITED_KEY = "visited";
 
 export function createPresets(datasets: Datasets): Presets {
   const tree: PresetTree = [
@@ -94,10 +95,23 @@ export function createPresets(datasets: Datasets): Presets {
     );
   });
 
-  const history: PresetsHistory = {
-    undo: createASS([], { equals: false }),
-    redo: createASS([], { equals: false }),
-  };
+  createEffect(() => {
+    const serializedHistory: SerializedPresetsHistory = history().map(
+      ({ preset, date }) => ({
+        p: preset.id,
+        d: date.valueOf(),
+      }),
+    );
+
+    localStorage.setItem(
+      LOCAL_STORAGE_HISTORY_KEY,
+      JSON.stringify(serializedHistory),
+    );
+  });
+
+  const history: PresetsHistorySignal = createASS(getHistory(list), {
+    equals: false,
+  });
 
   const selected = createASS(findInitialPreset(list), {
     equals: false,
@@ -113,12 +127,17 @@ export function createPresets(datasets: Datasets): Presets {
   createEffect(() => selected().visited.set(true));
 
   const select = (preset: Preset) => {
-    history.undo.set((l) => {
-      l.push(selected());
+    if (selected().id === preset.id) {
+      return;
+    }
+
+    history.set((l) => {
+      l.unshift({
+        date: new Date(),
+        preset,
+      });
       return l;
     });
-
-    history.redo.set([]);
 
     _select(preset, selected.set);
   };
@@ -146,59 +165,9 @@ export function createPresets(datasets: Datasets): Presets {
     list,
     selected,
     favorites,
-    undoPossible: createMemo(() => !!history.undo().length),
-    redoPossible: createMemo(() => !!history.redo().length),
+    history,
     select,
-    selectRandom() {
-      const preset = random(list);
-
-      if (preset) {
-        select(preset);
-      }
-    },
     openedFolders,
-    undo() {
-      let preset: Preset | undefined;
-
-      history.undo.set((l) => {
-        preset = l.pop();
-        return l;
-      });
-
-      if (preset) {
-        history.redo.set((l) => {
-          l.push(selected());
-          return l;
-        });
-
-        const _preset = list.find((_preset) => preset === _preset);
-
-        if (_preset) {
-          _select(_preset, selected.set);
-        }
-      }
-    },
-    redo() {
-      let preset: Preset | undefined;
-
-      history.redo.set((l) => {
-        preset = l.pop();
-        return l;
-      });
-
-      if (preset) {
-        history.undo.set((l) => {
-          l.push(selected());
-          return l;
-        });
-
-        const _preset = list.find((_preset) => preset === _preset);
-
-        if (_preset) {
-          _select(_preset, selected.set);
-        }
-      }
-    },
   };
 }
 
@@ -308,5 +277,17 @@ function setVisited(list: PresetList) {
     ) as string[]
   ).forEach((id) => {
     list.find((preset) => preset.id === id)?.visited.set(true);
+  });
+}
+
+function getHistory(list: PresetList): PresetsHistory {
+  return (
+    JSON.parse(
+      localStorage.getItem(LOCAL_STORAGE_HISTORY_KEY) || "[]",
+    ) as SerializedPresetsHistory
+  ).flatMap(({ p, d }) => {
+    const preset = list.find((preset) => preset.id === p);
+
+    return preset ? [{ preset, date: new Date(d) }] : [];
   });
 }

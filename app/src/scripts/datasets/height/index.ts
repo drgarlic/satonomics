@@ -2,8 +2,6 @@ import groupedKeysToPath from "/src/../../datasets/grouped_keys_to_url_path.json
 
 import { createResourceDataset } from "../base";
 
-// import { createCommonDatasets } from "../common";
-
 export function createHeightDatasets({
   setActiveResources,
 }: {
@@ -30,8 +28,6 @@ export function createHeightDatasets({
     path: "/height-to-ohlc",
     setActiveResources,
   });
-
-  // const common = createCommonDatasets({ price, setActiveResources });
 
   return {
     ...resourceDatasets,

@@ -1,12 +1,17 @@
 @font-face {
-  font-family: "Druk";
-  src: url("/fonts/Druk.woff2") format("woff2");
+  font-family: "Lexend";
+  src: url("/fonts/Lexend.var.woff2") format("woff2");
+  /* src: url("/fonts/Lexend[HEXP,wght].woff2") format("woff2"); */
+  /* font-variation-settings: 'HEXP' 100; */
+  font-weight: 100 900;
+  /* font-style: normal; */
+  font-optical-sizing: auto;
 }
 
+/* 
 @font-face {
-  font-family: "Lexend var";
-  src: url("/fonts/Lexend.var.woff2") format("woff2");
-  font-weight: 100 900;
+  font-family: "Druk";
+  src: url("/fonts/Druk.woff2") format("woff2");
 }
 
 @font-face {
@@ -18,3 +23,12 @@
   font-family: "Hipnouma";
   src: url("/fonts/Hipnouma.woff2") format("woff2");
 }
+
+@font-face {
+  font-family: "Mona Sans";
+  src:
+    url("/fonts/Mona-Sans.woff2") format("woff2 supports variations"),
+    url("/fonts/Mona-Sans.woff2") format("woff2-variations");
+  font-weight: 200 900;
+  font-stretch: 75% 125%;
+} */

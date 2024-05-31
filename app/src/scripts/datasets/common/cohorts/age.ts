@@ -107,6 +107,7 @@ export const upToCohorts = [
   { key: "up_to_5y", name: "Up To 5 Years" },
   { key: "up_to_7y", name: "Up To 7 Yeats" },
   { key: "up_to_10y", name: "Up To 10 Years" },
+  { key: "up_to_15y", name: "Up To 15 Years" },
 ] as const;
 
 export const fromXToYCohorts = [
@@ -150,6 +151,10 @@ export const fromXToYCohorts = [
     key: "from_7y_to_10y",
     name: "From 7 Years To 10 Years",
   },
+  {
+    key: "from_10y_to_15y",
+    name: "From 10 Years To 15 Years",
+  },
 ] as const;
 
 export const fromXCohorts = [
@@ -168,6 +173,10 @@ export const fromXCohorts = [
   {
     key: "from_10y",
     name: "From 10 Years",
+  },
+  {
+    key: "from_15y",
+    name: "From 15 Years",
   },
 ] as const;
 

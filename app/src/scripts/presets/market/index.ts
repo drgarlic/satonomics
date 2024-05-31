@@ -10,7 +10,7 @@ export function createPresets(scale: ResourceScale) {
     name: "Market",
     tree: [
       {
-        id: `${scale}-market-price`,
+        id: `${scale}-to-market-price`,
         icon: IconTablerCurrencyDollar,
         name: "Price",
         title: "Bitcoin Price In US Dollars - USD",
@@ -20,7 +20,7 @@ export function createPresets(scale: ResourceScale) {
         description,
       },
       {
-        id: `${scale}-market-performance`,
+        id: `${scale}-to-market-performance`,
         icon: IconTablerPercentage,
         name: "Performance",
         title: "Bitcoin USD Performance",
@@ -40,7 +40,7 @@ export function createPresets(scale: ResourceScale) {
         description,
       },
       {
-        id: `${scale}-market-cap`,
+        id: `${scale}-to-market-cap`,
         icon: IconTablerInfinity,
         name: "Capitalization",
         title: "Bitcoin USD Market Capitalization",

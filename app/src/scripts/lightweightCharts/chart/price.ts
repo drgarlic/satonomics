@@ -56,7 +56,7 @@ export const applyPriceSeries = <
 
   const color = createASS<string | string[]>("");
 
-  if (!dataset && seriesType === "Candlestick" && preset.scale === "date") {
+  if (!dataset && seriesType === "Candlestick") {
     const [series, colors] = createCandlesticksSeries(chart, {
       ...options,
       // inverseColors: options?.inverseColors ?? priceMode === 'sats',
@@ -81,9 +81,12 @@ export const applyPriceSeries = <
 
     // TODO: fix types
     createEffect(() => {
-      series.setData(
-        dataset?.values() || datasets[scale].price.values() || ([] as any),
-      );
+      const data =
+        dataset?.values() || datasets[scale].price.values() || ([] as any);
+
+      // console.log(data);
+
+      series.setData(data);
     });
   }
 
@@ -127,7 +130,7 @@ export const applyPriceSeries = <
 
   setTimeScale({
     scale,
-    switchBetweenCandlestickAndLine: !dataset && scale === "date",
+    switchBetweenCandlestickAndLine: !dataset,
     candlesticks:
       dataset?.values() || datasets[scale].price.values() || ([] as any),
     lowerOpacity,

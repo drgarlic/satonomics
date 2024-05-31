@@ -14,6 +14,7 @@ import { createASS } from "/src/solid";
 import { Background, LOCAL_STORAGE_MARQUEE_KEY } from "./components/background";
 import { ChartFrame } from "./components/frames/chart";
 import { FavoritesFrame } from "./components/frames/favorites";
+import { HistoryFrame } from "./components/frames/history";
 import {
   INPUT_PRESET_SEARCH_ID,
   SearchFrame,
@@ -202,6 +203,7 @@ export function App() {
               <TreeFrame presets={presets} selectedFrame={selectedFrame} />
               <FavoritesFrame presets={presets} selectedFrame={selectedFrame} />
               <SearchFrame presets={presets} selectedFrame={selectedFrame} />
+              <HistoryFrame presets={presets} selectedFrame={selectedFrame} />
               <SettingsFrame marquee={marquee} selectedFrame={selectedFrame} />
             </div>
 

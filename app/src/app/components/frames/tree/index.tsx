@@ -44,7 +44,7 @@ export function TreeFrame({
             favorites={presets.favorites}
           />
 
-          <div class="h-[90dvh] flex-none" />
+          <div class="h-[50dvh] flex-none" />
         </div>
       </div>
 

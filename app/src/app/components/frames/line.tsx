@@ -8,7 +8,7 @@ export function Line({
   active,
   depth = 0,
   onClick,
-  path,
+  header,
   tail,
   classes: classes,
 }: {
@@ -17,7 +17,7 @@ export function Line({
   onClick: VoidFunction;
   active?: Accessor<boolean>;
   depth?: number;
-  path?: string;
+  header?: string;
   icon?: () => JSXElement;
   tail?: () => JSXElement;
   classes?: () => string;
@@ -43,7 +43,7 @@ export function Line({
     >
       <For each={new Array(depth)}>
         {() => (
-          <span class="ml-1 h-8 w-3 flex-none border-l border-orange-200/20" />
+          <span class="ml-1 h-8 w-3 flex-none border-l border-orange-200/10" />
         )}
       </For>
       <Show when={icon}>
@@ -64,10 +64,10 @@ export function Line({
           "inline-flex w-full flex-col -space-y-1 truncate py-1 text-left",
         ])}
       >
-        <Show when={path}>
+        <Show when={header}>
           <span
             class="truncate text-xs text-white text-opacity-50"
-            innerHTML={path}
+            innerHTML={header}
           />
         </Show>
         <span innerHTML={name} class="truncate" />

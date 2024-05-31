@@ -5,16 +5,35 @@ export const GENESIS_DAY = "2009-01-03";
 // export const DAY_BEFORE_WHITEPAPER_DAY = "2008-10-30";
 // export const WHITEPAPER_DAY = "2008-10-31";
 
-export const whitespaceDataset: (WhitespaceData & Numbered)[] = [];
+const whitespaceDateDataset: (WhitespaceData & Numbered)[] = [];
+const whitespaceHeightDataset: (WhitespaceData & Numbered)[] = new Array(
+  840_000,
+)
+  .fill(0)
+  .map(
+    (_, index) =>
+      ({
+        time: index,
+        number: index,
+      }) as any,
+  );
 
 export function setWhitespace(chart: IChartApi, scale: ResourceScale) {
-  if (scale !== "date") return;
-
   const whitespaceSeries = createLineSeries(chart);
 
-  updateWhitespaceDataset(whitespaceDataset);
+  if (scale === "date") {
+    updateWhitespaceDataset(whitespaceDateDataset);
 
-  whitespaceSeries.setData(whitespaceDataset.map((data) => ({ ...data })));
+    whitespaceSeries.setData(
+      whitespaceDateDataset.map((data) => ({ ...data })),
+    );
+  } else {
+    // console.log("scale,", scale, whitespaceHeightDataset);
+
+    whitespaceSeries.setData(
+      whitespaceHeightDataset.map((data) => ({ ...data })),
+    );
+  }
 }
 
 function updateWhitespaceDataset(

@@ -20,7 +20,7 @@ export enum SeriesType {
   Histogram,
 }
 
-export const applyMultipleSeries = <Scale extends ResourceScale>({
+export function applyMultipleSeries<Scale extends ResourceScale>({
   scale,
   chart,
   list = [],
@@ -105,7 +105,7 @@ export const applyMultipleSeries = <Scale extends ResourceScale>({
   datasets: Datasets;
   presets: Presets;
   activeResources: Accessor<Set<ResourceDataset<any, any>>>;
-}): PresetLegend => {
+}): PresetLegend {
   const { halved } = priceScaleOptions || {};
 
   const legend: PresetLegend = [];
@@ -274,4 +274,4 @@ export const applyMultipleSeries = <Scale extends ResourceScale>({
   });
 
   return [priceLegend, ...legend.reverse()];
-};
+}

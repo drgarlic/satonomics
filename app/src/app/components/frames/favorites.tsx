@@ -23,7 +23,7 @@ export function FavoritesFrame({
         <div class="-mx-4 border-t border-orange-200/10" />
 
         <div
-          class="space-y-1 py-1"
+          class="space-y-0.5 py-1"
           style={{
             display: !presets.favorites().length ? "none" : undefined,
           }}
@@ -35,13 +35,13 @@ export function FavoritesFrame({
                 name={preset.title}
                 onClick={() => presets.select(preset)}
                 active={() => presets.selected() === preset}
-                path={`/ ${[...preset.path.map(({ name }) => name), preset.name].join(" / ")}`}
+                header={`/ ${[...preset.path.map(({ name }) => name), preset.name].join(" / ")}`}
               />
             )}
           </For>
         </div>
 
-        <div class="h-[90dvh] flex-none" />
+        <div class="h-[25dvh] flex-none" />
       </div>
     </div>
   );

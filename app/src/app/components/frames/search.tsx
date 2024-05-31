@@ -4,9 +4,9 @@ import { createVisibilityObserver } from "@solid-primitives/intersection-observe
 import { scrollIntoView } from "/src/scripts";
 import { createASS } from "/src/solid";
 
-import { Box } from "../box";
-import { Button } from "../button";
-import { Line } from "../line";
+import { Box } from "./box";
+import { Button } from "./button";
+import { Line } from "./line";
 
 const PER_PAGE = 100;
 
@@ -237,7 +237,7 @@ function ListSection({
             name={title}
             onClick={() => presets.select(preset)}
             active={() => presets.selected() === preset}
-            path={path}
+            header={path}
           />
         )}
       </For>

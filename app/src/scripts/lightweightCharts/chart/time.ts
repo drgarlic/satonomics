@@ -74,18 +74,25 @@ export function setTimeScale({
   chartState.chart?.timeScale().subscribeVisibleTimeRangeChange((range) => {
     if (!range) return;
 
+    let ids: number[] = [];
+
     if (typeof range.from === "string" && typeof range.to === "string") {
       const from = Number(range.from.split("-").shift());
       const to = Number(range.to.split("-").shift()) || from;
 
-      let ids = Array.from({ length: to - from + 1 }, (_, i) => i + from);
-
-      ids.forEach((id) => {
-        activeResources().forEach((resource) => resource.fetch(id));
-      });
+      ids = Array.from({ length: to - from + 1 }, (_, i) => i + from);
     } else {
-      console.log(range);
+      const from = Math.floor(Number(range.from) / 13125);
+      const to = Math.floor(Number(range.to) / 13125);
+
+      const length = to - from + 1;
+
+      ids = Array.from({ length }, (_, i) => (from + i) * 13125);
     }
+
+    ids.forEach((id) => {
+      activeResources().forEach((resource) => resource.fetch(id));
+    });
   });
 
   makeTimer(

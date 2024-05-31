@@ -11,11 +11,12 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Lexend var", ...defaultTheme.fontFamily.sans],
-        druk: ["Druk"],
-        drukx: ["Druk X"],
-        solstice: ["Solstice"],
-        hipnouma: ["Hipnouma"],
+        sans: ["Lexend", ...defaultTheme.fontFamily.sans],
+        // sans: ["Mona Sans", ...defaultTheme.fontFamily.sans],
+        // druk: ["Druk"],
+        // drukx: ["Druk X"],
+        // solstice: ["Solstice"],
+        // hipnouma: ["Hipnouma"],
       },
       screens: {
         md: "720px",
