@@ -1,5 +1,4 @@
 use crate::{
-    bitcoin::sats_to_btc,
     datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
     states::UnrealizedState,
     structs::{AnyBiMap, BiMap},
@@ -49,7 +48,7 @@ impl UnrealizedSubDataset {
     ) {
         self.supply_in_profit
             .height
-            .insert(height, sats_to_btc(block_state.supply_in_profit));
+            .insert(height, block_state.supply_in_profit.to_btc());
 
         self.unrealized_profit
             .height
@@ -64,7 +63,7 @@ impl UnrealizedSubDataset {
 
             self.supply_in_profit
                 .date
-                .insert(date, sats_to_btc(date_state.supply_in_profit));
+                .insert(date, date_state.supply_in_profit.to_btc());
 
             self.unrealized_profit
                 .date

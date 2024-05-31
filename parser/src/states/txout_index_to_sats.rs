@@ -4,16 +4,16 @@ use derive_deref::{Deref, DerefMut};
 
 use savefile_derive::Savefile;
 
-use crate::structs::TxoutIndex;
+use crate::structs::{TxoutIndex, WAmount};
 
 use super::AnyState;
 
 #[derive(Default, Deref, DerefMut, Debug, Savefile)]
-pub struct TxoutIndexToSats(BTreeMap<TxoutIndex, u64>);
+pub struct TxoutIndexToAmount(BTreeMap<TxoutIndex, WAmount>);
 
-impl AnyState for TxoutIndexToSats {
+impl AnyState for TxoutIndexToAmount {
     fn name<'a>() -> &'a str {
-        "txout_index_to_sats"
+        "txout_index_to_amount"
     }
 
     fn clear(&mut self) {

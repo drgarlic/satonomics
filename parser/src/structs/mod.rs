@@ -18,6 +18,7 @@ mod map_value;
 mod partial_txout_data;
 mod tx_data;
 mod txout_index;
+mod wamount;
 mod wnaivedate;
 
 pub use address::*;
@@ -40,4 +41,5 @@ pub use map_value::*;
 pub use partial_txout_data::*;
 pub use tx_data::*;
 pub use txout_index::*;
+pub use wamount::*;
 pub use wnaivedate::*;

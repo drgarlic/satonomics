@@ -19,6 +19,7 @@ pub struct SplitByUTXOCohort<T> {
     pub up_to_5y: T,
     pub up_to_7y: T,
     pub up_to_10y: T,
+    pub up_to_15y: T,
 
     pub from_1d_to_1w: T,
     pub from_1w_to_1m: T,
@@ -30,11 +31,13 @@ pub struct SplitByUTXOCohort<T> {
     pub from_3y_to_5y: T,
     pub from_5y_to_7y: T,
     pub from_7y_to_10y: T,
+    pub from_10y_to_15y: T,
 
     pub from_1y: T,
     pub from_2y: T,
     pub from_4y: T,
     pub from_10y: T,
+    pub from_15y: T,
 
     pub year_2009: T,
     pub year_2010: T,
@@ -71,6 +74,7 @@ impl<T> SplitByUTXOCohort<T> {
             UTXOCohortId::UpTo5y => &self.up_to_5y,
             UTXOCohortId::UpTo7y => &self.up_to_7y,
             UTXOCohortId::UpTo10y => &self.up_to_10y,
+            UTXOCohortId::UpTo15y => &self.up_to_15y,
             UTXOCohortId::From1dTo1w => &self.from_1d_to_1w,
             UTXOCohortId::From1wTo1m => &self.from_1w_to_1m,
             UTXOCohortId::From1mTo3m => &self.from_1m_to_3m,
@@ -81,10 +85,12 @@ impl<T> SplitByUTXOCohort<T> {
             UTXOCohortId::From3yTo5y => &self.from_3y_to_5y,
             UTXOCohortId::From5yTo7y => &self.from_5y_to_7y,
             UTXOCohortId::From7yTo10y => &self.from_7y_to_10y,
+            UTXOCohortId::From10yTo15y => &self.from_10y_to_15y,
             UTXOCohortId::From1y => &self.from_1y,
             UTXOCohortId::From2y => &self.from_2y,
             UTXOCohortId::From4y => &self.from_4y,
             UTXOCohortId::From10y => &self.from_10y,
+            UTXOCohortId::From15y => &self.from_15y,
             UTXOCohortId::Year2009 => &self.year_2009,
             UTXOCohortId::Year2010 => &self.year_2010,
             UTXOCohortId::Year2011 => &self.year_2011,
@@ -105,57 +111,6 @@ impl<T> SplitByUTXOCohort<T> {
             UTXOCohortId::LongTermHolders => &self.lth,
         }
     }
-
-    // pub fn get_mut(&mut self, id: &UTXOCohortId) -> &mut T {
-    //     match id {
-    //         UTXOCohortId::UpTo1d => &mut self.up_to_1d,
-    //         UTXOCohortId::UpTo1w => &mut self.up_to_1w,
-    //         UTXOCohortId::UpTo1m => &mut self.up_to_1m,
-    //         UTXOCohortId::UpTo2m => &mut self.up_to_2m,
-    //         UTXOCohortId::UpTo3m => &mut self.up_to_3m,
-    //         UTXOCohortId::UpTo4m => &mut self.up_to_4m,
-    //         UTXOCohortId::UpTo5m => &mut self.up_to_5m,
-    //         UTXOCohortId::UpTo6m => &mut self.up_to_6m,
-    //         UTXOCohortId::UpTo1y => &mut self.up_to_1y,
-    //         UTXOCohortId::UpTo2y => &mut self.up_to_2y,
-    //         UTXOCohortId::UpTo3y => &mut self.up_to_3y,
-    //         UTXOCohortId::UpTo5y => &mut self.up_to_5y,
-    //         UTXOCohortId::UpTo7y => &mut self.up_to_7y,
-    //         UTXOCohortId::UpTo10y => &mut self.up_to_10y,
-    //         UTXOCohortId::From1dTo1w => &mut self.from_1d_to_1w,
-    //         UTXOCohortId::From1wTo1m => &mut self.from_1w_to_1m,
-    //         UTXOCohortId::From1mTo3m => &mut self.from_1m_to_3m,
-    //         UTXOCohortId::From3mTo6m => &mut self.from_3m_to_6m,
-    //         UTXOCohortId::From6mTo1y => &mut self.from_6m_to_1y,
-    //         UTXOCohortId::From1yTo2y => &mut self.from_1y_to_2y,
-    //         UTXOCohortId::From2yTo3y => &mut self.from_2y_to_3y,
-    //         UTXOCohortId::From3yTo5y => &mut self.from_3y_to_5y,
-    //         UTXOCohortId::From5yTo7y => &mut self.from_5y_to_7y,
-    //         UTXOCohortId::From7yTo10y => &mut self.from_7y_to_10y,
-    //         UTXOCohortId::From1y => &mut self.from_1y,
-    //         UTXOCohortId::From2y => &mut self.from_2y,
-    //         UTXOCohortId::From4y => &mut self.from_4y,
-    //         UTXOCohortId::From10y => &mut self.from_10y,
-    //         UTXOCohortId::Year2009 => &mut self.year_2009,
-    //         UTXOCohortId::Year2010 => &mut self.year_2010,
-    //         UTXOCohortId::Year2011 => &mut self.year_2011,
-    //         UTXOCohortId::Year2012 => &mut self.year_2012,
-    //         UTXOCohortId::Year2013 => &mut self.year_2013,
-    //         UTXOCohortId::Year2014 => &mut self.year_2014,
-    //         UTXOCohortId::Year2015 => &mut self.year_2015,
-    //         UTXOCohortId::Year2016 => &mut self.year_2016,
-    //         UTXOCohortId::Year2017 => &mut self.year_2017,
-    //         UTXOCohortId::Year2018 => &mut self.year_2018,
-    //         UTXOCohortId::Year2019 => &mut self.year_2019,
-    //         UTXOCohortId::Year2020 => &mut self.year_2020,
-    //         UTXOCohortId::Year2021 => &mut self.year_2021,
-    //         UTXOCohortId::Year2022 => &mut self.year_2022,
-    //         UTXOCohortId::Year2023 => &mut self.year_2023,
-    //         UTXOCohortId::Year2024 => &mut self.year_2024,
-    //         UTXOCohortId::ShortTermHolders => &mut self.sth,
-    //         UTXOCohortId::LongTermHolders => &mut self.lth,
-    //     }
-    // }
 
     /// Excluding years since they're static
     pub fn duo_filtered_apply(
@@ -277,6 +232,14 @@ impl<T> SplitByUTXOCohort<T> {
             apply_if_previous_only(&mut self.up_to_10y);
         }
 
+        let is_up_to_15y = UTXO_FILTERS.up_to_15y.check_days_old(current_days_old);
+        let was_up_to_15y = UTXO_FILTERS.up_to_15y.check_days_old(previous_days_old);
+        if is_up_to_15y && !was_up_to_15y {
+            apply_if_current_only(&mut self.up_to_15y);
+        } else if was_up_to_15y && !is_up_to_15y {
+            apply_if_previous_only(&mut self.up_to_15y);
+        }
+
         let is_from_1d_to_1w = UTXO_FILTERS.from_1d_to_1w.check_days_old(current_days_old);
         let was_from_1d_to_1w = UTXO_FILTERS.from_1d_to_1w.check_days_old(previous_days_old);
         if is_from_1d_to_1w && !was_from_1d_to_1w {
@@ -359,6 +322,18 @@ impl<T> SplitByUTXOCohort<T> {
             apply_if_previous_only(&mut self.from_7y_to_10y);
         }
 
+        let is_from_10y_to_15y = UTXO_FILTERS
+            .from_10y_to_15y
+            .check_days_old(current_days_old);
+        let was_from_10y_to_15y = UTXO_FILTERS
+            .from_10y_to_15y
+            .check_days_old(previous_days_old);
+        if is_from_10y_to_15y && !was_from_10y_to_15y {
+            apply_if_current_only(&mut self.from_10y_to_15y);
+        } else if was_from_10y_to_15y && !is_from_10y_to_15y {
+            apply_if_previous_only(&mut self.from_10y_to_15y);
+        }
+
         let is_from_1y = UTXO_FILTERS.from_1y.check_days_old(current_days_old);
         let was_from_1y = UTXO_FILTERS.from_1y.check_days_old(previous_days_old);
         if is_from_1y && !was_from_1y {
@@ -389,6 +364,14 @@ impl<T> SplitByUTXOCohort<T> {
             apply_if_current_only(&mut self.from_10y);
         } else if was_from_10y && !is_from_10y {
             apply_if_previous_only(&mut self.from_10y);
+        }
+
+        let is_from_15y = UTXO_FILTERS.from_15y.check_days_old(current_days_old);
+        let was_from_15y = UTXO_FILTERS.from_15y.check_days_old(previous_days_old);
+        if is_from_15y && !was_from_15y {
+            apply_if_current_only(&mut self.from_15y);
+        } else if was_from_15y && !is_from_15y {
+            apply_if_previous_only(&mut self.from_15y);
         }
 
         let is_sth = UTXO_FILTERS.sth.check_days_old(current_days_old);
@@ -441,6 +424,8 @@ impl<T> SplitByUTXOCohort<T> {
             apply(&mut self.from_5y_to_7y);
         } else if UTXO_FILTERS.from_7y_to_10y.check(days_old, year) {
             apply(&mut self.from_7y_to_10y);
+        } else if UTXO_FILTERS.from_10y_to_15y.check(days_old, year) {
+            apply(&mut self.from_10y_to_15y);
         }
 
         if UTXO_FILTERS.year_2009.check(days_old, year) {
@@ -501,6 +486,16 @@ impl<T> SplitByUTXOCohort<T> {
 
         if UTXO_FILTERS.from_10y.check(days_old, year) {
             apply(&mut self.from_10y);
+        }
+
+        if UTXO_FILTERS.from_15y.check(days_old, year) {
+            apply(&mut self.from_15y);
+        }
+
+        if UTXO_FILTERS.up_to_15y.check(days_old, year) {
+            apply(&mut self.up_to_15y);
+        } else {
+            return;
         }
 
         if UTXO_FILTERS.up_to_10y.check(days_old, year) {
@@ -596,6 +591,7 @@ impl<T> SplitByUTXOCohort<T> {
             &self.up_to_5y,
             &self.up_to_7y,
             &self.up_to_10y,
+            &self.up_to_15y,
             &self.from_1d_to_1w,
             &self.from_1w_to_1m,
             &self.from_1m_to_3m,
@@ -606,10 +602,12 @@ impl<T> SplitByUTXOCohort<T> {
             &self.from_3y_to_5y,
             &self.from_5y_to_7y,
             &self.from_7y_to_10y,
+            &self.from_10y_to_15y,
             &self.from_1y,
             &self.from_2y,
             &self.from_4y,
             &self.from_10y,
+            &self.from_15y,
             &self.year_2009,
             &self.year_2010,
             &self.year_2011,
@@ -647,6 +645,7 @@ impl<T> SplitByUTXOCohort<T> {
             &mut self.up_to_5y,
             &mut self.up_to_7y,
             &mut self.up_to_10y,
+            &mut self.up_to_15y,
             &mut self.from_1d_to_1w,
             &mut self.from_1w_to_1m,
             &mut self.from_1m_to_3m,
@@ -657,10 +656,12 @@ impl<T> SplitByUTXOCohort<T> {
             &mut self.from_3y_to_5y,
             &mut self.from_5y_to_7y,
             &mut self.from_7y_to_10y,
+            &mut self.from_10y_to_15y,
             &mut self.from_1y,
             &mut self.from_2y,
             &mut self.from_4y,
             &mut self.from_10y,
+            &mut self.from_15y,
             &mut self.year_2009,
             &mut self.year_2010,
             &mut self.year_2011,

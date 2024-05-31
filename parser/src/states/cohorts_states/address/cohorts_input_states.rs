@@ -1,7 +1,7 @@
+use bitcoin::Amount;
 use derive_deref::{Deref, DerefMut};
 
 use crate::{
-    bitcoin::sats_to_btc,
     states::InputState,
     structs::{AddressRealizedData, LiquidityClassification, SplitByLiquidity},
 };
@@ -18,25 +18,28 @@ impl AddressCohortsInputStates {
         liquidity_classification: &LiquidityClassification,
     ) {
         let count = realized_data.utxos_destroyed as f64;
-        let volume = sats_to_btc(realized_data.sent);
+        let volume = realized_data.sent;
 
         let split_count = liquidity_classification.split(count);
-        let split_volume = liquidity_classification.split(volume);
+        let split_volume = liquidity_classification.split(volume.to_sat() as f64);
 
         let iterate = move |state: &mut SplitByLiquidity<InputState>| {
             state.all.iterate(count, volume);
 
-            state
-                .illiquid
-                .iterate(split_count.illiquid, split_volume.illiquid);
+            state.illiquid.iterate(
+                split_count.illiquid,
+                Amount::from_sat(split_volume.illiquid.round() as u64),
+            );
 
-            state
-                .liquid
-                .iterate(split_count.liquid, split_volume.liquid);
+            state.liquid.iterate(
+                split_count.liquid,
+                Amount::from_sat(split_volume.liquid.round() as u64),
+            );
 
-            state
-                .highly_liquid
-                .iterate(split_count.highly_liquid, split_volume.highly_liquid);
+            state.highly_liquid.iterate(
+                split_count.highly_liquid,
+                Amount::from_sat(split_volume.highly_liquid.round() as u64),
+            );
         };
 
         self.iterate(&realized_data.initial_address_data, iterate);

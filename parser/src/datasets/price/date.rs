@@ -35,6 +35,12 @@ pub struct DateDataset {
     pub price_89d_sma: DateMap<f32>,
     pub price_144d_sma: DateMap<f32>,
     pub price_200w_sma: DateMap<f32>,
+    // volatility
+    // sats per dollar
+    // 1year return
+    // 4year return
+    // 4year yoy return
+    // 10y return
 }
 
 impl DateDataset {

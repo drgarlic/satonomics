@@ -1,5 +1,6 @@
 use std::thread;
 
+use bitcoin::Amount;
 use derive_deref::{Deref, DerefMut};
 
 use crate::{
@@ -28,11 +29,11 @@ impl UTXOCohortsDurableStates {
                 .iter()
                 .flat_map(|date_data| &date_data.blocks)
                 .for_each(|block_data| {
-                    let amount = block_data.amount;
+                    let amount = *block_data.amount;
                     let utxo_count = block_data.spendable_outputs as usize;
 
                     // No need to either insert or remove if 0
-                    if amount == 0 {
+                    if amount == Amount::ZERO {
                         return;
                     }
 
@@ -60,11 +61,11 @@ impl UTXOCohortsDurableStates {
         last_block_data: &BlockData,
         previous_last_block_data: Option<&BlockData>,
     ) {
-        let amount = block_data.amount;
+        let amount = *block_data.amount;
         let utxo_count = block_data.spendable_outputs as usize;
 
         // No need to either insert or remove if 0
-        if amount == 0 {
+        if amount == Amount::ZERO {
             return;
         }
 
@@ -131,7 +132,7 @@ impl UTXOCohortsDurableStates {
         let utxo_count = sent_data.count as usize;
 
         // No need to either insert or remove if 0
-        if amount == 0 {
+        if amount == Amount::ZERO {
             return;
         }
 
@@ -216,6 +217,10 @@ impl UTXOCohortsDurableStates {
                 self.up_to_10y
                     .compute_one_shot_states(block_price, date_price)
             });
+            let up_to_15y_handle = scope.spawn(|| {
+                self.up_to_15y
+                    .compute_one_shot_states(block_price, date_price)
+            });
 
             let from_1d_to_1w_handle = scope.spawn(|| {
                 self.from_1d_to_1w
@@ -257,6 +262,10 @@ impl UTXOCohortsDurableStates {
                 self.from_7y_to_10y
                     .compute_one_shot_states(block_price, date_price)
             });
+            let from_10y_to_15y_handle = scope.spawn(|| {
+                self.from_10y_to_15y
+                    .compute_one_shot_states(block_price, date_price)
+            });
 
             let from_1y_handle = scope.spawn(|| {
                 self.from_1y
@@ -272,6 +281,10 @@ impl UTXOCohortsDurableStates {
             });
             let from_10y_handle = scope.spawn(|| {
                 self.from_10y
+                    .compute_one_shot_states(block_price, date_price)
+            });
+            let from_15y_handle = scope.spawn(|| {
+                self.from_15y
                     .compute_one_shot_states(block_price, date_price)
             });
 
@@ -358,6 +371,7 @@ impl UTXOCohortsDurableStates {
                 up_to_5y: up_to_5y_handle.join().unwrap(),
                 up_to_7y: up_to_7y_handle.join().unwrap(),
                 up_to_10y: up_to_10y_handle.join().unwrap(),
+                up_to_15y: up_to_15y_handle.join().unwrap(),
 
                 from_1d_to_1w: from_1d_to_1w_handle.join().unwrap(),
                 from_1w_to_1m: from_1w_to_1m_handle.join().unwrap(),
@@ -369,11 +383,13 @@ impl UTXOCohortsDurableStates {
                 from_3y_to_5y: from_3y_to_5y_handle.join().unwrap(),
                 from_5y_to_7y: from_5y_to_7y_handle.join().unwrap(),
                 from_7y_to_10y: from_7y_to_10y_handle.join().unwrap(),
+                from_10y_to_15y: from_10y_to_15y_handle.join().unwrap(),
 
                 from_1y: from_1y_handle.join().unwrap(),
                 from_2y: from_2y_handle.join().unwrap(),
                 from_4y: from_4y_handle.join().unwrap(),
                 from_10y: from_10y_handle.join().unwrap(),
+                from_15y: from_15y_handle.join().unwrap(),
 
                 year_2009: year_2009_handle.join().unwrap(),
                 year_2010: year_2010_handle.join().unwrap(),

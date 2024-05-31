@@ -1,5 +1,6 @@
 use std::{collections::BTreeMap, ops::RangeInclusive};
 
+use bitcoin::Amount;
 use chrono::NaiveDate;
 use itertools::Itertools;
 
@@ -52,12 +53,13 @@ pub struct InsertData<'a> {
     pub address_cohorts_realized_states: &'a Option<AddressCohortsRealizedStates>,
     pub address_index_to_address_realized_data: &'a BTreeMap<u32, AddressRealizedData>,
     pub address_index_to_removed_address_data: &'a BTreeMap<u32, AddressData>,
+    pub amount_sent: Amount,
     pub block_interval: u32,
     pub block_price: f32,
     pub block_size: usize,
     pub block_vbytes: u64,
     pub block_weight: u64,
-    pub coinbase: u64,
+    pub coinbase: Amount,
     pub compute_addresses: bool,
     pub databases: &'a Databases,
     pub date: NaiveDate,
@@ -65,12 +67,11 @@ pub struct InsertData<'a> {
     pub date_first_height: usize,
     pub date_price: f32,
     pub difficulty: f64,
-    pub fees: &'a Vec<u64>,
+    pub fees: &'a Vec<Amount>,
     pub height: usize,
     pub is_date_last_block: bool,
-    pub satblocks_destroyed: u64,
-    pub satdays_destroyed: u64,
-    pub sats_sent: u64,
+    pub satblocks_destroyed: Amount,
+    pub satdays_destroyed: Amount,
     pub states: &'a States,
     pub timestamp: u32,
     pub transaction_count: usize,

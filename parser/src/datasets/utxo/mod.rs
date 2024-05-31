@@ -51,6 +51,8 @@ impl UTXODatasets {
                 scope.spawn(|| UTXODataset::import(parent_path, UTXOCohortId::UpTo7y));
             let up_to_10y_handle =
                 scope.spawn(|| UTXODataset::import(parent_path, UTXOCohortId::UpTo10y));
+            let up_to_15y_handle =
+                scope.spawn(|| UTXODataset::import(parent_path, UTXOCohortId::UpTo15y));
 
             let from_1d_to_1w_handle =
                 scope.spawn(|| UTXODataset::import(parent_path, UTXOCohortId::From1dTo1w));
@@ -72,6 +74,8 @@ impl UTXODatasets {
                 scope.spawn(|| UTXODataset::import(parent_path, UTXOCohortId::From5yTo7y));
             let from_7y_to_10y_handle =
                 scope.spawn(|| UTXODataset::import(parent_path, UTXOCohortId::From7yTo10y));
+            let from_10y_to_15y_handle =
+                scope.spawn(|| UTXODataset::import(parent_path, UTXOCohortId::From10yTo15y));
 
             let from_1y_handle =
                 scope.spawn(|| UTXODataset::import(parent_path, UTXOCohortId::From1y));
@@ -81,6 +85,8 @@ impl UTXODatasets {
                 scope.spawn(|| UTXODataset::import(parent_path, UTXOCohortId::From4y));
             let from_10y_handle =
                 scope.spawn(|| UTXODataset::import(parent_path, UTXOCohortId::From10y));
+            let from_15y_handle =
+                scope.spawn(|| UTXODataset::import(parent_path, UTXOCohortId::From15y));
 
             let year_2009_handle =
                 scope.spawn(|| UTXODataset::import(parent_path, UTXOCohortId::Year2009));
@@ -136,6 +142,7 @@ impl UTXODatasets {
                     up_to_5y: up_to_5y_handle.join().unwrap()?,
                     up_to_7y: up_to_7y_handle.join().unwrap()?,
                     up_to_10y: up_to_10y_handle.join().unwrap()?,
+                    up_to_15y: up_to_15y_handle.join().unwrap()?,
 
                     from_1d_to_1w: from_1d_to_1w_handle.join().unwrap()?,
                     from_1w_to_1m: from_1w_to_1m_handle.join().unwrap()?,
@@ -147,11 +154,13 @@ impl UTXODatasets {
                     from_3y_to_5y: from_3y_to_5y_handle.join().unwrap()?,
                     from_5y_to_7y: from_5y_to_7y_handle.join().unwrap()?,
                     from_7y_to_10y: from_7y_to_10y_handle.join().unwrap()?,
+                    from_10y_to_15y: from_10y_to_15y_handle.join().unwrap()?,
 
                     from_1y: from_1y_handle.join().unwrap()?,
                     from_2y: from_2y_handle.join().unwrap()?,
                     from_4y: from_4y_handle.join().unwrap()?,
                     from_10y: from_10y_handle.join().unwrap()?,
+                    from_15y: from_15y_handle.join().unwrap()?,
 
                     sth,
                     lth,

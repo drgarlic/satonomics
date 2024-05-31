@@ -1,5 +1,4 @@
 use crate::{
-    bitcoin::sats_to_btc,
     structs::{AnyBiMap, BiMap, DateMap, HeightMap},
     utils::{ONE_DAY_IN_DAYS, ONE_YEAR_IN_DAYS, THREE_MONTHS_IN_DAYS, TWO_WEEK_IN_DAYS},
 };
@@ -144,7 +143,7 @@ impl CointimeDataset {
     ) {
         self.coinblocks_destroyed
             .height
-            .insert(height, sats_to_btc(satblocks_destroyed) as f32);
+            .insert(height, satblocks_destroyed.to_btc() as f32);
 
         if is_date_last_block {
             self.coinblocks_destroyed

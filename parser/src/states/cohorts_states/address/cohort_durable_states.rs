@@ -1,5 +1,7 @@
 use std::thread;
 
+use bitcoin::Amount;
+
 use crate::{
     states::{DurableStates, OneShotStates},
     structs::{LiquiditySplitResult, SplitByLiquidity},
@@ -14,30 +16,32 @@ pub struct AddressCohortDurableStates {
 impl AddressCohortDurableStates {
     pub fn increment(
         &mut self,
-        sats: u64,
+        amount: Amount,
         utxo_count: usize,
         mean_cents_paid: u32,
-        split_sat_amount: &LiquiditySplitResult,
+        split_amount: &LiquiditySplitResult,
         split_utxo_count: &LiquiditySplitResult,
     ) {
         self.address_count += 1;
 
-        self.split.all.increment(sats, utxo_count, mean_cents_paid);
+        self.split
+            .all
+            .increment(amount, utxo_count, mean_cents_paid);
 
         self.split.illiquid.increment(
-            split_sat_amount.illiquid.round() as u64,
+            Amount::from_sat(split_amount.illiquid.round() as u64),
             split_utxo_count.illiquid.round() as usize,
             mean_cents_paid,
         );
 
         self.split.liquid.increment(
-            split_sat_amount.liquid.round() as u64,
+            Amount::from_sat(split_amount.liquid.round() as u64),
             split_utxo_count.liquid.round() as usize,
             mean_cents_paid,
         );
 
         self.split.highly_liquid.increment(
-            split_sat_amount.highly_liquid.round() as u64,
+            Amount::from_sat(split_amount.highly_liquid.round() as u64),
             split_utxo_count.highly_liquid.round() as usize,
             mean_cents_paid,
         );
@@ -45,7 +49,7 @@ impl AddressCohortDurableStates {
 
     pub fn decrement(
         &mut self,
-        sats: u64,
+        amount: Amount,
         utxo_count: usize,
         mean_cents_paid: u32,
         split_sat_amount: &LiquiditySplitResult,
@@ -53,22 +57,24 @@ impl AddressCohortDurableStates {
     ) {
         self.address_count -= 1;
 
-        self.split.all.decrement(sats, utxo_count, mean_cents_paid);
+        self.split
+            .all
+            .decrement(amount, utxo_count, mean_cents_paid);
 
         self.split.illiquid.decrement(
-            split_sat_amount.illiquid.round() as u64,
+            Amount::from_sat(split_sat_amount.illiquid.round() as u64),
             split_utxo_count.illiquid.round() as usize,
             mean_cents_paid,
         );
 
         self.split.liquid.decrement(
-            split_sat_amount.liquid.round() as u64,
+            Amount::from_sat(split_sat_amount.liquid.round() as u64),
             split_utxo_count.liquid.round() as usize,
             mean_cents_paid,
         );
 
         self.split.highly_liquid.decrement(
-            split_sat_amount.highly_liquid.round() as u64,
+            Amount::from_sat(split_sat_amount.highly_liquid.round() as u64),
             split_utxo_count.highly_liquid.round() as usize,
             mean_cents_paid,
         );

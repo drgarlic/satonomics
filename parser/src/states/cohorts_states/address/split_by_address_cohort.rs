@@ -64,7 +64,7 @@ impl<T> SplitByAddressCohort<T> {
         }
 
         if let Some(state) = self.get_mut(&AddressSplit::Size(AddressSize::from_amount(
-            address_data.amount,
+            *address_data.amount,
         ))) {
             iterate(state);
         }

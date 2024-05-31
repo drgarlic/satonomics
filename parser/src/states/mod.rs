@@ -27,7 +27,7 @@ pub struct States {
     pub utxo_cohorts_durable_states: UTXOCohortsDurableStates,
     pub tx_index_to_tx_data: TxIndexToTxData,
     pub txout_index_to_address_index: TxoutIndexToAddressIndex,
-    pub txout_index_to_sats: TxoutIndexToSats,
+    pub txout_index_to_amount: TxoutIndexToAmount,
 }
 
 impl States {
@@ -38,7 +38,7 @@ impl States {
 
         let txout_index_to_address_index_handle = thread::spawn(TxoutIndexToAddressIndex::import);
 
-        let txout_index_to_sats_handle = thread::spawn(TxoutIndexToSats::import);
+        let txout_index_to_amount_handle = thread::spawn(TxoutIndexToAmount::import);
 
         let date_data_vec_handle = thread::spawn(DateDataVec::import);
 
@@ -48,7 +48,7 @@ impl States {
 
         let txout_index_to_address_index = txout_index_to_address_index_handle.join().unwrap()?;
 
-        let txout_index_to_sats = txout_index_to_sats_handle.join().unwrap()?;
+        let txout_index_to_amount = txout_index_to_amount_handle.join().unwrap()?;
 
         let tx_index_to_tx_data = tx_index_to_tx_data_handle.join().unwrap()?;
 
@@ -66,7 +66,7 @@ impl States {
             date_data_vec,
             tx_index_to_tx_data,
             txout_index_to_address_index,
-            txout_index_to_sats,
+            txout_index_to_amount,
             utxo_cohorts_durable_states,
         })
     }
@@ -76,7 +76,7 @@ impl States {
 
         let _ = self.date_data_vec.reset();
         let _ = self.tx_index_to_tx_data.reset();
-        let _ = self.txout_index_to_sats.reset();
+        let _ = self.txout_index_to_amount.reset();
 
         self.utxo_cohorts_durable_states = UTXOCohortsDurableStates::default();
 
@@ -97,7 +97,7 @@ impl States {
             s.spawn(|| self.date_data_vec.export().unwrap());
             s.spawn(|| self.tx_index_to_tx_data.export().unwrap());
             s.spawn(|| self.txout_index_to_address_index.export().unwrap());
-            s.spawn(|| self.txout_index_to_sats.export().unwrap());
+            s.spawn(|| self.txout_index_to_amount.export().unwrap());
         });
 
         Ok(())

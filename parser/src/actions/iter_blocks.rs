@@ -42,6 +42,10 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
     // txout_index_to_sats: 5.89GB RAM vs 2.53GB ROM
     // tx_index_to_tx_data: 2.73GB RAM vs 1.24GB ROM
 
+    // while true {
+    //     dbg!(memory_stats::memory_stats());
+    // }
+
     println!("{:?} - Imported states", Local::now());
 
     let first_unsafe_heights =

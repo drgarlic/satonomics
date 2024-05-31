@@ -204,11 +204,14 @@ where
                 #[allow(clippy::map_entry)] // Can't be mut and then use read_dir()
                 if !self.imported.contains_key(&chunk_start) {
                     let dir_content = self.read_dir();
+
                     let path = dir_content.get(&chunk_start).unwrap_or_else(|| {
                         dbg!(self.path(), chunk_start, &dir_content);
                         panic!();
                     });
+
                     let serialized = self.import(path).unwrap();
+
                     self.imported.insert(chunk_start, serialized);
                 }
 

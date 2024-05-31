@@ -1,5 +1,4 @@
 use crate::{
-    bitcoin::sats_to_btc,
     datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
     states::SupplyState,
     structs::{AnyBiMap, BiMap, DateMap, HeightMap},
@@ -42,7 +41,7 @@ impl SupplySubDataset {
         }: &InsertData,
         state: &SupplyState,
     ) {
-        let total_supply = self.total.height.insert(height, sats_to_btc(state.supply));
+        let total_supply = self.total.height.insert(height, state.supply.to_btc());
 
         if is_date_last_block {
             self.total.date.insert(date, total_supply);

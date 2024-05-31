@@ -1,3 +1,4 @@
+use bitcoin::Amount;
 use sanakirja::{direct_repr, Storable, UnsizedStorable};
 
 use super::{AddressData, AddressType};
@@ -5,7 +6,7 @@ use super::{AddressData, AddressType};
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Default)]
 pub struct EmptyAddressData {
     pub address_type: AddressType,
-    pub transfered: u64,
+    pub transfered: Amount,
 }
 direct_repr!(EmptyAddressData);
 
@@ -18,7 +19,7 @@ impl EmptyAddressData {
 
         Self {
             address_type: non_empty.address_type,
-            transfered: non_empty.sent,
+            transfered: *non_empty.sent,
         }
     }
 

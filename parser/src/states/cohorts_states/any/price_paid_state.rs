@@ -1,3 +1,5 @@
+use bitcoin::Amount;
+
 #[derive(Default, Debug)]
 pub struct PricePaidState {
     pub realized_cap: f32,
@@ -22,11 +24,11 @@ pub struct PricePaidState {
     pub pp_90p: Option<f32>,
     pub pp_95p: Option<f32>,
 
-    pub processed_amount: u64,
+    pub processed_amount: Amount,
 }
 
 impl PricePaidState {
-    pub fn iterate(&mut self, price: f32, btc_amount: f64, sat_amount: u64, total_supply: u64) {
+    pub fn iterate(&mut self, price: f32, amount: Amount, total_supply: Amount) {
         let PricePaidState {
             processed_amount,
             realized_cap,
@@ -51,15 +53,18 @@ impl PricePaidState {
             pp_95p,
         } = self;
 
-        *realized_cap += btc_amount as f32 * price;
+        *realized_cap += amount.to_btc() as f32 * price;
 
-        *processed_amount += sat_amount;
+        *processed_amount += amount;
+
+        let processed_amount_in_btc = processed_amount.to_btc();
+        let total_supply_in_btc = total_supply.to_btc();
 
         if pp_95p.is_some() {
             return;
         }
 
-        if *processed_amount as f32 >= total_supply as f32 * 0.95 {
+        if processed_amount_in_btc >= total_supply_in_btc * 0.95 {
             pp_95p.replace(price);
         }
 
@@ -67,7 +72,7 @@ impl PricePaidState {
             return;
         }
 
-        if *processed_amount as f32 >= total_supply as f32 * 0.9 {
+        if processed_amount_in_btc >= total_supply_in_btc * 0.9 {
             pp_90p.replace(price);
         }
 
@@ -75,7 +80,7 @@ impl PricePaidState {
             return;
         }
 
-        if *processed_amount as f32 >= total_supply as f32 * 0.85 {
+        if processed_amount_in_btc >= total_supply_in_btc * 0.85 {
             pp_85p.replace(price);
         }
 
@@ -83,7 +88,7 @@ impl PricePaidState {
             return;
         }
 
-        if *processed_amount as f32 >= total_supply as f32 * 0.8 {
+        if processed_amount_in_btc >= total_supply_in_btc * 0.8 {
             pp_80p.replace(price);
         }
 
@@ -91,7 +96,7 @@ impl PricePaidState {
             return;
         }
 
-        if *processed_amount as f32 >= total_supply as f32 * 0.75 {
+        if processed_amount_in_btc >= total_supply_in_btc * 0.75 {
             pp_75p.replace(price);
         }
 
@@ -99,7 +104,7 @@ impl PricePaidState {
             return;
         }
 
-        if *processed_amount as f32 >= total_supply as f32 * 0.7 {
+        if processed_amount_in_btc >= total_supply_in_btc * 0.7 {
             pp_70p.replace(price);
         }
 
@@ -107,7 +112,7 @@ impl PricePaidState {
             return;
         }
 
-        if *processed_amount as f32 >= total_supply as f32 * 0.65 {
+        if processed_amount_in_btc >= total_supply_in_btc * 0.65 {
             pp_65p.replace(price);
         }
 
@@ -115,7 +120,7 @@ impl PricePaidState {
             return;
         }
 
-        if *processed_amount as f32 >= total_supply as f32 * 0.6 {
+        if processed_amount_in_btc >= total_supply_in_btc * 0.6 {
             pp_60p.replace(price);
         }
 
@@ -123,7 +128,7 @@ impl PricePaidState {
             return;
         }
 
-        if *processed_amount as f32 >= total_supply as f32 * 0.55 {
+        if processed_amount_in_btc >= total_supply_in_btc * 0.55 {
             pp_55p.replace(price);
         }
 
@@ -131,7 +136,7 @@ impl PricePaidState {
             return;
         }
 
-        if *processed_amount as f32 >= total_supply as f32 * 0.5 {
+        if processed_amount_in_btc >= total_supply_in_btc * 0.5 {
             pp_median.replace(price);
         }
 
@@ -139,7 +144,7 @@ impl PricePaidState {
             return;
         }
 
-        if *processed_amount as f32 >= total_supply as f32 * 0.45 {
+        if processed_amount_in_btc >= total_supply_in_btc * 0.45 {
             pp_45p.replace(price);
         }
 
@@ -147,7 +152,7 @@ impl PricePaidState {
             return;
         }
 
-        if *processed_amount as f32 >= total_supply as f32 * 0.4 {
+        if processed_amount_in_btc >= total_supply_in_btc * 0.4 {
             pp_40p.replace(price);
         }
 
@@ -155,7 +160,7 @@ impl PricePaidState {
             return;
         }
 
-        if *processed_amount as f32 >= total_supply as f32 * 0.35 {
+        if processed_amount_in_btc >= total_supply_in_btc * 0.35 {
             pp_35p.replace(price);
         }
 
@@ -163,7 +168,7 @@ impl PricePaidState {
             return;
         }
 
-        if *processed_amount as f32 >= total_supply as f32 * 0.3 {
+        if processed_amount_in_btc >= total_supply_in_btc * 0.3 {
             pp_30p.replace(price);
         }
 
@@ -171,7 +176,7 @@ impl PricePaidState {
             return;
         }
 
-        if *processed_amount as f32 >= total_supply as f32 * 0.25 {
+        if processed_amount_in_btc >= total_supply_in_btc * 0.25 {
             pp_25p.replace(price);
         }
 
@@ -179,7 +184,7 @@ impl PricePaidState {
             return;
         }
 
-        if *processed_amount as f32 >= total_supply as f32 * 0.2 {
+        if processed_amount_in_btc >= total_supply_in_btc * 0.2 {
             pp_20p.replace(price);
         }
 
@@ -187,7 +192,7 @@ impl PricePaidState {
             return;
         }
 
-        if *processed_amount as f32 >= total_supply as f32 * 0.15 {
+        if processed_amount_in_btc >= total_supply_in_btc * 0.15 {
             pp_15p.replace(price);
         }
 
@@ -195,7 +200,7 @@ impl PricePaidState {
             return;
         }
 
-        if *processed_amount as f32 >= total_supply as f32 * 0.1 {
+        if processed_amount_in_btc >= total_supply_in_btc * 0.1 {
             pp_10p.replace(price);
         }
 
@@ -203,7 +208,7 @@ impl PricePaidState {
             return;
         }
 
-        if *processed_amount as f32 >= total_supply as f32 * 0.05 {
+        if processed_amount_in_btc >= total_supply_in_btc * 0.05 {
             pp_05p.replace(price);
         }
     }

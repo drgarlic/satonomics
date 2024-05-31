@@ -1,6 +1,6 @@
 use std::f64::EPSILON;
 
-use crate::bitcoin::sats_to_btc;
+use bitcoin::Amount;
 
 pub struct LiquidityClassification {
     illiquid: f64,
@@ -12,8 +12,8 @@ impl LiquidityClassification {
     /// Following this:
     /// https://insights.glassnode.com/bitcoin-liquid-supply/
     /// https://www.desmos.com/calculator/dutgni5rtj
-    pub fn new(sent: u64, received: u64) -> Self {
-        if received == 0 {
+    pub fn new(sent: Amount, received: Amount) -> Self {
+        if received == Amount::ZERO {
             dbg!(sent, received);
             panic!()
         }
@@ -23,13 +23,13 @@ impl LiquidityClassification {
                 panic!("Shouldn't be possible");
             }
 
-            if sent == 0 {
+            if sent == Amount::ZERO {
                 0.0
             } else {
-                let liquidity = sats_to_btc(sent) / sats_to_btc(received);
+                let liquidity = sent.to_btc() / received.to_btc();
 
                 if liquidity.is_nan() {
-                    dbg!(sent, received, sats_to_btc(sent) / sats_to_btc(received));
+                    dbg!(sent, received);
                     unreachable!()
                 } else {
                     liquidity

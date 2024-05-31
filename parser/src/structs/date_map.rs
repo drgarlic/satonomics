@@ -210,6 +210,11 @@ where
 
                     if let Some(path) = dir_content.get(&year) {
                         let serialized = self.import(path).unwrap();
+                        //     .unwrap_or(SerializedDateMap {
+                        //     version: self.version,
+                        //     map: BTreeMap::default(),
+                        // });
+
                         self.imported.insert(year, serialized);
                     }
                 }

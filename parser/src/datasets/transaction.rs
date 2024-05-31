@@ -1,5 +1,4 @@
 use crate::{
-    bitcoin::sats_to_btc,
     datasets::InsertData,
     structs::{AnyBiMap, BiMap},
     utils::{ONE_DAY_IN_S, ONE_YEAR_IN_DAYS},
@@ -22,6 +21,7 @@ pub struct TransactionDataset {
     // Min
     // Max
     // 10th 25th 75th 90th percentiles
+    // type
 
     // Computed
     pub annualized_volume: BiMap<f32>,
@@ -60,7 +60,7 @@ impl TransactionDataset {
         &InsertData {
             height,
             date,
-            sats_sent,
+            amount_sent,
             transaction_count,
             is_date_last_block,
             date_blocks_range,
@@ -70,7 +70,7 @@ impl TransactionDataset {
     ) {
         self.count.height.insert(height, transaction_count);
 
-        let volume = self.volume.height.insert(height, sats_to_btc(sats_sent));
+        let volume = self.volume.height.insert(height, amount_sent.to_btc());
 
         self.volume_in_dollars
             .height

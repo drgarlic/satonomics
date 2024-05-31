@@ -1,3 +1,5 @@
+use bitcoin::Amount;
+
 use crate::{
     bitcoin::TARGET_BLOCKS_PER_DAY,
     datasets::AnyDataset,
@@ -14,11 +16,11 @@ pub struct MiningDataset {
     // Inserted
     pub blocks_mined: DateMap<usize>,
     pub total_blocks_mined: DateMap<usize>,
-    pub coinbase: BiMap<u64>,
+    pub coinbase: BiMap<f64>,
     pub coinbase_in_dollars: BiMap<f32>,
     // pub cumulative_coinbase: BiMap<f32>,
     // pub cumulative_coinbase_in_dollars: BiMap<f32>,
-    pub fees: BiMap<u64>,
+    pub fees: BiMap<f64>,
     pub fees_in_dollars: BiMap<f32>,
     // pub cumulative_fees: BiMap<f32>,
     // pub cumulative_fees_in_dollars: BiMap<f32>,
@@ -41,19 +43,19 @@ pub struct MiningDataset {
     // pub _10th_percentile_fee_price: BiMap<f32>,
     // pub min_fee_price: BiMap<f32>,
     // -
-    pub subsidy: BiMap<u64>,
+    pub subsidy: BiMap<f64>,
     pub subsidy_in_dollars: BiMap<f32>,
-    pub cumulative_subsidy: BiMap<u64>,
+    pub cumulative_subsidy: BiMap<f64>,
     // pub cumulative_subsidy_in_dollars: BiMap<f32>,
-    pub cumulative_coinbase: BiMap<u64>,
+    pub cumulative_coinbase: BiMap<f64>,
     // pub cumulative_coinbase_in_dollars: BiMap<f32>,
-    pub cumulative_fees: BiMap<u64>,
+    pub cumulative_fees: BiMap<f64>,
     // pub cumulative_fees_in_dollars: BiMap<f32>,
-    pub last_coinbase: DateMap<u64>,
+    pub last_coinbase: DateMap<f64>,
     pub last_coinbase_in_dollars: DateMap<f32>,
-    pub last_fees: DateMap<u64>,
+    pub last_fees: DateMap<f64>,
     pub last_fees_in_dollars: DateMap<f32>,
-    pub last_subsidy: DateMap<u64>,
+    pub last_subsidy: DateMap<f64>,
     pub last_subsidy_in_dollars: DateMap<f32>,
     pub difficulty: BiMap<f64>,
     pub block_size: HeightMap<f32>,   // in MB
@@ -64,7 +66,7 @@ pub struct MiningDataset {
     // Computed
     pub cumulative_block_size: BiMap<f32>,
     pub cumulative_subsidy_in_dollars: BiMap<f32>,
-    pub annualized_issuance: BiMap<u64>,
+    pub annualized_issuance: BiMap<f64>,
     pub yearly_inflation_rate: BiMap<f64>,
     pub blocks_mined_target: DateMap<f32>,
     pub blocks_mined_1w_sma: DateMap<f32>,
@@ -161,26 +163,29 @@ impl MiningDataset {
             ..
         }: &InsertData,
     ) {
-        self.coinbase.height.insert(height, coinbase);
+        self.coinbase.height.insert(height, coinbase.to_btc());
 
         let coinbase_in_dollars = self
             .coinbase_in_dollars
             .height
-            .insert(height, coinbase as f32 * block_price);
+            .insert(height, coinbase.to_btc() as f32 * block_price);
 
-        let sumed_fees = self.fees.height.insert(height, fees.iter().sum());
+        let sumed_fees = Amount::from_sat(fees.iter().map(|amount| amount.to_sat()).sum());
+
+        self.fees.height.insert(height, sumed_fees.to_btc());
 
         let sumed_fees_in_dollars = self
             .fees_in_dollars
             .height
-            .insert(height, sumed_fees as f32 * block_price);
+            .insert(height, sumed_fees.to_btc() as f32 * block_price);
 
-        let subsidy = self.subsidy.height.insert(height, coinbase - sumed_fees);
+        let subsidy = coinbase - sumed_fees;
+        self.subsidy.height.insert(height, subsidy.to_btc());
 
         let subsidy_in_dollars = self
             .subsidy_in_dollars
             .height
-            .insert(height, subsidy as f32 * block_price);
+            .insert(height, subsidy.to_btc() as f32 * block_price);
 
         self.difficulty.height.insert(height, difficulty);
 
@@ -207,17 +212,17 @@ impl MiningDataset {
             self.subsidy_in_dollars
                 .date_insert_sum_range(date, date_blocks_range);
 
-            self.last_coinbase.insert(date, coinbase);
+            self.last_coinbase.insert(date, coinbase.to_btc());
 
             self.last_coinbase_in_dollars
                 .insert(date, coinbase_in_dollars);
 
-            self.last_subsidy.insert(date, subsidy);
+            self.last_subsidy.insert(date, subsidy.to_btc());
 
             self.last_subsidy_in_dollars
                 .insert(date, subsidy_in_dollars);
 
-            self.last_fees.insert(date, sumed_fees);
+            self.last_fees.insert(date, sumed_fees.to_btc());
 
             self.last_fees_in_dollars
                 .insert(date, sumed_fees_in_dollars);

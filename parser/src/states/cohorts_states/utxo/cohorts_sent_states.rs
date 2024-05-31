@@ -4,7 +4,6 @@ use derive_deref::{Deref, DerefMut};
 
 use crate::{
     actions::SentData,
-    bitcoin::sats_to_btc,
     states::{DateDataVec, InputState, RealizedState},
     structs::BlockPath,
     utils::{difference_in_days_between_timestamps, timestamp_to_year},
@@ -42,13 +41,15 @@ impl UTXOCohortsSentStates {
 
                     let previous_price = block_data.price;
 
-                    let btc_sent = sats_to_btc(sent_data.volume);
+                    let amount_sent = sent_data.volume;
+
+                    let amount_sent_as_btc = amount_sent.to_btc();
 
                     self.initial_filtered_apply(&days_old, &year, |state| {
-                        state.input.iterate(sent_data.count as f64, btc_sent);
+                        state.input.iterate(sent_data.count as f64, amount_sent);
 
-                        let previous_dollar_amount = previous_price * btc_sent as f32;
-                        let current_dollar_amount = current_price * btc_sent as f32;
+                        let previous_dollar_amount = previous_price * amount_sent_as_btc as f32;
+                        let current_dollar_amount = current_price * amount_sent_as_btc as f32;
 
                         if previous_dollar_amount < current_dollar_amount {
                             state.realized.realized_profit +=

@@ -1,5 +1,7 @@
 // use super::AddressData;
 
+use bitcoin::Amount;
+
 #[derive(PartialEq, PartialOrd, Ord, Eq, Debug)]
 pub enum AddressSize {
     Empty,
@@ -14,8 +16,8 @@ pub enum AddressSize {
 }
 
 impl AddressSize {
-    pub fn from_amount(amount: u64) -> Self {
-        match amount {
+    pub fn from_amount(amount: Amount) -> Self {
+        match amount.to_sat() {
             0 => Self::Empty,
             1..=9_999_999 => Self::Plankton,
             10_000_000..=99_999_999 => Self::Shrimp,

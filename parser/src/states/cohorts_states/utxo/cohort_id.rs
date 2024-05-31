@@ -14,6 +14,7 @@ pub enum UTXOCohortId {
     UpTo5y,
     UpTo7y,
     UpTo10y,
+    UpTo15y,
 
     From1dTo1w,
     From1wTo1m,
@@ -25,11 +26,13 @@ pub enum UTXOCohortId {
     From3yTo5y,
     From5yTo7y,
     From7yTo10y,
+    From10yTo15y,
 
     From1y,
     From2y,
     From4y,
     From10y,
+    From15y,
 
     Year2009,
     Year2010,
@@ -69,6 +72,7 @@ impl UTXOCohortId {
             UTXOCohortId::UpTo5y => "up_to_5y",
             UTXOCohortId::UpTo7y => "up_to_7y",
             UTXOCohortId::UpTo10y => "up_to_10y",
+            UTXOCohortId::UpTo15y => "up_to_15y",
 
             UTXOCohortId::From1dTo1w => "from_1d_to_1w",
             UTXOCohortId::From1wTo1m => "from_1w_to_1m",
@@ -80,11 +84,13 @@ impl UTXOCohortId {
             UTXOCohortId::From3yTo5y => "from_3y_to_5y",
             UTXOCohortId::From5yTo7y => "from_5y_to_7y",
             UTXOCohortId::From7yTo10y => "from_7y_to_10y",
+            UTXOCohortId::From10yTo15y => "from_10y_to_15y",
 
             UTXOCohortId::From1y => "from_1y",
             UTXOCohortId::From2y => "from_2y",
             UTXOCohortId::From4y => "from_4y",
             UTXOCohortId::From10y => "from_10y",
+            UTXOCohortId::From15y => "from_15y",
 
             UTXOCohortId::Year2009 => "year_2009",
             UTXOCohortId::Year2010 => "year_2010",

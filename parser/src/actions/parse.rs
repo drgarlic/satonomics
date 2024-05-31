@@ -4,7 +4,7 @@ use std::{
     thread,
 };
 
-use bitcoin::Block;
+use bitcoin::{Amount, Block};
 use chrono::NaiveDate;
 use itertools::Itertools;
 use rayon::prelude::*;
@@ -19,7 +19,7 @@ use crate::{
     },
     structs::{
         Address, AddressData, AddressRealizedData, BlockData, BlockPath, Counter, EmptyAddressData,
-        PartialTxoutData, TxData, TxoutIndex,
+        PartialTxoutData, TxData, TxoutIndex, WAmount,
     },
 };
 
@@ -40,29 +40,16 @@ pub struct ParseData<'a> {
 
 #[derive(Default, Debug)]
 pub struct SentData {
-    pub volume: u64,
+    pub volume: Amount,
     pub count: u32,
 }
 
 impl SentData {
-    pub fn send(&mut self, sats: u64) {
+    pub fn send(&mut self, sats: Amount) {
         self.volume += sats;
         self.count += 1;
     }
 }
-
-// #[derive(Default, Debug)]
-// pub struct ReceivedData {
-//     pub volume: u64,
-//     pub count: u32,
-// }
-
-// impl ReceivedData {
-//     pub fn receive(&mut self, sats: u64) {
-//         self.volume += sats;
-//         self.count += 1;
-//     }
-// }
 
 pub fn parse(
     ParseData {
@@ -139,13 +126,13 @@ pub fn parse(
 
     let mut address_index_removed_at_least_once: BTreeSet<u32> = BTreeSet::default();
 
-    let mut coinbase = 0;
-    let mut satblocks_destroyed = 0;
-    let mut satdays_destroyed = 0;
-    let mut sats_sent = 0;
+    let mut coinbase = Amount::ZERO;
+    let mut satblocks_destroyed = Amount::ZERO;
+    let mut satdays_destroyed = Amount::ZERO;
+    let mut amount_sent = Amount::ZERO;
     let mut transaction_count = 0;
     let mut fees = vec![];
-    let mut fees_total = 0;
+    let mut fees_total = Amount::ZERO;
 
     let (
         (
@@ -215,7 +202,7 @@ pub fn parse(
             // ---
 
             let mut utxos = BTreeMap::new();
-            let mut spendable_sats = 0;
+            let mut spendable_amount = Amount::ZERO;
 
             let is_coinbase = tx.is_coinbase();
 
@@ -223,8 +210,8 @@ pub fn parse(
                 unreachable!();
             }
 
-            let mut inputs_sum = 0;
-            let mut outputs_sum = 0;
+            let mut inputs_sum = Amount::ZERO;
+            let mut outputs_sum = Amount::ZERO;
 
             // Before `input` to cover outputs being used in the same block as inputs
             tx.output
@@ -235,12 +222,12 @@ pub fn parse(
                         panic!("vout can indeed be bigger than u16::MAX !");
                     }
 
-                    let sats = tx_out.value.to_sat();
+                    let amount = tx_out.value;
 
                     if is_coinbase {
-                        coinbase += sats;
+                        coinbase += amount;
                     } else {
-                        outputs_sum += sats;
+                        outputs_sum += amount;
                     }
 
                     partial_txout_data_vec
@@ -257,14 +244,16 @@ pub fn parse(
                     let PartialTxoutData {
                         address,
                         address_index_opt,
-                        sats,
+                        amount,
                     } = partial_txout_data;
 
-                    spendable_sats += sats;
+                    spendable_amount += amount;
 
-                    utxos.insert(vout, sats);
+                    utxos.insert(vout, amount);
 
-                    states.txout_index_to_sats.insert(txout_index, sats);
+                    states
+                        .txout_index_to_amount
+                        .insert(txout_index, WAmount::wrap(amount));
 
                     if compute_addresses {
                         let address = address.unwrap();
@@ -351,9 +340,9 @@ pub fn parse(
                             .entry(address_index)
                             .or_insert_with(|| AddressRealizedData::default(address_data));
 
-                        address_data.receive(sats, block_price);
+                        address_data.receive(amount, block_price);
 
-                        address_realized_data.receive(sats);
+                        address_realized_data.receive(amount);
 
                         states
                             .txout_index_to_address_index
@@ -363,7 +352,7 @@ pub fn parse(
 
             let last_block = states.date_data_vec.last_mut_block().unwrap();
 
-            last_block.amount += spendable_sats;
+            *last_block.amount += spendable_amount;
 
             if !utxos.is_empty() {
                 last_block.spendable_outputs += utxos.len() as u32;
@@ -437,9 +426,9 @@ pub fn parse(
 
                         let input_tx_data = input_tx_data.unwrap();
 
-                        let input_sats = states.txout_index_to_sats.remove(&input_txout_index);
+                        let input_amount = states.txout_index_to_amount.remove(&input_txout_index);
 
-                        if input_sats.is_none() {
+                        if input_amount.is_none() {
                             if !enable_check_if_txout_value_is_zero_in_db
                                 || bitcoin_db
                                     .check_if_txout_value_is_zero(&input_txid, input_vout as usize)
@@ -457,7 +446,7 @@ pub fn parse(
                             panic!("Txout index to be in txout_index_to_txout_value");
                         }
 
-                        let input_sats = input_sats.unwrap();
+                        let input_amount = *input_amount.unwrap();
 
                         let input_block_path = input_tx_data.block_path;
 
@@ -495,21 +484,20 @@ pub fn parse(
 
                         input_block_data.spendable_outputs -= 1;
 
-                        input_block_data.amount -= input_sats;
+                        *input_block_data.amount -= input_amount;
 
-                        inputs_sum += input_sats;
+                        inputs_sum += input_amount;
 
                         block_path_to_sent_data
                             .entry(input_block_path)
                             .or_default()
-                            .send(input_sats);
+                            .send(input_amount);
 
                         satblocks_destroyed +=
-                            (height as u64 - input_block_data.height as u64) * input_sats;
+                            input_amount * (height as u64 - input_block_data.height as u64);
 
-                        satdays_destroyed +=
-                            date.signed_duration_since(*input_date_data.date).num_days() as u64
-                                * input_sats;
+                        satdays_destroyed += input_amount
+                            * date.signed_duration_since(*input_date_data.date).num_days() as u64;
 
                         if compute_addresses {
                             let input_address_index = states
@@ -535,10 +523,10 @@ pub fn parse(
 
                                 // MUST be after `or_insert_with`
                                 let address_realized_profit_or_loss =
-                                    input_address_data.send(input_sats, input_block_data.price);
+                                    input_address_data.send(input_amount, input_block_data.price);
 
                                 input_address_realized_data
-                                    .send(input_sats, address_realized_profit_or_loss);
+                                    .send(input_amount, address_realized_profit_or_loss);
 
                                 input_address_data.is_empty()
                             };
@@ -577,7 +565,7 @@ pub fn parse(
                 })?;
             }
 
-            sats_sent += inputs_sum;
+            amount_sent += inputs_sum;
 
             let fee = inputs_sum - outputs_sum;
 
@@ -754,7 +742,7 @@ pub fn parse(
         is_date_last_block,
         satblocks_destroyed,
         satdays_destroyed,
-        sats_sent,
+        amount_sent,
         states,
         timestamp,
         transaction_count,
@@ -766,7 +754,7 @@ pub fn parse(
 
 pub struct TxoutsParsingResults {
     partial_txout_data_vec: Vec<Option<PartialTxoutData>>,
-    provably_unspendable: u64,
+    provably_unspendable: Amount,
     op_returns: usize,
 }
 
@@ -779,7 +767,7 @@ fn parse_txouts(
     empty_addresses: &mut Counter,
     address_to_address_index: &mut AddressToAddressIndex,
 ) -> TxoutsParsingResults {
-    let mut provably_unspendable = 0;
+    let mut provably_unspendable = Amount::ZERO;
     let mut op_returns = 0;
 
     let mut partial_txout_data_vec = block
@@ -795,12 +783,12 @@ fn parse_txouts(
             // dbg!(txout_index);
 
             let script = &txout.script_pubkey;
-            let value = txout.value.to_sat();
+            let amount = txout.value;
 
             // 0 sats outputs are possible and allowed !
             // https://mempool.space/tx/2f2442f68e38b980a6c4cec21e71851b0d8a5847d85208331a27321a9967bbd6
             // https://bitcoin.stackexchange.com/questions/104937/transaction-outputs-with-value-0
-            if value == 0 {
+            if amount == Amount::ZERO {
                 return None;
             }
 
@@ -809,13 +797,13 @@ fn parse_txouts(
                 // TODO: Count fee paid to write said OP_RETURN, beware of coinbase transactions
                 // For coinbase transactions, count miners
                 op_returns += 1;
-                provably_unspendable += value;
+                provably_unspendable += amount;
 
                 // return None;
             }
             // https://mempool.space/tx/8a68c461a2473653fe0add786f0ca6ebb99b257286166dfb00707be24716af3a#flow=&vout=0
             else if script.is_provably_unspendable() {
-                provably_unspendable += value;
+                provably_unspendable += amount;
                 // return None;
             }
 
@@ -833,7 +821,7 @@ fn parse_txouts(
                 address
             });
 
-            Some(PartialTxoutData::new(address_opt, value, None))
+            Some(PartialTxoutData::new(address_opt, amount, None))
         })
         .collect_vec();
 
