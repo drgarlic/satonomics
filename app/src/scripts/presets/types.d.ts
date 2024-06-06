@@ -1,5 +1,5 @@
 interface PartialPreset {
-  id: string;
+  scale: ResourceScale;
   icon?: () => JSXElement;
   name: string;
   title: string;
@@ -8,10 +8,10 @@ interface PartialPreset {
 }
 
 interface Preset extends PartialPreset {
+  id: string;
   path: FilePath;
-  isFavorite: ASS<boolean>;
-  visited: ASS<boolean>;
-  scale: ResourceScale;
+  isFavorite: RWS<boolean>;
+  visited: RWS<boolean>;
 }
 
 type FilePath = {
@@ -30,29 +30,32 @@ type ApplyPreset = (params: {
 
 type ApplyPresetReturn = PresetLegend;
 
-type PresetFolder = {
-  scale?: ResourceScale;
-  id: string;
+interface PartialPresetFolder {
   name: string;
-  tree: PresetTree;
-};
+  tree: PartialPresetTree;
+}
 
-type PresetTree = (PartialPreset | PresetFolder)[];
-type PresetList = Preset[];
-type FavoritePresets = Accessor<Preset[]>;
+interface PresetFolder extends PartialPresetFolder {
+  id: string;
+}
+
+type PartialPresetTree = (PartialPreset | PartialPresetFolder)[];
+type PresetTree = (Preset | PresetFolder)[];
+// type PresetList = Preset[];
+// type FavoritePresets = Accessor<Preset[]>;
 
 type PresetsHistory = { date: Date; preset: Preset }[];
-type PresetsHistorySignal = ASS<PresetsHistory>;
+type PresetsHistorySignal = RWS<PresetsHistory>;
 type SerializedPresetsHistory = { p: string; d: number }[];
 
 interface Presets {
-  tree: PresetTree;
-  list: PresetList;
-  favorites: FavoritePresets;
+  tree: (Preset | PresetFolder)[];
+  list: Preset[];
+  favorites: Accessor<Preset[]>;
   history: PresetsHistorySignal;
 
-  selected: ASS<Preset>;
-  openedFolders: ASS<Set<string>>;
+  selected: RWS<Preset>;
+  openedFolders: RWS<Set<string>>;
 
   select(preset: Preset): void;
 }

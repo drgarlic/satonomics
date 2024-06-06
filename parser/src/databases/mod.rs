@@ -70,17 +70,20 @@ impl Databases {
             //         self.address_index_to_address_data.export(height, date)
             //     })
             // });
+
             s.spawn(|| {
                 time("  Database address_index_to_empty_address_data", || {
                     self.address_index_to_empty_address_data
                         .export(height, date)
                 })
             });
+
             s.spawn(|| {
                 time("  Database address_to_address_index", || {
                     self.address_to_address_index.export(height, date)
                 })
             });
+
             // s.spawn(|| {
             //     time("  Database tx_index_to_tx_data", || {
             //         self.tx_index_to_tx_data.export(height, date)
@@ -91,11 +94,13 @@ impl Databases {
                     self.txid_to_tx_index.export(height, date)
                 })
             });
+
             // s.spawn(|| {
             //     time("  Database txout_index_to_address_index", || {
             //         self.txout_index_to_address_index.export(height, date)
             //     })
             // });
+
             // s.spawn(|| {
             //     time("  Database txout_index_to_sats", || {
             //         self.txout_index_to_sats.export(height, date)

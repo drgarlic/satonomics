@@ -14,7 +14,7 @@ export function createPresets({
 }: {
   scale: ResourceScale;
   datasets: Datasets;
-}): PresetFolder {
+}): PartialPresetFolder {
   return {
     id: `${scale}-addresses`,
     name: "Addresses",
@@ -34,7 +34,6 @@ export function createPresets({
             },
             list: [
               {
-                id: `total-non-empty-addresses`,
                 title: `Total Non Empty Address`,
                 color: colors.bitcoin,
                 seriesType: SeriesType.Area,
@@ -59,7 +58,6 @@ export function createPresets({
             },
             list: [
               {
-                id: "total-address-count",
                 title: `New Addresses`,
                 color: colors.white,
                 dataset: params.datasets[scale].created_addresses,
@@ -83,7 +81,6 @@ export function createPresets({
             },
             list: [
               {
-                id: "created_addresses",
                 title: `Total Addresses Created`,
                 color: colors.bitcoin,
                 seriesType: SeriesType.Area,
@@ -108,7 +105,6 @@ export function createPresets({
             },
             list: [
               {
-                id: "total-empty-addresses",
                 title: `Total Empty Addresses`,
                 color: colors.darkWhite,
                 seriesType: SeriesType.Area,
@@ -147,7 +143,7 @@ export function createPresets({
         ),
       },
     ],
-  } satisfies PresetFolder;
+  } satisfies PartialPresetFolder;
 }
 
 function createAddressPresetFolder<Scale extends ResourceScale>({
@@ -164,7 +160,7 @@ function createAddressPresetFolder<Scale extends ResourceScale>({
   name: string;
   datasetKey: AddressCohortKey;
   color: string;
-}): PresetFolder {
+}): PartialPresetFolder {
   return {
     id: `${scale}-addresses-${id}`,
     name,
@@ -181,7 +177,7 @@ function createAddressPresetFolder<Scale extends ResourceScale>({
       {
         id: `${scale}-addresses-${id}-liquidity`,
         name: `Split By Liquidity`,
-        tree: liquidities.map((liquidity): PresetFolder => {
+        tree: liquidities.map((liquidity): PartialPresetFolder => {
           const _id = `${scale}-${id}-${liquidity.route}`;
 
           return {

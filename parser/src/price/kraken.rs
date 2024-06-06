@@ -4,13 +4,16 @@ use chrono::NaiveDate;
 use color_eyre::eyre::ContextCompat;
 use serde_json::Value;
 
-use crate::{datasets::OHLC, utils::timestamp_to_naive_date};
+use crate::{
+    datasets::OHLC,
+    utils::{log, timestamp_to_naive_date},
+};
 
 pub struct Kraken;
 
 impl Kraken {
     pub fn fetch_1mn_prices() -> color_eyre::Result<BTreeMap<u32, OHLC>> {
-        println!("kraken: fetch 1mn");
+        log("kraken: fetch 1mn");
 
         let body: Value =
             reqwest::blocking::get("https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=1")?
@@ -57,7 +60,7 @@ impl Kraken {
     }
 
     pub fn fetch_daily_prices() -> color_eyre::Result<BTreeMap<NaiveDate, OHLC>> {
-        println!("fetch kraken daily");
+        log("fetch kraken daily");
 
         let body: Value = reqwest::blocking::get(
             "https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=1440",

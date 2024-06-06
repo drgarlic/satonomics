@@ -1,7 +1,7 @@
 use crate::{
     datasets::InsertData,
     structs::{AnyBiMap, BiMap},
-    utils::{ONE_DAY_IN_S, ONE_YEAR_IN_DAYS},
+    utils::{ONE_DAY_IN_S, ONE_MONTH_IN_DAYS, ONE_WEEK_IN_DAYS, ONE_YEAR_IN_DAYS},
     HeightMap,
 };
 
@@ -22,12 +22,21 @@ pub struct TransactionDataset {
     // Max
     // 10th 25th 75th 90th percentiles
     // type
+    // version
 
     // Computed
+    pub count_1w_sma: BiMap<f32>,
+    pub count_1m_sma: BiMap<f32>,
+    pub volume_1w_sma: BiMap<f32>,
+    pub volume_1m_sma: BiMap<f32>,
+    pub volume_in_dollars_1w_sma: BiMap<f32>,
+    pub volume_in_dollars_1m_sma: BiMap<f32>,
     pub annualized_volume: BiMap<f32>,
     pub annualized_volume_in_dollars: BiMap<f32>,
     pub velocity: BiMap<f32>,
     pub transactions_per_second: BiMap<f32>,
+    pub transactions_per_second_1w_sma: BiMap<f32>,
+    pub transactions_per_second_1m_sma: BiMap<f32>,
 }
 
 impl TransactionDataset {
@@ -38,15 +47,23 @@ impl TransactionDataset {
             min_initial_states: MinInitialStates::default(),
 
             count: BiMap::new_bin(1, &f("transaction_count")),
+            count_1w_sma: BiMap::new_bin(1, &f("transaction_count_1w_sma")),
+            count_1m_sma: BiMap::new_bin(1, &f("transaction_count_1m_sma")),
             volume: BiMap::new_bin(1, &f("transaction_volume")),
+            volume_1w_sma: BiMap::new_bin(1, &f("transaction_volume_1w_sma")),
+            volume_1m_sma: BiMap::new_bin(1, &f("transaction_volume_1m_sma")),
             volume_in_dollars: BiMap::new_bin(1, &f("transaction_volume_in_dollars")),
+            volume_in_dollars_1w_sma: BiMap::new_bin(1, &f("transaction_volume_in_dollars_1w_sma")),
+            volume_in_dollars_1m_sma: BiMap::new_bin(1, &f("transaction_volume_in_dollars_1m_sma")),
             annualized_volume: BiMap::new_bin(1, &f("annualized_transaction_volume")),
             annualized_volume_in_dollars: BiMap::new_bin(
-                1,
+                2,
                 &f("annualized_transaction_volume_in_dollars"),
             ),
             velocity: BiMap::new_bin(1, &f("transaction_velocity")),
             transactions_per_second: BiMap::new_bin(1, &f("transactions_per_second")),
+            transactions_per_second_1w_sma: BiMap::new_bin(1, &f("transactions_per_second_1w_sma")),
+            transactions_per_second_1m_sma: BiMap::new_bin(1, &f("transactions_per_second_1m_sma")),
         };
 
         s.min_initial_states
@@ -92,6 +109,48 @@ impl TransactionDataset {
         circulating_supply: &mut BiMap<f64>,
         block_interval: &mut HeightMap<u32>,
     ) {
+        self.count_1w_sma.multi_insert_simple_average(
+            heights,
+            dates,
+            &mut self.count,
+            ONE_WEEK_IN_DAYS,
+        );
+
+        self.count_1m_sma.multi_insert_simple_average(
+            heights,
+            dates,
+            &mut self.count,
+            ONE_MONTH_IN_DAYS,
+        );
+
+        self.volume_1w_sma.multi_insert_simple_average(
+            heights,
+            dates,
+            &mut self.volume,
+            ONE_WEEK_IN_DAYS,
+        );
+
+        self.volume_1m_sma.multi_insert_simple_average(
+            heights,
+            dates,
+            &mut self.volume,
+            ONE_MONTH_IN_DAYS,
+        );
+
+        self.volume_in_dollars_1w_sma.multi_insert_simple_average(
+            heights,
+            dates,
+            &mut self.volume_in_dollars,
+            ONE_WEEK_IN_DAYS,
+        );
+
+        self.volume_in_dollars_1m_sma.multi_insert_simple_average(
+            heights,
+            dates,
+            &mut self.volume_in_dollars,
+            ONE_MONTH_IN_DAYS,
+        );
+
         self.annualized_volume.multi_insert_last_x_sum(
             heights,
             dates,
@@ -102,7 +161,7 @@ impl TransactionDataset {
         self.annualized_volume_in_dollars.multi_insert_last_x_sum(
             heights,
             dates,
-            &mut self.volume,
+            &mut self.volume_in_dollars,
             ONE_YEAR_IN_DAYS,
         );
 
@@ -113,19 +172,33 @@ impl TransactionDataset {
             circulating_supply,
         );
 
-        heights.iter().for_each(|height| {
-            self.transactions_per_second.height.insert(
-                *height,
-                self.count.height.get_or_import(height) as f32
-                    / (block_interval.get_or_import(height)) as f32,
-            );
-        });
+        self.transactions_per_second.height.multi_insert_divide(
+            heights,
+            &mut self.count.height,
+            block_interval,
+        );
 
         self.transactions_per_second
             .date
             .multi_insert_simple_transform(dates, &mut self.count.date, |count| {
                 count as f32 / ONE_DAY_IN_S as f32
             });
+
+        self.transactions_per_second_1w_sma
+            .multi_insert_simple_average(
+                heights,
+                dates,
+                &mut self.transactions_per_second,
+                ONE_WEEK_IN_DAYS,
+            );
+
+        self.transactions_per_second_1m_sma
+            .multi_insert_simple_average(
+                heights,
+                dates,
+                &mut self.transactions_per_second,
+                ONE_MONTH_IN_DAYS,
+            );
     }
 }
 
@@ -148,19 +221,35 @@ impl AnyDataset for TransactionDataset {
 
     fn to_computed_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
         vec![
+            &self.count_1w_sma,
+            &self.count_1m_sma,
+            &self.volume_1w_sma,
+            &self.volume_1m_sma,
+            &self.volume_in_dollars_1w_sma,
+            &self.volume_in_dollars_1m_sma,
             &self.annualized_volume,
             &self.annualized_volume_in_dollars,
             &self.velocity,
             &self.transactions_per_second,
+            &self.transactions_per_second_1w_sma,
+            &self.transactions_per_second_1m_sma,
         ]
     }
 
     fn to_computed_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
         vec![
+            &mut self.count_1w_sma,
+            &mut self.count_1m_sma,
+            &mut self.volume_1w_sma,
+            &mut self.volume_1m_sma,
+            &mut self.volume_in_dollars_1w_sma,
+            &mut self.volume_in_dollars_1m_sma,
             &mut self.annualized_volume,
             &mut self.annualized_volume_in_dollars,
             &mut self.velocity,
             &mut self.transactions_per_second,
+            &mut self.transactions_per_second_1w_sma,
+            &mut self.transactions_per_second_1m_sma,
         ]
     }
 }

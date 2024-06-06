@@ -1,4 +1,4 @@
-import { classPropToString } from "/src/solid";
+import { classPropToString } from "/src/solid/classes";
 
 export function Clickable({
   selected,

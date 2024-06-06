@@ -1,5 +1,7 @@
 use std::time::Instant;
 
+use crate::utils::log;
+
 use super::ONE_DAY_IN_S;
 
 pub fn time<F, T>(name: &str, function: F) -> T
@@ -10,7 +12,7 @@ where
 
     let returned = function();
 
-    println!("{name}: {} seconds", time.elapsed().as_secs_f32());
+    log(&format!("{name}: {} seconds", time.elapsed().as_secs_f32()));
 
     returned
 }

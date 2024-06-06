@@ -1,6 +1,5 @@
-use std::thread;
-
 use derive_deref::{Deref, DerefMut};
+use rayon::prelude::*;
 
 use crate::{
     states::AddressIndexToAddressData,
@@ -86,65 +85,34 @@ impl AddressCohortsDurableStates {
         block_price: f32,
         date_price: Option<f32>,
     ) -> AddressCohortsOneShotStates {
-        thread::scope(|scope| {
-            let all_handle =
-                scope.spawn(|| self.all.compute_one_shot_states(block_price, date_price));
+        let mut one_shot_states = AddressCohortsOneShotStates::default();
 
-            let plankton_handle = scope.spawn(|| {
-                self.plankton
-                    .compute_one_shot_states(block_price, date_price)
-            });
-            let shrimp_handle =
-                scope.spawn(|| self.shrimp.compute_one_shot_states(block_price, date_price));
-            let crab_handle =
-                scope.spawn(|| self.crab.compute_one_shot_states(block_price, date_price));
-            let fish_handle =
-                scope.spawn(|| self.fish.compute_one_shot_states(block_price, date_price));
-            let shark_handle =
-                scope.spawn(|| self.shark.compute_one_shot_states(block_price, date_price));
-            let whale_handle =
-                scope.spawn(|| self.whale.compute_one_shot_states(block_price, date_price));
-            let humpback_handle = scope.spawn(|| {
-                self.humpback
-                    .compute_one_shot_states(block_price, date_price)
-            });
-            let megalodon_handle = scope.spawn(|| {
-                self.megalodon
-                    .compute_one_shot_states(block_price, date_price)
-            });
-
-            let p2pk_handle =
-                scope.spawn(|| self.p2pk.compute_one_shot_states(block_price, date_price));
-            let p2pkh_handle =
-                scope.spawn(|| self.p2pkh.compute_one_shot_states(block_price, date_price));
-            let p2sh_handle =
-                scope.spawn(|| self.p2sh.compute_one_shot_states(block_price, date_price));
-            let p2wpkh_handle =
-                scope.spawn(|| self.p2wpkh.compute_one_shot_states(block_price, date_price));
-            let p2wsh_handle =
-                scope.spawn(|| self.p2wsh.compute_one_shot_states(block_price, date_price));
-            let p2tr_handle =
-                scope.spawn(|| self.p2tr.compute_one_shot_states(block_price, date_price));
-
-            AddressCohortsOneShotStates(SplitByAddressCohort {
-                all: all_handle.join().unwrap(),
-
-                plankton: plankton_handle.join().unwrap(),
-                shrimp: shrimp_handle.join().unwrap(),
-                crab: crab_handle.join().unwrap(),
-                fish: fish_handle.join().unwrap(),
-                shark: shark_handle.join().unwrap(),
-                whale: whale_handle.join().unwrap(),
-                humpback: humpback_handle.join().unwrap(),
-                megalodon: megalodon_handle.join().unwrap(),
-
-                p2pk: p2pk_handle.join().unwrap(),
-                p2pkh: p2pkh_handle.join().unwrap(),
-                p2sh: p2sh_handle.join().unwrap(),
-                p2wpkh: p2wpkh_handle.join().unwrap(),
-                p2wsh: p2wsh_handle.join().unwrap(),
-                p2tr: p2tr_handle.join().unwrap(),
+        self.as_vec()
+            .into_par_iter()
+            .flat_map(|(states, address_cohort_id)| {
+                states
+                    .split
+                    .as_vec()
+                    .into_par_iter()
+                    .map(move |(states, liquidity_id)| {
+                        (
+                            address_cohort_id,
+                            liquidity_id,
+                            states.compute_one_shot_states(block_price, date_price),
+                        )
+                    })
             })
-        })
+            .map(|(address_cohort_id, liquidity_id, states)| {
+                (address_cohort_id, liquidity_id, states)
+            })
+            .collect::<Vec<_>>()
+            .into_iter()
+            .for_each(|(address_cohort_id, liquidity_id, states)| {
+                *one_shot_states
+                    .get_mut_from_id(&address_cohort_id)
+                    .get_mut(&liquidity_id) = states;
+            });
+
+        one_shot_states
     }
 }

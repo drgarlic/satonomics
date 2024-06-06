@@ -4,7 +4,7 @@ import {
   saveToStorage,
   writeURLParam,
 } from "/src/scripts/utils";
-import { createASS } from "/src/solid";
+import { createRWS } from "/src/solid/rws";
 
 export function createSeriesLegend({
   id,
@@ -23,21 +23,28 @@ export function createSeriesLegend({
 }) {
   const storageID = `${presetId}-${id}`;
 
-  const visible = createASS(
+  console.log(readBooleanURLParam(id), readBooleanFromStorage(storageID));
+
+  const visible = createRWS(
     readBooleanURLParam(id) ??
       readBooleanFromStorage(storageID) ??
       defaultVisible,
   );
 
   createEffect(() => {
+    const v = visible();
+
     series.applyOptions({
-      visible: visible(),
+      visible: v,
     });
 
-    const v = !visible() ? false : undefined;
-
-    writeURLParam(id, v);
-    saveToStorage(storageID, v);
+    if (v !== defaultVisible) {
+      writeURLParam(id, v);
+      saveToStorage(storageID, v);
+    } else {
+      writeURLParam(id, undefined);
+      saveToStorage(storageID, undefined);
+    }
   });
 
   return {
@@ -45,7 +52,7 @@ export function createSeriesLegend({
     title,
     series,
     color,
-    hovering: createASS(false),
+    hovering: createRWS(false),
     visible,
   };
 }

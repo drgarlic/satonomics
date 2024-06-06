@@ -1,6 +1,6 @@
 import { generate } from "lean-qr";
 
-import { classPropToString } from "/src/solid";
+import { classPropToString } from "/src/solid/classes";
 
 export function Actions({
   presets,
@@ -8,8 +8,8 @@ export function Actions({
   qrcode,
 }: {
   presets: Presets;
-  qrcode: ASS<string>;
-  fullscreen?: ASS<boolean>;
+  qrcode: RWS<string>;
+  fullscreen?: RWS<boolean>;
 }) {
   return (
     <div class="flex space-x-1">
@@ -19,7 +19,7 @@ export function Actions({
         classes="hidden md:block"
       />
       <Button
-        icon={() => IconTablerQrcode}
+        icon={() => IconTablerShare}
         onClick={() => {
           qrcode.set(() =>
             generate(document.location.href).toDataURL({
@@ -30,20 +30,6 @@ export function Actions({
         }}
         classes="hidden md:block"
       />
-      {/* <Button
-        icon={() => IconTablerArrowsShuffle2}
-        onClick={presets.selectRandom}
-      />
-      <Button
-        disabled={() => !presets.undoPossible()}
-        icon={() => IconTablerArrowBack}
-        onClick={presets.undo}
-      />
-      <Button
-        disabled={() => !presets.redoPossible()}
-        icon={() => IconTablerArrowForward}
-        onClick={presets.redo}
-      /> */}
       <Button
         colors={() =>
           presets.selected().isFavorite()

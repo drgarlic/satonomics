@@ -1,4 +1,4 @@
-import { classPropToString } from "/src/solid";
+import { classPropToString } from "/src/solid/classes";
 
 import { Box } from "../box";
 import { Actions } from "./components/actions";
@@ -18,8 +18,8 @@ export function ChartFrame({
   presets: Presets;
   show: Accessor<boolean>;
   legend: Accessor<PresetLegend>;
-  qrcode: ASS<string>;
-  fullscreen?: ASS<boolean>;
+  qrcode: RWS<string>;
+  fullscreen?: RWS<boolean>;
   standalone: boolean;
 }) {
   return (
@@ -34,7 +34,7 @@ export function ChartFrame({
       }}
     >
       <Box flex={false} dark>
-        <Title presets={presets} qrcode={qrcode} />
+        <Title presets={presets} />
 
         <div class="-mx-2 border-t border-orange-200/15" />
 

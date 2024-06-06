@@ -7,6 +7,8 @@ export * from "./height";
 
 export const scales = ["date" as const, "height" as const];
 
+export const HEIGHT_CHUNK_SIZE = 10_000;
+
 export function createDatasets({
   setActiveResources,
 }: {

@@ -592,6 +592,8 @@ pub fn parse(
     let mut address_cohorts_output_states = None;
     let mut address_cohorts_realized_states = None;
 
+    // log("Starting heavy work...");
+
     thread::scope(|scope| {
         scope.spawn(|| {
             let last_block_data = states.date_data_vec.last_block().unwrap();
@@ -717,6 +719,8 @@ pub fn parse(
         }
     });
 
+    // log("Finished heavy work !");
+
     datasets.insert(InsertData {
         address_cohorts_input_states: &address_cohorts_input_states,
         block_size,
@@ -747,7 +751,6 @@ pub fn parse(
         timestamp,
         transaction_count,
         utxo_cohorts_one_shot_states: &utxo_cohorts_one_shot_states,
-        // utxo_cohorts_received_states: &utxo_cohorts_received_states,
         utxo_cohorts_sent_states: &utxo_cohorts_sent_states,
     });
 }
@@ -792,7 +795,9 @@ fn parse_txouts(
                 return None;
             }
 
-            // https://mempool.space/tx/fd0d23d88059dd3b285ede0c88a1246b880e9d8cbac8aa0077a37d70091769d1#flow=&vout=2
+            // Op Return
+            // https://mempool.space/tx/139c004f477101c468767983536caaeef568613fab9c2ed9237521f5ff530afd
+            // Provably unspendable https://mempool.space/tx/8a68c461a2473653fe0add786f0ca6ebb99b257286166dfb00707be24716af3a#flow=&vout=0
             if script.is_op_return() {
                 // TODO: Count fee paid to write said OP_RETURN, beware of coinbase transactions
                 // For coinbase transactions, count miners

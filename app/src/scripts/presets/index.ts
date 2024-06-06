@@ -1,8 +1,8 @@
-import { colors, random, replaceHistory, resetURLParams } from "/src/scripts";
-import { createASS } from "/src/solid";
+import { colors, replaceHistory, resetURLParams } from "/src/scripts";
+import { createRWS } from "/src/solid/rws";
 
+import { stringToId } from "../utils/id";
 import { createPresets as createAddressesPresets } from "./addresses";
-import { createPresets as createAveragesPresets } from "./averages";
 import { createPresets as createBlocksPresets } from "./blocks";
 import { createPresets as createCoinblocksPresets } from "./coinblocks";
 import { createPresets as createHodlersPresets } from "./hodlers";
@@ -20,13 +20,11 @@ export const LOCAL_STORAGE_SELECTED_KEY = "preset";
 export const LOCAL_STORAGE_VISITED_KEY = "visited";
 
 export function createPresets(datasets: Datasets): Presets {
-  const tree: PresetTree = [
+  const partialTree = [
     {
-      scale: "date",
-      id: "date",
       name: "Date",
       tree: [
-        createMarketPresets("date"),
+        createMarketPresets({ scale: "date", datasets }),
         createBlocksPresets(),
         createMinersPresets("date"),
         createTransactionsPresets("date"),
@@ -38,36 +36,35 @@ export function createPresets(datasets: Datasets): Presets {
           datasetKey: "",
           title: "",
         }),
-        createAveragesPresets(datasets),
-        createHodlersPresets({ scale: "date", datasets }),
-        createAddressesPresets({ scale: "date", datasets }),
+        // createHodlersPresets({ scale: "date", datasets }),
+        // createAddressesPresets({ scale: "date", datasets }),
         createCoinblocksPresets({ scale: "date", datasets }),
       ],
-    },
-    {
-      scale: "height",
-      id: "height",
-      name: "Height",
-      tree: [
-        createMarketPresets("height"),
-        createMinersPresets("height"),
-        createTransactionsPresets("height"),
-        ...createCohortPresetList({
-          datasets,
-          scale: "height",
-          id: "all",
-          color: colors.bitcoin,
-          datasetKey: "",
-          title: "",
-        }),
-        createHodlersPresets({ scale: "height", datasets }),
-        createAddressesPresets({ scale: "height", datasets }),
-        createCoinblocksPresets({ scale: "height", datasets }),
-      ],
-    },
+    } satisfies PartialPresetFolder,
+    // {
+    //   scale: "height",
+    //   id: "height",
+    //   name: "Height (unusable)",
+    //   tree: [
+    //     createMarketPresets("height"),
+    //     createMinersPresets("height"),
+    //     createTransactionsPresets("height"),
+    //     ...createCohortPresetList({
+    //       datasets,
+    //       scale: "height",
+    //       id: "all",
+    //       color: colors.bitcoin,
+    //       datasetKey: "",
+    //       title: "",
+    //     }),
+    //     createHodlersPresets({ scale: "height", datasets }),
+    //     createAddressesPresets({ scale: "height", datasets }),
+    //     createCoinblocksPresets({ scale: "height", datasets }),
+    //   ],
+    // } satisfies PartialPresetFolder,
   ];
 
-  const { list, ids } = flatten(tree);
+  const { list, ids, tree } = flatten(partialTree);
 
   checkIfDuplicateIds(ids);
 
@@ -109,11 +106,11 @@ export function createPresets(datasets: Datasets): Presets {
     );
   });
 
-  const history: PresetsHistorySignal = createASS(getHistory(list), {
+  const history: PresetsHistorySignal = createRWS(getHistory(list), {
     equals: false,
   });
 
-  const selected = createASS(findInitialPreset(list), {
+  const selected = createRWS(findInitialPreset(list), {
     equals: false,
   });
 
@@ -142,7 +139,7 @@ export function createPresets(datasets: Datasets): Presets {
     _select(preset, selected.set);
   };
 
-  const openedFolders = createASS(
+  const openedFolders = createRWS(
     new Set(
       JSON.parse(
         localStorage.getItem(LOCAL_STORAGE_FOLDERS_KEY) || "[]",
@@ -182,53 +179,52 @@ function _select(preset: Preset, set: Setter<Preset>) {
   set(preset);
 }
 
-function flatten(ref: PresetTree) {
-  const result: { list: PresetList; ids: string[] } = { list: [], ids: [] };
+function flatten(partialTree: PartialPresetTree) {
+  const result: { list: Preset[]; ids: string[] } = { list: [], ids: [] };
 
-  const _flatten = (
-    ref: PresetTree,
-    path?: FilePath,
-    scale?: ResourceScale,
-  ) => {
-    ref.forEach((anyPreset) => {
+  const _flatten = (partialTree: PartialPresetTree, path?: FilePath) => {
+    partialTree.forEach((anyPreset) => {
       if ("tree" in anyPreset) {
-        result.ids.push(anyPreset.id);
-
-        return _flatten(
-          anyPreset.tree,
-          [
-            ...(path || []),
-            {
-              name: anyPreset.name,
-              id: anyPreset.id,
-            },
-          ],
-          anyPreset.scale || scale,
+        const id = stringToId(
+          `${(path || [])?.map(({ name }) => name).join(" ")} ${anyPreset.name} folder`,
         );
+
+        const presetFolder: PresetFolder = {
+          ...anyPreset,
+          id,
+        };
+
+        Object.assign(anyPreset, presetFolder);
+
+        result.ids.push(presetFolder.id);
+
+        return _flatten(presetFolder.tree, [
+          ...(path || []),
+          {
+            name: presetFolder.name,
+            id: presetFolder.id,
+          },
+        ]);
       } else {
-        const preset = anyPreset as Partial<Preset>;
-        preset.path = path || [];
-        preset.isFavorite = createASS(false);
-        preset.visited = createASS(false);
-        preset.scale = scale;
+        const preset: Preset = {
+          ...anyPreset,
+          path: path || [],
+          isFavorite: createRWS(false),
+          visited: createRWS(false),
+          id: `${anyPreset.scale}-to-${stringToId(anyPreset.title)}`,
+        };
 
-        if (!preset.id) {
-          throw Error("Preset MUST have an ID");
-        }
+        Object.assign(anyPreset, preset);
 
-        if (!preset.scale) {
-          throw Error("Preset MUST have a scale");
-        }
-
-        result.list.push(preset as Preset);
+        result.list.push(preset);
         result.ids.push(preset.id);
       }
     });
   };
 
-  _flatten(ref);
+  _flatten(partialTree);
 
-  return result;
+  return { ...result, tree: partialTree as PresetTree };
 }
 
 function checkIfDuplicateIds(ids: string[]) {
@@ -247,7 +243,7 @@ function checkIfDuplicateIds(ids: string[]) {
   }
 }
 
-function findInitialPreset(presets: PresetList): Preset {
+function findInitialPreset(presets: Preset[]): Preset {
   const params = useParams();
 
   return (
@@ -260,7 +256,7 @@ function findInitialPreset(presets: PresetList): Preset {
   );
 }
 
-function setIsFavorites(list: PresetList) {
+function setIsFavorites(list: Preset[]) {
   (
     JSON.parse(
       localStorage.getItem(LOCAL_STORAGE_FAVORITES_KEY) || "[]",
@@ -270,7 +266,7 @@ function setIsFavorites(list: PresetList) {
   });
 }
 
-function setVisited(list: PresetList) {
+function setVisited(list: Preset[]) {
   (
     JSON.parse(
       localStorage.getItem(LOCAL_STORAGE_VISITED_KEY) || "[]",
@@ -280,7 +276,7 @@ function setVisited(list: PresetList) {
   });
 }
 
-function getHistory(list: PresetList): PresetsHistory {
+function getHistory(list: Preset[]): PresetsHistory {
   return (
     JSON.parse(
       localStorage.getItem(LOCAL_STORAGE_HISTORY_KEY) || "[]",

@@ -4,14 +4,12 @@ use crate::{
     structs::{AnyBiMap, BiMap, DateMap, HeightMap},
 };
 
+#[derive(Default)]
 pub struct SupplySubDataset {
     min_initial_states: MinInitialStates,
 
     // Inserted
     pub total: BiMap<f64>,
-
-    // Computed
-    pub market_cap: BiMap<f32>,
 }
 
 impl SupplySubDataset {
@@ -22,7 +20,7 @@ impl SupplySubDataset {
             min_initial_states: MinInitialStates::default(),
 
             total: BiMap::_new_bin(1, &f("supply"), usize::MAX),
-            market_cap: BiMap::_new_bin(1, &f("market_cap"), usize::MAX),
+            // market_cap: BiMap::_new_bin(1, &f("market_cap"), usize::MAX),
         };
 
         s.min_initial_states
@@ -48,20 +46,21 @@ impl SupplySubDataset {
         }
     }
 
+    #[allow(unused_variables)]
     pub fn compute(
         &mut self,
         &ComputeData { heights, dates }: &ComputeData,
         date_closes: &mut DateMap<f32>,
         height_closes: &mut HeightMap<f32>,
     ) {
-        self.market_cap.height.multi_insert_multiply(
-            heights,
-            &mut self.total.height,
-            height_closes,
-        );
-        self.market_cap
-            .date
-            .multi_insert_multiply(dates, &mut self.total.date, date_closes);
+        // self.market_cap.height.multi_insert_multiply(
+        //     heights,
+        //     &mut self.total.height,
+        //     height_closes,
+        // );
+        // self.market_cap
+        //     .date
+        //     .multi_insert_multiply(dates, &mut self.total.date, date_closes);
     }
 }
 
@@ -79,10 +78,14 @@ impl AnyDataset for SupplySubDataset {
     }
 
     fn to_computed_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![&self.market_cap]
+        vec![
+            // &self.market_cap
+        ]
     }
 
     fn to_computed_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![&mut self.market_cap]
+        vec![
+            // &mut self.market_cap
+        ]
     }
 }

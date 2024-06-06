@@ -1,4 +1,4 @@
-import { createASS } from "/src/solid";
+import { createRWS } from "/src/solid/rws";
 
 export const createSelectableList = <T, L extends T[] = T[]>(
   list: L,
@@ -7,13 +7,13 @@ export const createSelectableList = <T, L extends T[] = T[]>(
     selectedIndex?: number | null;
   },
 ) => {
-  const selected = createASS<L[number] | null>(null);
-  const selectedIndex = createASS<number | null>(null);
+  const selected = createRWS<L[number] | null>(null);
+  const selectedIndex = createRWS<number | null>(null);
 
   const selectableList: SelectableList<L[number], L> = {
     selected,
     selectedIndex,
-    list: createASS(list, {
+    list: createRWS(list, {
       equals: false,
     }),
     select(s) {

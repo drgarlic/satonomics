@@ -89,15 +89,14 @@ pub struct AllDatasets {
     min_initial_states: MinInitialStates,
 
     pub address: AddressDatasets,
-    pub price: PriceDatasets,
-    pub utxo: UTXODatasets,
-
     pub block_metadata: BlockMetadataDataset,
-    pub cointime: CointimeDataset,
     pub coindays: CoindaysDataset,
+    pub cointime: CointimeDataset,
     pub date_metadata: DateMetadataDataset,
     pub mining: MiningDataset,
+    pub price: PriceDatasets,
     pub transaction: TransactionDataset,
+    pub utxo: UTXODatasets,
 }
 
 impl AllDatasets {
@@ -175,13 +174,20 @@ impl AllDatasets {
     }
 
     pub fn compute(&mut self, compute_data: ComputeData) {
+        if self.mining.should_compute(&compute_data) {
+            self.mining
+                .compute(&compute_data, &mut self.date_metadata.last_height);
+        }
+
         // No compute needed for now
-        self.price.compute(&compute_data);
+        self.price
+            .compute(&compute_data, &mut self.mining.cumulative_subsidy);
 
         self.address.compute(
             &compute_data,
             &mut self.price.date.closes,
             &mut self.price.height.closes,
+            &mut self.price.market_cap,
         );
 
         self.utxo.compute(
@@ -205,18 +211,10 @@ impl AllDatasets {
         //     self.coindays.compute(&compute_data);
         // }
 
-        if self.mining.should_compute(&compute_data) {
-            self.mining.compute(
-                &compute_data,
-                &mut self.address.cohorts.all.all.supply.total,
-                &mut self.date_metadata.last_height,
-            );
-        }
-
         if self.transaction.should_compute(&compute_data) {
             self.transaction.compute(
                 &compute_data,
-                &mut self.address.cohorts.all.all.supply.total,
+                &mut self.mining.cumulative_subsidy,
                 &mut self.mining.block_interval,
             );
         }
@@ -228,7 +226,7 @@ impl AllDatasets {
                 &mut self.date_metadata.last_height,
                 &mut self.price.date.closes,
                 &mut self.price.height.closes,
-                &mut self.address.cohorts.all.all.supply.total,
+                &mut self.mining.cumulative_subsidy,
                 &mut self.address.cohorts.all.all.price_paid.realized_cap,
                 &mut self.address.cohorts.all.all.price_paid.realized_price,
                 &mut self.mining.yearly_inflation_rate,

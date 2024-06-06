@@ -5,9 +5,10 @@ use crate::{
         AnyDataset, AnyDatasetGroup, ComputeData, InsertData, MinInitialStates, SubDataset,
     },
     states::UTXOCohortId,
-    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, DateMap, HeightMap},
+    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, DateMap, HeightMap},
 };
 
+#[derive(Default)]
 pub struct UTXODataset {
     id: UTXOCohortId,
 
@@ -105,6 +106,7 @@ impl UTXODataset {
         compute_data: &ComputeData,
         date_closes: &mut DateMap<f32>,
         height_closes: &mut HeightMap<f32>,
+        market_cap: &mut BiMap<f32>,
     ) {
         if self.subs.supply.should_compute(compute_data) {
             self.subs
@@ -116,6 +118,10 @@ impl UTXODataset {
             self.subs
                 .unrealized
                 .compute(compute_data, &mut self.subs.supply.total);
+        }
+
+        if self.subs.realized.should_compute(compute_data) {
+            self.subs.realized.compute(compute_data, market_cap);
         }
 
         if self.subs.price_paid.should_compute(compute_data) {

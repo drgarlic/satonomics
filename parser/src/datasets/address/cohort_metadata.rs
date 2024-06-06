@@ -3,6 +3,7 @@ use crate::{
     structs::{AnyBiMap, BiMap},
 };
 
+#[derive(Default)]
 pub struct MetadataDataset {
     min_initial_states: MinInitialStates,
 

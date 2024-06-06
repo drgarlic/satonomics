@@ -1,14 +1,14 @@
 import { makeEventListener } from "@solid-primitives/event-listener";
 
-import { createASS } from "/src/solid";
+import { createRWS } from "/src/solid/rws";
 
 export const createResourceWS = <T>(
   creator: (callback: (value: T) => void) => WebSocket,
 ) => {
   let ws: WebSocket | null = null;
 
-  const live = createASS(false);
-  const latest = createASS<T | null>(null);
+  const live = createRWS(false);
+  const latest = createRWS<T | null>(null);
 
   let clearFocusListener: VoidFunction | undefined;
 

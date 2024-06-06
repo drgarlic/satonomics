@@ -31,7 +31,7 @@ export function createMomentumPresetFolder<
   id: string;
   title: string;
   datasetKey: Key;
-}): PresetFolder {
+}): PartialPresetFolder {
   return {
     id: `${scale}-${id}-momentum`,
     name: "Momentum",
@@ -47,7 +47,6 @@ export function createMomentumPresetFolder<
             ...params,
             list: [
               {
-                id: "momentum",
                 title: "Momentum",
                 colors: colors.momentum,
                 seriesType: SeriesType.Histogram,
@@ -81,7 +80,6 @@ export function createMomentumPresetFolder<
                 },
                 list: [
                   {
-                    id: "bitcoin-returns",
                     title: "Bitcoin Returns",
                     dataset:
                       datasets[`${datasetKey}MomentumBLSHBitcoinReturns`],
@@ -107,7 +105,6 @@ export function createMomentumPresetFolder<
                 },
                 list: [
                   {
-                    id: "dollar-returns",
                     title: "Dollar Returns",
                     dataset: datasets[`${datasetKey}MomentumBLSHDollarReturns`],
                     color: colors.dollars,

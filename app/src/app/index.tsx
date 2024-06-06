@@ -9,7 +9,7 @@ import {
   renderChart,
   sleep,
 } from "/src/scripts";
-import { createASS } from "/src/solid";
+import { createRWS } from "/src/solid/rws";
 
 import { Background, LOCAL_STORAGE_MARQUEE_KEY } from "./components/background";
 import { ChartFrame } from "./components/frames/chart";
@@ -31,12 +31,12 @@ const LOCAL_STORAGE_BAR_KEY = "bar-width";
 export function App() {
   const { needRefresh, updateServiceWorker } = registerServiceWorker();
 
-  const tabFocused = createASS(true);
+  const tabFocused = createRWS(true);
 
-  const qrcode = createASS("");
-  const fullscreen = createASS(false);
+  const qrcode = createRWS("");
+  const fullscreen = createRWS(false);
 
-  const activeResources = createASS<Set<ResourceDataset<any, any>>>(new Set(), {
+  const activeResources = createRWS<Set<ResourceDataset<any, any>>>(new Set(), {
     equals: false,
   });
 
@@ -44,13 +44,13 @@ export function App() {
     setActiveResources: activeResources.set,
   });
 
-  const legend = createASS<PresetLegend>([]);
+  const legend = createRWS<PresetLegend>([]);
 
   const windowSize = useWindowSize();
 
   const windowSizeIsAtLeastMedium = createMemo(() => windowSize.width >= 720);
 
-  const barWidth = createASS(
+  const barWidth = createRWS(
     Number(localStorage.getItem(LOCAL_STORAGE_BAR_KEY)),
   );
 
@@ -58,7 +58,7 @@ export function App() {
     localStorage.setItem(LOCAL_STORAGE_BAR_KEY, String(barWidth()));
   });
 
-  const _selectedFrame = createASS<FrameName>("Chart");
+  const _selectedFrame = createRWS<FrameName>("Chart");
 
   const selectedFrame = createMemo(() =>
     windowSizeIsAtLeastMedium() && _selectedFrame() === "Chart"
@@ -68,9 +68,9 @@ export function App() {
 
   const presets = createPresets(datasets);
 
-  const marquee = createASS(!!localStorage.getItem(LOCAL_STORAGE_MARQUEE_KEY));
+  const marquee = createRWS(!!localStorage.getItem(LOCAL_STORAGE_MARQUEE_KEY));
 
-  const resizingBarStart = createASS<number | undefined>(undefined);
+  const resizingBarStart = createRWS<number | undefined>(undefined);
 
   const resources = createResources();
 

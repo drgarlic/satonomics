@@ -6,6 +6,8 @@ use date::*;
 use height::*;
 pub use ohlc::*;
 
+use crate::structs::BiMap;
+
 use super::{AnyDataset, AnyDatasets, ComputeData, MinInitialStates};
 
 pub struct PriceDatasets {
@@ -32,10 +34,12 @@ impl PriceDatasets {
         Ok(s)
     }
 
-    pub fn compute(&mut self, compute_data: &ComputeData) {
-        self.height.compute(compute_data);
+    pub fn compute(&mut self, compute_data: &ComputeData, circulating_supply: &mut BiMap<f64>) {
+        self.height
+            .compute(compute_data, &mut circulating_supply.height);
 
-        self.date.compute(compute_data);
+        self.date
+            .compute(compute_data, &mut circulating_supply.date);
     }
 }
 

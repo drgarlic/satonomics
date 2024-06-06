@@ -21,8 +21,40 @@ impl LossyFrom<usize> for u64 {
 }
 
 // ---
+// usize
+// ---
+
+impl LossyFrom<usize> for usize {
+    #[inline(always)]
+    fn lossy_from(x: usize) -> Self {
+        x
+    }
+}
+
+impl LossyFrom<f32> for usize {
+    #[inline(always)]
+    fn lossy_from(x: f32) -> Self {
+        x.round() as usize
+    }
+}
+
+// ---
 // f32
 // ---
+
+impl LossyFrom<u32> for f32 {
+    #[inline(always)]
+    fn lossy_from(x: u32) -> Self {
+        x as f32
+    }
+}
+
+impl LossyFrom<u64> for f32 {
+    #[inline(always)]
+    fn lossy_from(x: u64) -> Self {
+        x as f32
+    }
+}
 
 impl LossyFrom<usize> for f32 {
     #[inline(always)]

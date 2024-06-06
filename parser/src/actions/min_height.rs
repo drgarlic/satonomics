@@ -2,6 +2,7 @@ use crate::{
     databases::Databases,
     datasets::{AllDatasets, AnyDatasets},
     states::States,
+    utils::log,
 };
 
 #[derive(Default, Debug)]
@@ -49,7 +50,7 @@ pub fn find_first_inserted_unsafe_height(
         .map(|date_data| date_data.date)
         .and_then(|last_safe_date| {
             if !usable_databases {
-                println!("Unusable databases");
+                log("Unusable databases");
 
                 return None;
             }
@@ -59,8 +60,8 @@ pub fn find_first_inserted_unsafe_height(
             let min_datasets_inserted_last_height = datasets_min_initial_states.inserted.last_height;
             let min_datasets_inserted_last_date = datasets_min_initial_states.inserted.last_date;
 
-            println!("min_datasets_inserted_last_height: {:?}", min_datasets_inserted_last_height);
-            println!("min_datasets_inserted_last_date: {:?}", min_datasets_inserted_last_date);
+            log(&format!("min_datasets_inserted_last_height: {:?}", min_datasets_inserted_last_height));
+            log(&format!("min_datasets_inserted_last_date: {:?}", min_datasets_inserted_last_date));
 
             let inserted_last_date_is_older_than_saved_state = min_datasets_inserted_last_date.map_or(true, |min_datasets_last_date| min_datasets_last_date < *last_safe_date);
 
@@ -78,7 +79,7 @@ pub fn find_first_inserted_unsafe_height(
                     let inserted_heights_and_dates_are_out_of_sync = min_datasets_inserted_last_height.map_or(true, |min_datasets_inserted_last_height| min_datasets_inserted_last_height < last_safe_height);
 
                     if inserted_heights_and_dates_are_out_of_sync {
-                        println!("last_safe_height ({last_safe_height}) > min_datasets_height ({min_datasets_inserted_last_height:?})");
+                        log(&format!("last_safe_height ({last_safe_height}) > min_datasets_height ({min_datasets_inserted_last_height:?})"));
 
                         None
                     } else {
@@ -106,16 +107,16 @@ pub fn find_first_inserted_unsafe_height(
             )
         })
         .unwrap_or_else(|| {
-            println!("Starting over...");
+            log("Starting over...");
 
             let include_addresses = !usable_databases
                 || min_initial_inserted_last_address_date.is_none()
                 || min_initial_inserted_last_address_height.is_none();
 
-            // if true {
-            //     dbg!(include_addresses);
-            //     panic!("");
-            // }
+            if true {
+                dbg!(include_addresses);
+                panic!("");
+            }
 
             states.reset(include_addresses);
 

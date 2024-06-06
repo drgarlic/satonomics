@@ -1,5 +1,6 @@
 import { scrollIntoView } from "/src/scripts";
-import { classPropToString, createASS } from "/src/solid";
+import { classPropToString } from "/src/solid/classes";
+import {  createRWS } from "/src/solid/rws";
 
 export function Line({
   id,
@@ -22,7 +23,7 @@ export function Line({
   tail?: () => JSXElement;
   classes?: () => string;
 } & ParentProps) {
-  const ref = createASS<HTMLButtonElement | undefined>(undefined);
+  const ref = createRWS<HTMLButtonElement | undefined>(undefined);
 
   return (
     <button

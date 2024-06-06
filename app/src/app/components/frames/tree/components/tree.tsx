@@ -11,10 +11,10 @@ export function Tree({
   path = [],
   favorites,
 }: {
-  tree: PresetTree;
+  tree: PartialPresetTree;
   selected: Accessor<Preset>;
   selectPreset(preset: Preset): void;
-  openedFolders: ASS<Set<string>>;
+  openedFolders: RWS<Set<string>>;
   depth?: number;
   visible?: Accessor<boolean>;
   path?: FilePath;
@@ -101,7 +101,7 @@ export function Tree({
 function countChildren(folder: PresetFolder) {
   let count = 0;
 
-  function _countChildren(tree: PresetTree) {
+  function _countChildren(tree: PartialPresetTree) {
     tree.forEach((anyPreset) => {
       if ("tree" in anyPreset) {
         _countChildren(anyPreset.tree);

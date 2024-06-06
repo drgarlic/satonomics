@@ -2,6 +2,8 @@ use std::{process::Command, thread::sleep, time::Duration};
 
 use serde_json::Value;
 
+use crate::utils::log;
+
 struct BlockchainInfo {
     pub headers: u64,
     pub blocks: u64,
@@ -21,7 +23,7 @@ impl<'a> BitcoinDaemon<'a> {
     pub fn start(&self) {
         sleep(Duration::from_secs(1));
 
-        println!("Starting node...");
+        log("Starting node...");
 
         // bitcoind -datadir=/Users/k/Developer/bitcoin -blocksonly -txindex=1 -v2transport -daemon
         let _ = Command::new("bitcoind")
@@ -35,7 +37,7 @@ impl<'a> BitcoinDaemon<'a> {
 
         sleep(Duration::from_secs(15));
 
-        println!("Node started successfully !");
+        log("Node started successfully !");
     }
 
     pub fn stop(&self) {
@@ -48,9 +50,9 @@ impl<'a> BitcoinDaemon<'a> {
             .status;
 
         if status.success() {
-            println!("Stopping node...");
+            log("Stopping node...");
             sleep(Duration::from_secs(15));
-            println!("bitcoind stopped successfully !");
+            log("bitcoind stopped successfully !");
         }
     }
 
@@ -63,7 +65,7 @@ impl<'a> BitcoinDaemon<'a> {
     }
 
     pub fn wait_for_new_block(&self, last_block_height: usize) -> color_eyre::Result<()> {
-        println!("Waiting for new block...");
+        log("Waiting for new block...");
 
         while self.get_blockchain_info()?.headers as usize == last_block_height {
             sleep(Duration::from_secs(5))
@@ -78,9 +80,9 @@ impl<'a> BitcoinDaemon<'a> {
         let synced = blocks == headers;
 
         if synced {
-            println!("Synced ! ({blocks} blocks)");
+            log(&format!("Synced ! ({blocks} blocks)"));
         } else {
-            println!("Syncing... ({} remaining)", headers - blocks)
+            log(&format!("Syncing... ({} remaining)", headers - blocks));
         }
 
         Ok(synced)

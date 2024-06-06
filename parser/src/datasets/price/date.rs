@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use chrono::NaiveDate;
+use chrono::{Days, NaiveDate};
 use color_eyre::eyre::Error;
 
 use crate::{
@@ -22,6 +22,7 @@ pub struct DateDataset {
     pub closes: DateMap<f32>,
 
     // Computed
+    pub market_cap: DateMap<f32>,
     pub price_1w_sma: DateMap<f32>,
     pub price_1m_sma: DateMap<f32>,
     pub price_1y_sma: DateMap<f32>,
@@ -35,12 +36,20 @@ pub struct DateDataset {
     pub price_89d_sma: DateMap<f32>,
     pub price_144d_sma: DateMap<f32>,
     pub price_200w_sma: DateMap<f32>,
+    pub price_1d_total_return: DateMap<f32>,
+    pub price_1m_total_return: DateMap<f32>,
+    pub price_6m_total_return: DateMap<f32>,
+    pub price_1y_total_return: DateMap<f32>,
+    pub price_2y_total_return: DateMap<f32>,
+    pub price_3y_total_return: DateMap<f32>,
+    pub price_4y_total_return: DateMap<f32>,
+    pub price_6y_total_return: DateMap<f32>,
+    pub price_8y_total_return: DateMap<f32>,
+    pub price_10y_total_return: DateMap<f32>,
+    pub price_4y_compound_return: DateMap<f32>,
     // volatility
+    // drawdown
     // sats per dollar
-    // 1year return
-    // 4year return
-    // 4year yoy return
-    // 10y return
 }
 
 impl DateDataset {
@@ -54,6 +63,7 @@ impl DateDataset {
 
             ohlcs: DateMap::_new_json(1, &format!("{price_path}/ohlc"), usize::MAX, true),
             closes: DateMap::_new_json(1, &f("close"), usize::MAX, true),
+            market_cap: DateMap::new_bin(1, &f("market_cap")),
             price_1w_sma: DateMap::new_bin(1, &f("price_1w_sma")),
             price_1m_sma: DateMap::new_bin(1, &f("price_1m_sma")),
             price_1y_sma: DateMap::new_bin(1, &f("price_1y_sma")),
@@ -67,6 +77,17 @@ impl DateDataset {
             price_89d_sma: DateMap::new_bin(1, &f("price_89d_sma")),
             price_144d_sma: DateMap::new_bin(1, &f("price_144d_sma")),
             price_200w_sma: DateMap::new_bin(1, &f("price_200w_sma")),
+            price_1d_total_return: DateMap::new_bin(1, &f("price_1d_total_return")),
+            price_1m_total_return: DateMap::new_bin(1, &f("price_1m_total_return")),
+            price_6m_total_return: DateMap::new_bin(1, &f("price_6m_total_return")),
+            price_1y_total_return: DateMap::new_bin(1, &f("price_1y_total_return")),
+            price_2y_total_return: DateMap::new_bin(1, &f("price_2y_total_return")),
+            price_3y_total_return: DateMap::new_bin(1, &f("price_3y_total_return")),
+            price_4y_total_return: DateMap::new_bin(1, &f("price_4y_total_return")),
+            price_6y_total_return: DateMap::new_bin(1, &f("price_6y_total_return")),
+            price_8y_total_return: DateMap::new_bin(1, &f("price_8y_total_return")),
+            price_10y_total_return: DateMap::new_bin(1, &f("price_10y_total_return")),
+            price_4y_compound_return: DateMap::new_bin(1, &f("price_4y_compound_return")),
         };
 
         s.min_initial_states
@@ -103,9 +124,16 @@ impl DateDataset {
             .ok_or(Error::msg("Couldn't find date in daily kraken"))
     }
 
-    pub fn compute(&mut self, &ComputeData { dates, .. }: &ComputeData) {
+    pub fn compute(
+        &mut self,
+        &ComputeData { dates, .. }: &ComputeData,
+        circulating_supply: &mut DateMap<f64>,
+    ) {
         self.closes
             .multi_insert_simple_transform(dates, &mut self.ohlcs, |ohlc| ohlc.close);
+
+        self.market_cap
+            .multi_insert_multiply(dates, &mut self.closes, circulating_supply);
 
         self.price_1w_sma
             .multi_insert_simple_average(dates, &mut self.closes, ONE_WEEK_IN_DAYS);
@@ -154,6 +182,68 @@ impl DateDataset {
             &mut self.closes,
             200 * ONE_WEEK_IN_DAYS,
         );
+
+        self.price_1d_total_return
+            .multi_insert_percentage_change(dates, &mut self.closes, 1);
+        self.price_1m_total_return.multi_insert_percentage_change(
+            dates,
+            &mut self.closes,
+            ONE_MONTH_IN_DAYS,
+        );
+        self.price_6m_total_return.multi_insert_percentage_change(
+            dates,
+            &mut self.closes,
+            6 * ONE_MONTH_IN_DAYS,
+        );
+        self.price_1y_total_return.multi_insert_percentage_change(
+            dates,
+            &mut self.closes,
+            ONE_YEAR_IN_DAYS,
+        );
+        self.price_2y_total_return.multi_insert_percentage_change(
+            dates,
+            &mut self.closes,
+            2 * ONE_YEAR_IN_DAYS,
+        );
+        self.price_3y_total_return.multi_insert_percentage_change(
+            dates,
+            &mut self.closes,
+            3 * ONE_YEAR_IN_DAYS,
+        );
+        self.price_4y_total_return.multi_insert_percentage_change(
+            dates,
+            &mut self.closes,
+            4 * ONE_YEAR_IN_DAYS,
+        );
+        self.price_6y_total_return.multi_insert_percentage_change(
+            dates,
+            &mut self.closes,
+            6 * ONE_YEAR_IN_DAYS,
+        );
+        self.price_8y_total_return.multi_insert_percentage_change(
+            dates,
+            &mut self.closes,
+            8 * ONE_YEAR_IN_DAYS,
+        );
+        self.price_10y_total_return.multi_insert_percentage_change(
+            dates,
+            &mut self.closes,
+            10 * ONE_YEAR_IN_DAYS,
+        );
+
+        self.price_4y_compound_return
+            .multi_insert_complex_transform(
+                dates,
+                &mut self.closes,
+                |(last_value, date, closes)| {
+                    let previous_value = date
+                        .checked_sub_days(Days::new(4 * ONE_YEAR_IN_DAYS as u64))
+                        .and_then(|date| closes.get_or_import(date))
+                        .unwrap_or_default();
+
+                    (((last_value / previous_value).powf(1.0 / 4.0)) - 1.0) * 100.0
+                },
+            );
     }
 }
 
@@ -173,6 +263,7 @@ impl AnyDataset for DateDataset {
     fn to_computed_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
         vec![
             &self.closes,
+            &self.market_cap,
             &self.price_1w_sma,
             &self.price_1m_sma,
             &self.price_1y_sma,
@@ -186,12 +277,24 @@ impl AnyDataset for DateDataset {
             &self.price_89d_sma,
             &self.price_144d_sma,
             &self.price_200w_sma,
+            &self.price_1d_total_return,
+            &self.price_1m_total_return,
+            &self.price_6m_total_return,
+            &self.price_1y_total_return,
+            &self.price_2y_total_return,
+            &self.price_3y_total_return,
+            &self.price_4y_total_return,
+            &self.price_6y_total_return,
+            &self.price_8y_total_return,
+            &self.price_10y_total_return,
+            &self.price_4y_compound_return,
         ]
     }
 
     fn to_computed_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
         vec![
             &mut self.closes,
+            &mut self.market_cap,
             &mut self.price_1w_sma,
             &mut self.price_1m_sma,
             &mut self.price_1y_sma,
@@ -205,6 +308,17 @@ impl AnyDataset for DateDataset {
             &mut self.price_89d_sma,
             &mut self.price_144d_sma,
             &mut self.price_200w_sma,
+            &mut self.price_1d_total_return,
+            &mut self.price_1m_total_return,
+            &mut self.price_6m_total_return,
+            &mut self.price_1y_total_return,
+            &mut self.price_2y_total_return,
+            &mut self.price_3y_total_return,
+            &mut self.price_4y_total_return,
+            &mut self.price_6y_total_return,
+            &mut self.price_8y_total_return,
+            &mut self.price_10y_total_return,
+            &mut self.price_4y_compound_return,
         ]
     }
 }

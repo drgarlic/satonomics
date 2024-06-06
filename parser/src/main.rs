@@ -1,7 +1,7 @@
 use std::{env::args, path::Path};
 
 use itertools::Itertools;
-use parser::{iter_blocks, BitcoinDB, BitcoinDaemon};
+use parser::{iter_blocks, log, BitcoinDB, BitcoinDaemon};
 
 fn main() -> color_eyre::Result<()> {
     let args = args().collect_vec();
@@ -20,7 +20,8 @@ fn main() -> color_eyre::Result<()> {
 
             // let block_count = 200_000;
             let block_count = bitcoin_db.get_block_count();
-            println!("{block_count} blocks found.");
+
+            log(&format!("{block_count} blocks found."));
 
             iter_blocks(&bitcoin_db, block_count)?;
 

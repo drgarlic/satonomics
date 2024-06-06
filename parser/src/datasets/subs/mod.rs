@@ -18,6 +18,7 @@ use crate::datasets::AnyDataset;
 
 use super::AnyDatasetGroup;
 
+#[derive(Default)]
 pub struct SubDataset {
     pub input: InputSubDataset,
     // pub output: OutputSubDataset,

@@ -1,11 +1,7 @@
-import { generate } from "lean-qr";
-
 export function Title({
   presets,
-  qrcode,
 }: {
   presets: Presets;
-  qrcode: ASS<string>;
 }) {
   return (
     <div class="flex flex-1 items-center overflow-y-auto pb-1.5 text-orange-100/50">

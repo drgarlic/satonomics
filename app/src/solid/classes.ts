@@ -1,5 +1,5 @@
-export const classPropToString = (classes?: ClassProp): string =>
-  Array.isArray(classes)
+export function classPropToString(classes?: ClassProp): string {
+ return Array.isArray(classes)
     ? (
         classes
           .map((c) => (Array.isArray(c) ? classPropToString(c) : c))
@@ -9,3 +9,4 @@ export const classPropToString = (classes?: ClassProp): string =>
         .join(" ")
         .trim()
     : classes || "";
+}

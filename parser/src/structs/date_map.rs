@@ -17,6 +17,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     io::{format_path, Serialization},
     utils::LossyFrom,
+    HeightMap,
     // utils::ToF32,
 };
 
@@ -31,6 +32,7 @@ pub struct SerializedDateMap<T> {
     map: BTreeMap<WNaiveDate, T>,
 }
 
+#[derive(Default)]
 pub struct DateMap<T> {
     version: u32,
 
@@ -130,6 +132,10 @@ where
                 if let Ok(serialized) = s.import(&path) {
                     if serialized.version == s.version {
                         s.imported.insert(chunk_start, serialized);
+                    } else {
+                        s.read_dir()
+                            .iter()
+                            .for_each(|(_, path)| fs::remove_file(path).unwrap())
                     }
                 }
             });
@@ -400,7 +406,34 @@ impl<T> DateMap<T>
 where
     T: MapValue,
 {
-    pub fn multiple_static_insert(&mut self, dates: &[NaiveDate], static_value: T) {
+    pub fn multi_insert<F>(&mut self, dates: &[NaiveDate], mut callback: F)
+    where
+        F: FnMut(NaiveDate) -> T,
+    {
+        dates.iter().for_each(|date| {
+            let date = *date;
+
+            self.insert(date, callback(date));
+        });
+    }
+
+    pub fn multi_last_insert(
+        &mut self,
+        dates: &[NaiveDate],
+        source: &mut HeightMap<T>,
+        last_height: &mut DateMap<usize>,
+    ) {
+        dates.iter().for_each(|date| {
+            let date = *date;
+
+            self.insert(
+                date,
+                source.get_or_import(&last_height.get_or_import(date).unwrap()),
+            );
+        });
+    }
+
+    pub fn multi_static_insert(&mut self, dates: &[NaiveDate], static_value: T) {
         dates.iter().for_each(|date| {
             let date = *date;
 
@@ -431,14 +464,14 @@ where
         transform: F,
     ) where
         K: MapValue,
-        F: Fn((K, &NaiveDate)) -> T,
+        F: Fn((K, NaiveDate, &mut DateMap<K>)) -> T,
     {
         dates.iter().for_each(|date| {
             let date = *date;
 
             self.insert(
                 date,
-                transform((source.get_or_import(date).unwrap(), &date)),
+                transform((source.get_or_import(date).unwrap(), date, source)),
             );
         });
     }
@@ -563,18 +596,18 @@ where
         });
     }
 
-    pub fn multi_insert_cumulative<K>(&mut self, range: &[NaiveDate], source: &mut DateMap<K>)
+    pub fn multi_insert_cumulative<K>(&mut self, dates: &[NaiveDate], source: &mut DateMap<K>)
     where
         K: MapValue,
         T: LossyFrom<K>,
         T: Add<Output = T> + Sub<Output = T>,
     {
-        self._multi_insert_last_x_sum(range, source, None)
+        self._multi_insert_last_x_sum(dates, source, None)
     }
 
     pub fn multi_insert_last_x_sum<K>(
         &mut self,
-        range: &[NaiveDate],
+        dates: &[NaiveDate],
         source: &mut DateMap<K>,
         days: usize,
     ) where
@@ -582,12 +615,12 @@ where
         T: LossyFrom<K>,
         T: Add<Output = T> + Sub<Output = T>,
     {
-        self._multi_insert_last_x_sum(range, source, Some(days))
+        self._multi_insert_last_x_sum(dates, source, Some(days))
     }
 
     fn _multi_insert_last_x_sum<K>(
         &mut self,
-        range: &[NaiveDate],
+        dates: &[NaiveDate],
         source: &mut DateMap<K>,
         days: Option<usize>,
     ) where
@@ -597,12 +630,12 @@ where
     {
         let mut sum = None;
 
-        range.iter().for_each(|date| {
+        dates.iter().for_each(|date| {
             let date = *date;
 
             let to_subtract = days
                 .and_then(|x| {
-                    date.checked_sub_days(Days::new(x as u64 - 1))
+                    date.checked_sub_days(Days::new(x as u64))
                         .and_then(|previous_date| source.get_or_import(previous_date))
                 })
                 .unwrap_or_default();
@@ -626,7 +659,7 @@ where
 
     pub fn multi_insert_simple_average<K>(
         &mut self,
-        range: &[NaiveDate],
+        dates: &[NaiveDate],
         source: &mut DateMap<K>,
         days: usize,
     ) where
@@ -642,7 +675,7 @@ where
 
         let mut average = None;
 
-        range.iter().for_each(|date| {
+        dates.iter().for_each(|date| {
             let date = *date;
 
             let previous_average: f32 = average
@@ -682,9 +715,36 @@ where
 
             let last_value = source.get_or_import(date).unwrap();
 
-            let net = last_value - previous_value;
+            let net_change = last_value - previous_value;
 
-            self.insert(date, net);
+            self.insert(date, net_change);
+        });
+    }
+
+    pub fn multi_insert_percentage_change(
+        &mut self,
+        dates: &[NaiveDate],
+        source: &mut DateMap<T>,
+        days: usize,
+    ) where
+        T: Sub<Output = T> + FloatCore,
+    {
+        let one = T::from(1.0).unwrap();
+        let hundred = T::from(100.0).unwrap();
+
+        dates.iter().for_each(|date| {
+            let date = *date;
+
+            let previous_value = date
+                .checked_sub_days(Days::new(days as u64))
+                .and_then(|date| source.get_or_import(date))
+                .unwrap_or_default();
+
+            let last_value = source.get_or_import(date).unwrap();
+
+            let percentage_change = ((last_value / previous_value) - one) * hundred;
+
+            self.insert(date, percentage_change);
         });
     }
 
@@ -724,7 +784,7 @@ where
 
             let value = {
                 if let Some(start) = days.map_or(NaiveDate::from_ymd_opt(2009, 3, 1), |size| {
-                    date.checked_sub_days(Days::new(size as u64 - 1))
+                    date.checked_sub_days(Days::new(size as u64))
                 }) {
                     if ordered_vec.is_none() {
                         let mut vec = start

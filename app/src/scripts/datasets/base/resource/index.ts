@@ -1,7 +1,11 @@
 import { createLazyMemo } from "@solid-primitives/memo";
 
-import { ONE_DAY_IN_MS, ONE_MINUTE_IN_MS } from "/src/scripts";
-import { createASS } from "/src/solid";
+import {
+  HEIGHT_CHUNK_SIZE,
+  ONE_DAY_IN_MS,
+  ONE_MINUTE_IN_MS,
+} from "/src/scripts";
+import { createRWS } from "/src/solid/rws";
 
 export function createResourceDataset<
   Scale extends ResourceScale,
@@ -35,11 +39,11 @@ export function createResourceDataset<
   )
     .fill(null)
     .map((): FetchedResult<Scale, Type> => {
-      const json = createASS<FetchedJSON<Scale, Type, Dataset> | null>(null);
+      const json = createRWS<FetchedJSON<Scale, Type, Dataset> | null>(null);
 
       return {
         at: null,
-        loading: createASS(false),
+        loading: createRWS(false),
         json,
         vec: createMemo(() => {
           const map = json()?.dataset.map || null;
@@ -56,9 +60,9 @@ export function createResourceDataset<
                 ({
                   number: chunkId + index,
                   time: (chunkId + index) as Time,
-                  ...(typeof value !== "number"
+                  ...(typeof value !== "number" && value !== null
                     ? { ...(value as OHLC), value: value.close }
-                    : { value: value as number }),
+                    : { value: value === null ? NaN : (value as number) }),
                 }) as any as Value,
             );
           } else {
@@ -67,9 +71,9 @@ export function createResourceDataset<
                 ({
                   number: new Date(date).valueOf() / ONE_DAY_IN_MS,
                   time: date,
-                  ...(typeof value !== "number"
+                  ...(typeof value !== "number" && value !== null
                     ? { ...(value as OHLC), value: value.close }
-                    : { value: value as number }),
+                    : { value: value === null ? NaN : (value as number) }),
                 }) as any as Value,
             );
           }
@@ -78,7 +82,8 @@ export function createResourceDataset<
     }) as FetchedResult<Scale, Type>[];
 
   const _fetch = async (id: number) => {
-    const index = scale === "date" ? id - 2009 : Math.floor(id / 13125);
+    const index =
+      scale === "date" ? id - 2009 : Math.floor(id / HEIGHT_CHUNK_SIZE);
 
     const fetched = fetchedJSONs[index];
 

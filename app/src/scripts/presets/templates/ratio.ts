@@ -31,7 +31,7 @@ export function createRatioPresetFolder<
   title: string;
   color: string;
   datasetKey: Key;
-}): PresetFolder {
+}): PartialPresetFolder {
   return {
     id: `${scale}-${id}-ratio`,
     name: "Ratio",
@@ -50,7 +50,6 @@ export function createRatioPresetFolder<
             },
             list: [
               {
-                id: "ratio",
                 title: "Ratio",
                 seriesType: SeriesType.Based,
                 dataset: datasets[`${datasetKey}Ratio`],
@@ -81,7 +80,6 @@ export function createRatioPresetFolder<
                 },
                 list: [
                   {
-                    id: "ratio",
                     title: "Ratio",
                     seriesType: SeriesType.Based,
                     color: colors.gray,
@@ -91,13 +89,11 @@ export function createRatioPresetFolder<
                     },
                   },
                   {
-                    id: "7d",
                     title: "7 Day Moving Average",
                     color: colors.closes7DMA,
                     dataset: datasets[`${datasetKey}Ratio7DayMovingAverage`],
                   },
                   {
-                    id: "1y",
                     title: "1 Year Moving Average",
                     color: colors.closes1YMA,
                     dataset: datasets[`${datasetKey}Ratio1YearMovingAverage`],

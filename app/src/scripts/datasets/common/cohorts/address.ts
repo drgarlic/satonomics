@@ -140,13 +140,13 @@ export const addressOnlyDatasets = [
 
 export const liquidities = [
   {
-    key: "Illiquid",
+    key: "illiquid",
     name: "Illiquid",
     route: "illiquid",
   },
-  { key: "Liquid", name: "Liquid", route: "liquid" },
+  { key: "liquid", name: "Liquid", route: "liquid" },
   {
-    key: "HighlyLiquid",
+    key: "highly_liquid",
     name: "Highly Liquid",
     route: "highly_liquid",
   },

@@ -7,6 +7,8 @@ use leveldb::{
     options::{Options, ReadOptions},
 };
 
+use crate::utils::log;
+
 use super::{BlockchainRead, OpError, OpResult};
 
 const GENESIS_TXID: &str = "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b";
@@ -78,17 +80,20 @@ impl TxDB {
 
     fn try_open_db(path: &Path) -> Option<Database<TxKey>> {
         if !path.exists() {
-            println!("Failed to open tx_index DB: tx_index not built");
+            log("Failed to open tx_index DB: tx_index not built");
+
             return None;
         }
         let options = Options::new();
         match Database::open(path, options) {
             Ok(db) => {
-                println! {"Successfully opened tx_index DB!"}
+                log("Successfully opened tx_index DB!");
+
                 Some(db)
             }
             Err(e) => {
-                println!("Filed to open tx_index DB: {:?}", e);
+                log(&format!("Failed to open tx_index DB: {:?}", e));
+
                 None
             }
         }

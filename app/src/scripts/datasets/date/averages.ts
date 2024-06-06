@@ -29,11 +29,32 @@ export function createPriceAveragesDatasets(
 }
 
 export const averages = [
-  { name: "7 Day", key: "7D" as const, days: 7 },
-  { name: "30 Day", key: "30D" as const, days: 30 },
-  { name: "111 Day", key: "111D" as const, days: 111 },
-  { name: "200 Day", key: "200D" as const, days: 200 },
-  { name: "1 Year", key: "1Y" as const, days: 365 },
-  { name: "2 Year", key: "2Y" as const, days: 730 },
-  { name: "4 Year", key: "4Y" as const, days: 1460 },
+  { name: "1 Week", key: "1w", days: 7 },
+  { name: "8 Days", key: "8d", days: 8 },
+  { name: "13 Days", key: "13d", days: 13 },
+  { name: "21 Days", key: "21d", days: 21 },
+  { name: "1 Month", key: "1m", days: 30 },
+  { name: "34 Days", key: "34d", days: 34 },
+  { name: "55 Days", key: "55d", days: 55 },
+  { name: "89 Days", key: "89d", days: 89 },
+  { name: "144 Days", key: "144d", days: 144 },
+  { name: "1 Year", key: "1y", days: 365 },
+  { name: "2 Years", key: "2y", days: 2 * 365 },
+  { name: "200 Weeks", key: "200w", days: 200 * 7 },
+  { name: "4 Years", key: "4y", days: 4 * 365 },
 ] as const;
+
+export const totalReturns = [
+  { name: "1 Day", key: "1d" },
+  { name: "1 Month", key: "1m" },
+  { name: "6 Months", key: "6m" },
+  { name: "1 Year", key: "1y" },
+  { name: "2 Years", key: "2y" },
+  { name: "3 Years", key: "3y" },
+  { name: "4 Years", key: "4y" },
+  { name: "6 Years", key: "6y" },
+  { name: "8 Years", key: "8y" },
+  { name: "10 Years", key: "10y" },
+] as const;
+
+export const compoundReturns = [{ name: "4 Years", key: "4y" }] as const;

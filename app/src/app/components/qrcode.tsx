@@ -1,4 +1,4 @@
-export function Qrcode({ qrcode }: { qrcode: ASS<string> }) {
+export function Qrcode({ qrcode }: { qrcode: RWS<string> }) {
   return (
     <Show when={qrcode()}>
       <div

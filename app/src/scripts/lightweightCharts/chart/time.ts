@@ -3,6 +3,7 @@ import { makeTimer } from "@solid-primitives/timer";
 import {
   chartState,
   debounce,
+  HEIGHT_CHUNK_SIZE,
   run,
   setMinMaxMarkers,
   writeURLParam,
@@ -82,12 +83,12 @@ export function setTimeScale({
 
       ids = Array.from({ length: to - from + 1 }, (_, i) => i + from);
     } else {
-      const from = Math.floor(Number(range.from) / 13125);
-      const to = Math.floor(Number(range.to) / 13125);
+      const from = Math.floor(Number(range.from) / HEIGHT_CHUNK_SIZE);
+      const to = Math.floor(Number(range.to) / HEIGHT_CHUNK_SIZE);
 
       const length = to - from + 1;
 
-      ids = Array.from({ length }, (_, i) => (from + i) * 13125);
+      ids = Array.from({ length }, (_, i) => (from + i) * HEIGHT_CHUNK_SIZE);
     }
 
     ids.forEach((id) => {

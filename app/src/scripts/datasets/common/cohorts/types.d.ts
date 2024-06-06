@@ -24,7 +24,7 @@ type AddressCohortKey =
 
 type LiquidityKey = (typeof import("./index").liquidities)[number]["key"];
 
-type AddressCohortKeySplitByLiquidity = `${AddressCohortKey}${LiquidityKey}`;
+type AddressCohortKeySplitByLiquidity = `${LiquidityKey}_${AddressCohortKey}`;
 
 type LazyCohortDataset =
   | `PricePaidMean`

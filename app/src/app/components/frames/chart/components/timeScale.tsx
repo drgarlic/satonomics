@@ -4,7 +4,6 @@ import { Box } from "../../box";
 
 export function TimeScale() {
   return (
-    // <div class="m-2 flex space-x-2 overflow-y-auto rounded-xl border border-orange-200/10 bg-orange-100/5 p-2 backdrop-blur">
     <Box dark padded overflowY>
       <Button onClick={() => setTimeScale()}>All Time</Button>
       <Button onClick={() => setTimeScale(7)}>1 Week</Button>

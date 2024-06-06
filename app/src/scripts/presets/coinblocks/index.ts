@@ -17,29 +17,341 @@ export function createPresets<Scale extends ResourceScale>({
   const datasets = _datasets[scale];
 
   return {
-    id: `${scale}-cointime-economics`,
     name: "Cointime Economics",
     tree: [
       {
-        id: `${scale}-coinblocks`,
+        name: "Prices",
+        tree: [
+          {
+            scale,
+            icon: IconTablerArrowsCross,
+            name: "All",
+            title: "All Cointime Prices",
+            description: "",
+            applyPreset(params) {
+              return applyMultipleSeries({
+                ...params,
+                list: [
+                  {
+                    title: "Vaulted Price",
+                    color: colors.vaultedness,
+                    dataset: datasets.vaulted_price,
+                  },
+                  {
+                    title: "Active Price",
+                    color: colors.liveliness,
+                    dataset: datasets.active_price,
+                  },
+                  {
+                    title: "True Market Mean",
+                    color: colors.trueMarketMeanPrice,
+                    dataset: datasets.true_market_mean,
+                  },
+                  {
+                    title: "Realized Price",
+                    color: colors.bitcoin,
+                    dataset: datasets.realized_price,
+                  },
+                  {
+                    title: "Cointime",
+                    color: colors.cointimePrice,
+                    dataset: datasets.cointime_price,
+                  },
+                ],
+              });
+            },
+          },
+          {
+            name: "Active",
+            tree: [
+              {
+                scale,
+                icon: IconTablerHeartBolt,
+                name: "Price",
+                title: "Active Price",
+                description: "",
+                applyPreset(params) {
+                  return applyMultipleSeries({
+                    ...params,
+                    list: [
+                      {
+                        title: "Active Price",
+                        color: colors.liveliness,
+                        dataset: datasets.active_price,
+                      },
+                    ],
+                  });
+                },
+              },
+              // createRatioPresetFolder({
+              //   datasets,
+              //   scale,
+              //   color: colors.liveliness,
+              //   id: "active-price",
+              //   datasetKey: "activePrice",
+              //   title: "Active Price",
+              // }),
+            ],
+          },
+          {
+            name: "Vaulted",
+            tree: [
+              {
+                scale,
+                icon: IconTablerBuildingBank,
+                name: "Price",
+                title: "Vaulted Price",
+                description: "",
+                applyPreset(params) {
+                  return applyMultipleSeries({
+                    ...params,
+                    list: [
+                      {
+                        title: "Vaulted Price",
+                        color: colors.vaultedness,
+                        dataset: datasets.vaulted_price,
+                      },
+                    ],
+                  });
+                },
+              },
+              // createRatioPresetFolder({
+              //   datasets,
+              //   scale,
+              //   color: colors.vaultedness,
+              //   id: "vaulted-price",
+              //   datasetKey: "vaultedPrice",
+              //   title: "Vaulted Price",
+              // }),
+            ],
+          },
+          {
+            name: "True Market Mean",
+            tree: [
+              {
+                scale,
+                icon: IconTablerStackMiddle,
+                name: "Price",
+                title: "True Market Mean",
+                description: "",
+                applyPreset(params) {
+                  return applyMultipleSeries({
+                    ...params,
+                    list: [
+                      {
+                        title: "True Market Mean",
+                        color: colors.trueMarketMeanPrice,
+                        dataset: datasets.true_market_mean,
+                      },
+                    ],
+                  });
+                },
+              },
+              // createRatioPresetFolder({
+              //   datasets,
+              //   scale,
+              //   color: colors.trueMarketMeanPrice,
+              //   id: "true-market-mean",
+              //   datasetKey: "trueMarketMean",
+              //   title: "True Market Mean",
+              // }),
+            ],
+          },
+          {
+            name: "Cointime Price",
+            tree: [
+              {
+                scale,
+                icon: IconTablerStackMiddle,
+                name: "Price",
+                title: "Cointime Price",
+                description: "",
+                applyPreset(params) {
+                  return applyMultipleSeries({
+                    ...params,
+                    list: [
+                      {
+                        title: "Cointime",
+                        color: colors.cointimePrice,
+                        dataset: datasets.cointime_price,
+                      },
+                    ],
+                  });
+                },
+              },
+              // createRatioPresetFolder({
+              //   datasets,
+              //   scale,
+              //   color: colors.trueMarketMeanPrice,
+              //   id: "true-market-mean",
+              //   datasetKey: "trueMarketMean",
+              //   title: "True Market Mean",
+              // }),
+            ],
+          },
+        ],
+      },
+      {
+        name: "Capitalizations",
+        tree: [
+          {
+            scale,
+            icon: IconTablerArrowsCross,
+            name: "All",
+            title: "Cointime Capitalizations",
+            description: "",
+            applyPreset(params) {
+              return applyMultipleSeries({
+                ...params,
+                priceScaleOptions: {
+                  halved: true,
+                  mode: PriceScaleMode.Logarithmic,
+                },
+                list: [
+                  {
+                    title: "Market Cap",
+
+                    color: colors.white,
+                    dataset: datasets.market_cap,
+                  },
+                  {
+                    title: "Realized Cap",
+                    color: colors.realizedCap,
+                    dataset: datasets.realized_cap,
+                  },
+                  {
+                    title: "Investor Cap",
+                    color: colors.investorCap,
+                    dataset: datasets.investor_cap,
+                  },
+                  {
+                    title: "Thermo Cap",
+                    color: colors.thermoCap,
+                    dataset: datasets.thermo_cap,
+                  },
+                ],
+              });
+            },
+          },
+          {
+            scale,
+            icon: IconTablerPick,
+            name: "Thermo Cap",
+            title: "Thermo Cap",
+            description: "",
+            applyPreset(params) {
+              return applyMultipleSeries({
+                ...params,
+                priceScaleOptions: {
+                  halved: true,
+                  mode: PriceScaleMode.Logarithmic,
+                },
+                list: [
+                  {
+                    title: "Thermo Cap",
+                    color: colors.thermoCap,
+                    dataset: datasets.thermo_cap,
+                  },
+                ],
+              });
+            },
+          },
+          {
+            scale,
+            icon: IconTablerTie,
+            name: "Investor Cap",
+            title: "Investor Cap",
+            description: "",
+            applyPreset(params) {
+              return applyMultipleSeries({
+                ...params,
+                priceScaleOptions: {
+                  halved: true,
+                  mode: PriceScaleMode.Logarithmic,
+                },
+                list: [
+                  {
+                    title: "Investor Cap",
+                    color: colors.investorCap,
+                    dataset: datasets.investor_cap,
+                  },
+                ],
+              });
+            },
+          },
+          {
+            scale,
+            icon: IconTablerDivide,
+            name: "Thermo Cap To Investor Cap Ratio",
+            title: "Thermo Cap To Investor Cap Ratio (%)",
+            description: "",
+            applyPreset(params) {
+              return applyMultipleSeries({
+                ...params,
+                priceScaleOptions: {
+                  halved: true,
+                },
+                list: [
+                  {
+                    title: "Ratio",
+                    color: colors.bitcoin,
+                    dataset: datasets.thermo_cap_to_investor_cap_ratio,
+                  },
+                ],
+              });
+            },
+          },
+        ],
+      },
+      {
         name: "Coinblocks",
         tree: [
           {
-            id: `${scale}-coinblocks-created`,
+            scale,
+            icon: IconTablerArrowsCross,
+            name: "All",
+            title: "All Coinblocks",
+            description: "",
+            applyPreset(params) {
+              return applyMultipleSeries({
+                ...params,
+                priceScaleOptions: {
+                  halved: true,
+                },
+                list: [
+                  {
+                    title: "Coinblocks Created",
+                    color: colors.coinblocksCreated,
+                    dataset: datasets.coinblocks_created,
+                  },
+                  {
+                    title: "Coinblocks Destroyed",
+                    color: colors.coinblocksDestroyed,
+                    dataset: datasets.coinblocks_destroyed,
+                  },
+                  {
+                    title: "Coinblocks Stored",
+                    color: colors.coinblocksStored,
+                    dataset: datasets.coinblocks_stored,
+                  },
+                ],
+              });
+            },
+          },
+          {
+            scale,
             icon: IconTablerCube,
             name: "Created",
             title: "Coinblocks Created",
             description: "",
             applyPreset(params) {
               return applyMultipleSeries({
-                scale,
                 ...params,
                 priceScaleOptions: {
                   halved: true,
                 },
                 list: [
                   {
-                    id: "coinblocks-created",
                     title: "Coinblocks Created",
                     color: colors.coinblocksCreated,
                     dataset: datasets.coinblocks_created,
@@ -49,21 +361,19 @@ export function createPresets<Scale extends ResourceScale>({
             },
           },
           {
-            id: `${scale}-coinblocks-destroyed`,
+            scale,
             icon: IconTablerFileShredder,
             name: "Destroyed",
             title: "Coinblocks Destroyed",
             description: "",
             applyPreset(params) {
               return applyMultipleSeries({
-                scale,
                 ...params,
                 priceScaleOptions: {
                   halved: true,
                 },
                 list: [
                   {
-                    id: "coinblocks-destroyed",
                     title: "Coinblocks Destroyed",
                     color: colors.coinblocksDestroyed,
                     dataset: datasets.coinblocks_destroyed,
@@ -73,57 +383,19 @@ export function createPresets<Scale extends ResourceScale>({
             },
           },
           {
-            id: `${scale}-coinblocks-stored`,
+            scale,
             icon: IconTablerBuildingWarehouse,
             name: "Stored",
             title: "Coinblocks Stored",
             description: "",
             applyPreset(params) {
               return applyMultipleSeries({
-                scale,
                 ...params,
                 priceScaleOptions: {
                   halved: true,
                 },
                 list: [
                   {
-                    id: "coinblocks-stored",
-                    title: "Coinblocks Stored",
-                    color: colors.coinblocksStored,
-                    dataset: datasets.coinblocks_stored,
-                  },
-                ],
-              });
-            },
-          },
-          {
-            id: `${scale}-coinblocks-crossed`,
-            icon: IconTablerArrowsCross,
-            name: "Crossed",
-            title: "Coinblocks",
-            description: "",
-            applyPreset(params) {
-              return applyMultipleSeries({
-                scale,
-                ...params,
-                priceScaleOptions: {
-                  halved: true,
-                },
-                list: [
-                  {
-                    id: "coinblocks-created",
-                    title: "Coinblocks Created",
-                    color: colors.coinblocksCreated,
-                    dataset: datasets.coinblocks_created,
-                  },
-                  {
-                    id: "coinblocks-destroyed",
-                    title: "Coinblocks Destroyed",
-                    color: colors.coinblocksDestroyed,
-                    dataset: datasets.coinblocks_destroyed,
-                  },
-                  {
-                    id: "coinblocks-stored",
                     title: "Coinblocks Stored",
                     color: colors.coinblocksStored,
                     dataset: datasets.coinblocks_stored,
@@ -135,25 +407,54 @@ export function createPresets<Scale extends ResourceScale>({
         ],
       },
       {
-        id: `${scale}-cumulative-coinblocks`,
         name: "Cumulative Coinblocks",
         tree: [
           {
-            id: `${scale}-cumulative-coinblocks-created`,
+            scale,
+            icon: IconTablerArrowsCross,
+            name: "All",
+            title: "All Cumulative Coinblocks",
+            description: "",
+            applyPreset(params) {
+              return applyMultipleSeries({
+                ...params,
+                priceScaleOptions: {
+                  halved: true,
+                },
+                list: [
+                  {
+                    title: "Cumulative Coinblocks Created",
+                    color: colors.coinblocksCreated,
+                    dataset: datasets.cumulative_coinblocks_created,
+                  },
+                  {
+                    title: "Cumulative Coinblocks Destroyed",
+                    color: colors.coinblocksDestroyed,
+                    dataset: datasets.cumulative_coinblocks_destroyed,
+                  },
+                  {
+                    title: "Cumulative Coinblocks Stored",
+                    color: colors.coinblocksStored,
+                    dataset: datasets.cumulative_coinblocks_stored,
+                  },
+                ],
+              });
+            },
+          },
+          {
+            scale,
             icon: IconTablerCube,
             name: "Created",
             title: "Cumulative Coinblocks Created",
             description: "",
             applyPreset(params) {
               return applyMultipleSeries({
-                scale,
                 ...params,
                 priceScaleOptions: {
                   halved: true,
                 },
                 list: [
                   {
-                    id: "cumulative-coinblocks-created",
                     title: "Cumulative Coinblocks Created",
                     color: colors.coinblocksCreated,
                     dataset: datasets.cumulative_coinblocks_created,
@@ -163,21 +464,19 @@ export function createPresets<Scale extends ResourceScale>({
             },
           },
           {
-            id: `${scale}-cumulative-coinblocks-destroyed`,
+            scale,
             icon: IconTablerFileShredder,
             name: "Destroyed",
             title: "Cumulative Coinblocks Destroyed",
             description: "",
             applyPreset(params) {
               return applyMultipleSeries({
-                scale,
                 ...params,
                 priceScaleOptions: {
                   halved: true,
                 },
                 list: [
                   {
-                    id: "cumulative-coinblocks-destroyed",
                     title: "Cumulative Coinblocks Destroyed",
                     color: colors.coinblocksDestroyed,
                     dataset: datasets.cumulative_coinblocks_destroyed,
@@ -187,91 +486,21 @@ export function createPresets<Scale extends ResourceScale>({
             },
           },
           {
-            id: `${scale}-cumulative-coinblocks-stored`,
+            scale,
             icon: IconTablerBuildingWarehouse,
             name: "Stored",
             title: "Cumulative Coinblocks Stored",
             description: "",
             applyPreset(params) {
               return applyMultipleSeries({
-                scale,
                 ...params,
                 priceScaleOptions: {
                   halved: true,
                 },
                 list: [
                   {
-                    id: "cumulative-coinblocks-stored",
                     title: "Cumulative Coinblocks Stored",
                     color: colors.coinblocksStored,
-                    dataset: datasets.cumulative_coinblocks_stored,
-                  },
-                ],
-              });
-            },
-          },
-          {
-            id: `${scale}-cumulative-coinblocks-crossed`,
-            icon: IconTablerArrowsCross,
-            name: "Crossed",
-            title: "Cumulative Coinblocks (Crossed)",
-            description: "",
-            applyPreset(params) {
-              return applyMultipleSeries({
-                scale,
-                ...params,
-                priceScaleOptions: {
-                  halved: true,
-                },
-                list: [
-                  {
-                    id: "coinblocks-created",
-                    title: "Cumulative Coinblocks Created",
-                    color: colors.coinblocksCreated,
-                    dataset: datasets.cumulative_coinblocks_created,
-                  },
-                  {
-                    id: "coinblocks-destroyed",
-                    title: "Cumulative Coinblocks Destroyed",
-                    color: colors.coinblocksDestroyed,
-                    dataset: datasets.cumulative_coinblocks_destroyed,
-                  },
-                  {
-                    id: "coinblocks-stored",
-                    title: "Cumulative Coinblocks Stored",
-                    color: colors.coinblocksStored,
-                    dataset: datasets.cumulative_coinblocks_stored,
-                  },
-                ],
-              });
-            },
-          },
-          {
-            id: `${scale}-cumulative-coinblocks-stacked`,
-            icon: IconTablerStack,
-            name: "Stacked",
-            title: "Cumulative Coinblocks (Stacked)",
-            description: "",
-            applyPreset(params) {
-              return applyMultipleSeries({
-                scale,
-                ...params,
-                priceScaleOptions: {
-                  halved: true,
-                },
-                list: [
-                  {
-                    id: "coinblocks-destroyed",
-                    title: "Cumulative Coinblocks Destroyed",
-                    color: colors.coinblocksDestroyed,
-                    seriesType: SeriesType.Stacked,
-                    dataset: datasets.cumulative_coinblocks_destroyed,
-                  },
-                  {
-                    id: "coinblocks-stored",
-                    title: "Cumulative Coinblocks Stored",
-                    color: colors.coinblocksStored,
-                    seriesType: SeriesType.Stacked,
                     dataset: datasets.cumulative_coinblocks_stored,
                   },
                 ],
@@ -281,25 +510,22 @@ export function createPresets<Scale extends ResourceScale>({
         ],
       },
       {
-        id: `${scale}-liveliness-and-vaultedness`,
         name: "Liveliness & Vaultedness",
         tree: [
           {
-            id: `${scale}-liveliness`,
+            scale,
             icon: IconTablerHeartBolt,
             name: "Liveliness - Activity",
             title: "Liveliness (Activity)",
             description: "",
             applyPreset(params) {
               return applyMultipleSeries({
-                scale,
                 ...params,
                 priceScaleOptions: {
                   halved: true,
                 },
                 list: [
                   {
-                    id: "liveliness",
                     title: "Liveliness",
                     color: colors.liveliness,
                     dataset: datasets.liveliness,
@@ -309,21 +535,19 @@ export function createPresets<Scale extends ResourceScale>({
             },
           },
           {
-            id: `${scale}-vaultedness`,
+            scale,
             icon: IconTablerBuildingBank,
             name: "Vaultedness",
             title: "Vaultedness",
             description: "",
             applyPreset(params) {
               return applyMultipleSeries({
-                scale,
                 ...params,
                 priceScaleOptions: {
                   halved: true,
                 },
                 list: [
                   {
-                    id: "vaultedness",
                     title: "Vaultedness",
                     color: colors.vaultedness,
                     dataset: datasets.vaultedness,
@@ -333,27 +557,24 @@ export function createPresets<Scale extends ResourceScale>({
             },
           },
           {
-            id: `${scale}-liveliness-vs-vaultedness-crossed`,
+            scale,
             icon: IconTablerArrowsCross,
             name: "Crossed",
-            title: "Liveliness VS. Vaultedness (Crossed)",
+            title: "Liveliness V. Vaultedness",
             description: "",
             applyPreset(params) {
               return applyMultipleSeries({
-                scale,
                 ...params,
                 priceScaleOptions: {
                   halved: true,
                 },
                 list: [
                   {
-                    id: "liveliness",
                     title: "Liveliness",
                     color: colors.liveliness,
                     dataset: datasets.liveliness,
                   },
                   {
-                    id: "vaultedness",
                     title: "Vaultedness",
                     color: colors.vaultedness,
                     dataset: datasets.vaultedness,
@@ -363,53 +584,19 @@ export function createPresets<Scale extends ResourceScale>({
             },
           },
           {
-            id: `${scale}-liveliness-vs-vaultedness-stacked`,
-            icon: IconTablerStack,
-            name: "Stacked",
-            title: "Liveliness VS. Vaultedness (Stacked)",
-            description: "",
-            applyPreset(params) {
-              return applyMultipleSeries({
-                scale,
-                ...params,
-                priceScaleOptions: {
-                  halved: true,
-                },
-                list: [
-                  {
-                    id: "liveliness",
-                    title: "Liveliness",
-                    color: colors.liveliness,
-                    dataset: datasets.liveliness,
-                    seriesType: SeriesType.Stacked,
-                  },
-                  {
-                    id: "vaultedness",
-                    title: "Vaultedness",
-                    color: colors.vaultedness,
-                    dataset: datasets.vaultedness,
-                    seriesType: SeriesType.Stacked,
-                  },
-                ],
-              });
-            },
-          },
-          {
-            id: `${scale}-activity-to-vaultedness-ratio`,
+            scale,
             icon: IconTablerDivide,
-            name: "A2VR - Activity To Vaultedness Ratio",
-            title: "Activity To Vaultedness Ratio (A2VR)",
+            name: "Activity To Vaultedness Ratio",
+            title: "Activity To Vaultedness Ratio",
             description: "",
             applyPreset(params) {
               return applyMultipleSeries({
-                scale,
                 ...params,
                 priceScaleOptions: {
                   halved: true,
                 },
                 list: [
                   {
-                    id: "activity-to-vaultedness-ratio",
                     title: "Activity To Vaultedness Ratio",
                     color: colors.activityToVaultednessRatio,
                     dataset: datasets.activity_to_vaultedness_ratio,
@@ -419,27 +606,24 @@ export function createPresets<Scale extends ResourceScale>({
             },
           },
           {
-            id: `${scale}-concurrent-liveliness`,
+            scale,
             icon: IconTablerHeartBolt,
             name: "Concurrent Liveliness - Supply Adjusted Coindays Destroyed",
             title: "Concurrent Liveliness - Supply Adjusted Coindays Destroyed",
             description: "",
             applyPreset(params) {
               return applyMultipleSeries({
-                scale,
                 ...params,
                 priceScaleOptions: {
                   halved: true,
                 },
                 list: [
                   {
-                    id: "concurrent-liveliness",
                     title: "Concurrent Liveliness 14d Median",
                     color: `${colors.liveliness}66`,
                     dataset: datasets.concurrent_liveliness_2w_median,
                   },
                   {
-                    id: "concurrent-liveliness",
                     title: "Concurrent Liveliness",
                     color: colors.liveliness,
                     dataset: datasets.concurrent_liveliness,
@@ -449,28 +633,25 @@ export function createPresets<Scale extends ResourceScale>({
             },
           },
           {
-            id: `${scale}-liveliness-incremental-change`,
+            scale,
             icon: IconTablerStairs,
             name: "Liveliness Incremental Change",
             title: "Liveliness Incremental Change",
             description: "",
             applyPreset(params) {
               return applyMultipleSeries({
-                scale,
                 ...params,
                 priceScaleOptions: {
                   halved: true,
                 },
                 list: [
                   {
-                    id: "liveliness-incremental-change",
                     title: "Liveliness Incremental Change",
                     color: colors.darkLiveliness,
                     seriesType: SeriesType.Based,
                     dataset: datasets.liveliness_net_change,
                   },
                   {
-                    id: "liveliness-incremental-change-14d-median",
                     title: "Liveliness Incremental Change 14 Day Median",
                     color: colors.liveliness,
                     seriesType: SeriesType.Based,
@@ -483,25 +664,22 @@ export function createPresets<Scale extends ResourceScale>({
         ],
       },
       {
-        id: `${scale}-coinblocks-supply`,
         name: "Supply",
         tree: [
           {
-            id: `${scale}-vaulted-supply`,
+            scale,
             icon: IconTablerBuildingBank,
             name: "Vaulted",
             title: "Vaulted Supply",
             description: "",
             applyPreset(params) {
               return applyMultipleSeries({
-                scale,
                 ...params,
                 priceScaleOptions: {
                   halved: true,
                 },
                 list: [
                   {
-                    id: "vaulted-supply",
                     title: "Vaulted Supply",
                     color: colors.vaultedness,
                     dataset: datasets.vaulted_supply,
@@ -511,21 +689,19 @@ export function createPresets<Scale extends ResourceScale>({
             },
           },
           {
-            id: `${scale}-active-supply`,
+            scale,
             icon: IconTablerHeartBolt,
             name: "Active",
             title: "Active Supply",
             description: "",
             applyPreset(params) {
               return applyMultipleSeries({
-                scale,
                 ...params,
                 priceScaleOptions: {
                   halved: true,
                 },
                 list: [
                   {
-                    id: "active-supply",
                     title: "Active Supply",
                     color: colors.liveliness,
                     dataset: datasets.active_supply,
@@ -535,68 +711,32 @@ export function createPresets<Scale extends ResourceScale>({
             },
           },
           {
-            id: `${scale}-vaulted-supply-vs-active-supply-crossed`,
+            scale,
             icon: IconTablerArrowsCross,
-            name: "VS. Crossed",
-            title: "Vaulted VS. Active (Crossed)",
+            name: "Vaulted V. Active",
+            title: "Vaulted V. Active",
             description: "",
             applyPreset(params) {
               return applyMultipleSeries({
-                scale,
                 ...params,
                 priceScaleOptions: {
                   halved: true,
                 },
                 list: [
                   {
-                    id: "circulating-supply",
                     title: "Circulating Supply",
                     color: colors.coinblocksCreated,
                     dataset: datasets.supply,
                   },
                   {
-                    id: "vaulted",
                     title: "Vaulted Supply",
                     color: colors.vaultedness,
                     dataset: datasets.vaulted_supply,
                   },
                   {
-                    id: "active",
                     title: "Active Supply",
                     color: colors.liveliness,
                     dataset: datasets.active_supply,
-                  },
-                ],
-              });
-            },
-          },
-          {
-            id: `${scale}-vaulted-supply-vs-active-supply-stacked`,
-            icon: IconTablerStack,
-            name: "VS. Stacked",
-            title: "Vaulted VS. Active (Stacked)",
-            description: "",
-            applyPreset(params) {
-              return applyMultipleSeries({
-                scale,
-                ...params,
-                priceScaleOptions: {
-                  halved: true,
-                },
-                list: [
-                  {
-                    id: "vaulted",
-                    title: "Vaulted Supply",
-                    color: colors.vaultedness,
-                    dataset: datasets.vaulted_supply,
-                    seriesType: SeriesType.Stacked,
-                  },
-                  {
-                    id: "active",
-                    title: "Active Supply",
-                    color: colors.liveliness,
-                    dataset: datasets.active_supply,
-                    seriesType: SeriesType.Stacked,
                   },
                 ],
               });
@@ -633,21 +773,19 @@ export function createPresets<Scale extends ResourceScale>({
           //   },
           // },
           {
-            id: `${scale}-vaulted-supply-net-change`,
+            scale,
             icon: IconTablerBuildingBank,
             name: "Vaulted Net Change",
             title: "Vaulted Supply Net Change",
             description: "",
             applyPreset(params) {
               return applyMultipleSeries({
-                scale,
                 ...params,
                 priceScaleOptions: {
                   halved: true,
                 },
                 list: [
                   {
-                    id: "vaulted-supply-net-change",
                     title: "Vaulted Supply Net Change",
                     color: colors.vaultedness,
                     dataset: datasets.vaulted_supply,
@@ -657,21 +795,19 @@ export function createPresets<Scale extends ResourceScale>({
             },
           },
           {
-            id: `${scale}-active-supply-net-change`,
+            scale,
             icon: IconTablerHeartBolt,
             name: "Active Net Change",
             title: "Active Supply Net Change",
             description: "",
             applyPreset(params) {
               return applyMultipleSeries({
-                scale,
                 ...params,
                 priceScaleOptions: {
                   halved: true,
                 },
                 list: [
                   {
-                    id: "active-supply-net-change",
                     title: "Active Supply Net Change",
                     color: colors.liveliness,
                     dataset: datasets.active_supply_net_change,
@@ -681,28 +817,25 @@ export function createPresets<Scale extends ResourceScale>({
             },
           },
           {
-            id: `${scale}-active-vs-vaulted-supply-90d-net-change`,
+            scale,
             icon: IconTablerSwords,
             name: "Active VS. Vaulted 90D Net Change",
             title: "Active VS. Vaulted 90 Day Supply Net Change",
             description: "",
             applyPreset(params) {
               return applyMultipleSeries({
-                scale,
                 ...params,
                 priceScaleOptions: {
                   halved: true,
                 },
                 list: [
                   {
-                    id: "active-supply-net-change",
                     title: "Active Supply Net Change",
                     color: `${colors.liveliness}80`,
                     dataset: datasets.active_supply_3m_net_change,
                     seriesType: SeriesType.Based,
                   },
                   {
-                    id: "vaulted-supply-net-change",
                     title: "Vaulted Supply Net Change",
                     color: `${colors.vaultedPrice}80`,
                     seriesType: SeriesType.Based,
@@ -811,33 +944,29 @@ export function createPresets<Scale extends ResourceScale>({
           // },
 
           {
-            id: `${scale}-cointime-supply-in-profit`,
+            scale,
             icon: IconTablerTrendingUp,
             name: "In Profit",
             title: "Cointime Supply In Profit",
             description: "",
             applyPreset(params) {
               return applyMultipleSeries({
-                scale,
                 ...params,
                 priceScaleOptions: {
                   halved: true,
                 },
                 list: [
                   {
-                    id: "circulating-supply",
                     title: "Circulating Supply",
                     color: colors.coinblocksCreated,
                     dataset: datasets.supply,
                   },
                   {
-                    id: "vaulted",
                     title: "Vaulted Supply",
                     color: colors.vaultedness,
                     dataset: datasets.vaulted_supply,
                   },
                   {
-                    id: "supply-in-profit",
                     title: "Supply in profit",
                     color: colors.bitcoin,
                     dataset: datasets.supply_in_profit,
@@ -847,33 +976,29 @@ export function createPresets<Scale extends ResourceScale>({
             },
           },
           {
-            id: `${scale}-cointime-supply-in-loss`,
+            scale,
             icon: IconTablerTrendingDown,
             name: "In Loss",
             title: "Cointime Supply In Loss",
             description: "",
             applyPreset(params) {
               return applyMultipleSeries({
-                scale,
                 ...params,
                 priceScaleOptions: {
                   halved: true,
                 },
                 list: [
                   {
-                    id: "circulating-supply",
                     title: "Circulating Supply",
                     color: colors.coinblocksCreated,
                     dataset: datasets.supply,
                   },
                   {
-                    id: "active",
                     title: "Active Supply",
                     color: colors.liveliness,
                     dataset: datasets.active_supply,
                   },
                   {
-                    id: "supply-in-loss",
                     title: "Supply in Loss",
                     color: colors.bitcoin,
                     dataset: datasets.supply_in_loss,
@@ -885,14 +1010,13 @@ export function createPresets<Scale extends ResourceScale>({
         ],
       },
       {
-        id: `${scale}-cointime-adjusted-yearly-inflation-rate`,
+        scale,
         icon: IconTablerBuildingFactory,
         name: "Cointime Yearly Inflation Rate",
         title: "Cointime-Adjusted Yearly Inflation Rate (%)",
         description: "",
         applyPreset(params) {
           return applyMultipleSeries({
-            scale,
             ...params,
             priceScaleOptions: {
               halved: true,
@@ -900,14 +1024,12 @@ export function createPresets<Scale extends ResourceScale>({
             },
             list: [
               {
-                id: "cointime-adjusted-yearly-inflation-rate",
-                title: "Cointime Adjusted (%)",
+                title: "Cointime Adjusted",
                 color: colors.coinblocksCreated,
                 dataset: datasets.cointime_adjusted_yearly_inflation_rate,
               },
               {
-                id: "yearly-inflation-rate",
-                title: "Nominal (%)",
+                title: "Nominal",
                 color: colors.bitcoin,
                 dataset: datasets.yearly_inflation_rate,
               },
@@ -916,14 +1038,13 @@ export function createPresets<Scale extends ResourceScale>({
         },
       },
       {
-        id: `${scale}-cointime-adjusted-transactions-velocity`,
+        scale,
         icon: IconTablerWind,
         name: "Cointime Velocity",
         title: "Cointime-Adjusted Transactions Velocity",
         description: "",
         applyPreset(params) {
           return applyMultipleSeries({
-            scale,
             ...params,
             priceScaleOptions: {
               halved: true,
@@ -931,13 +1052,11 @@ export function createPresets<Scale extends ResourceScale>({
             },
             list: [
               {
-                id: "cointime-adjusted-transactions-velocity",
                 title: "Cointime Adjusted",
                 color: colors.coinblocksCreated,
                 dataset: datasets.cointime_adjusted_velocity,
               },
               {
-                id: "transactions-velocity",
                 title: "Nominal",
                 color: colors.bitcoin,
                 dataset: datasets.transaction_velocity,
@@ -946,246 +1065,6 @@ export function createPresets<Scale extends ResourceScale>({
           });
         },
       },
-      {
-        id: `${scale}-cointime-capitalizations-folder`,
-        name: "Capitalizations",
-        tree: [
-          {
-            id: `${scale}-cointime-capitalizations`,
-            icon: IconTablerArrowsCross,
-            name: "All",
-            title: "Cointime Capitalizations",
-            description: "",
-            applyPreset(params) {
-              return applyMultipleSeries({
-                scale,
-                ...params,
-                priceScaleOptions: {
-                  halved: true,
-                  mode: PriceScaleMode.Logarithmic,
-                },
-                list: [
-                  {
-                    id: "thermo-cap",
-                    title: "Thermo Cap",
-                    color: colors.thermoCap,
-                    dataset: datasets.thermo_cap,
-                  },
-                  {
-                    id: "investor-cap",
-                    title: "Investor Cap",
-                    color: colors.investorCap,
-                    dataset: datasets.investor_cap,
-                  },
-                  {
-                    id: "realized-cap",
-                    title: "Realized Cap",
-                    color: colors.realizedCap,
-                    dataset: datasets.realized_cap,
-                  },
-                  {
-                    id: "market-cap",
-                    title: "Market Cap",
-                    color: colors.bitcoin,
-                    dataset: datasets.market_cap,
-                  },
-                ],
-              });
-            },
-          },
-          {
-            id: `${scale}-thermo-cap`,
-            icon: IconTablerPick,
-            name: "Thermo Cap",
-            title: "Thermo Cap",
-            description: "",
-            applyPreset(params) {
-              return applyMultipleSeries({
-                scale,
-                ...params,
-                priceScaleOptions: {
-                  halved: true,
-                  mode: PriceScaleMode.Logarithmic,
-                },
-                list: [
-                  {
-                    id: "thermo-cap",
-                    title: "Thermo Cap",
-                    color: colors.thermoCap,
-                    dataset: datasets.thermo_cap,
-                  },
-                ],
-              });
-            },
-          },
-          {
-            id: `${scale}-investor-cap`,
-            icon: IconTablerTie,
-            name: "Investor Cap",
-            title: "Investor Cap",
-            description: "",
-            applyPreset(params) {
-              return applyMultipleSeries({
-                scale,
-                ...params,
-                priceScaleOptions: {
-                  halved: true,
-                  mode: PriceScaleMode.Logarithmic,
-                },
-                list: [
-                  {
-                    id: "investor-cap",
-                    title: "Investor Cap",
-                    color: colors.investorCap,
-                    dataset: datasets.investor_cap,
-                  },
-                ],
-              });
-            },
-          },
-          {
-            id: `${scale}-thermo-cap-to-investor-cap-ratio`,
-            icon: IconTablerDivide,
-            name: "Thermo To Investor Cap Ratio",
-            title: "Thermo To Investor Capitalization Ratio (%)",
-            description: "",
-            applyPreset(params) {
-              return applyMultipleSeries({
-                scale,
-                ...params,
-                priceScaleOptions: {
-                  halved: true,
-                },
-                list: [
-                  {
-                    id: "investor-cap",
-                    title: "Investor Cap",
-                    color: colors.bitcoin,
-                    dataset: datasets.thermo_cap_to_investor_cap_ratio,
-                  },
-                ],
-              });
-            },
-          },
-        ],
-      },
-      {
-        id: `${scale}-cointime-prices-folder`,
-        name: "Prices",
-        tree: [
-          {
-            id: `${scale}-active-price-folder`,
-            name: "Active",
-            tree: [
-              {
-                id: `${scale}-active-price`,
-                icon: IconTablerHeartBolt,
-                name: "Price",
-                title: "Active Price",
-                description: "",
-                applyPreset(params) {
-                  return applyMultipleSeries({
-                    scale,
-                    ...params,
-                    list: [
-                      {
-                        id: "active-price",
-                        title: "Active Price",
-                        color: colors.liveliness,
-                        dataset: datasets.active_price,
-                      },
-                      {
-                        id: "realized-price",
-                        title: "Realized Price",
-                        color: colors.bitcoin,
-                        dataset: datasets.realized_price,
-                      },
-                    ],
-                  });
-                },
-              },
-              createRatioPresetFolder({
-                datasets,
-                scale,
-                color: colors.liveliness,
-                id: "active-price",
-                datasetKey: "activePrice",
-                title: "Active Price",
-              }),
-            ],
-          },
-          {
-            id: `${scale}-vaulted-price-folder`,
-            name: "Vaulted",
-            tree: [
-              {
-                id: `${scale}-vaulted-price`,
-                icon: IconTablerBuildingBank,
-                name: "Price",
-                title: "Vaulted Price",
-                description: "",
-                applyPreset(params) {
-                  return applyMultipleSeries({
-                    scale,
-                    ...params,
-                    list: [
-                      {
-                        id: "vaulted-price",
-                        title: "Vaulted Price",
-                        color: colors.vaultedness,
-                        dataset: datasets.vaulted_price,
-                      },
-                    ],
-                  });
-                },
-              },
-              createRatioPresetFolder({
-                datasets,
-                scale,
-                color: colors.vaultedness,
-                id: "vaulted-price",
-                datasetKey: "vaultedPrice",
-                title: "Vaulted Price",
-              }),
-            ],
-          },
-          {
-            id: `${scale}-true-market-mean-folder`,
-            name: "True Market Mean",
-            tree: [
-              {
-                id: `${scale}-true-market-mean`,
-                icon: IconTablerStackMiddle,
-                name: "Price",
-                title: "True Market Mean (Price)",
-                description: "",
-                applyPreset(params) {
-                  return applyMultipleSeries({
-                    scale,
-                    ...params,
-                    list: [
-                      {
-                        id: "true-market-mean",
-                        title: "True Market Mean",
-                        color: colors.trueMarketMeanPrice,
-                        dataset: datasets.true_market_mean,
-                      },
-                    ],
-                  });
-                },
-              },
-              createRatioPresetFolder({
-                datasets,
-                scale,
-                color: colors.trueMarketMeanPrice,
-                id: "true-market-mean",
-                datasetKey: "trueMarketMean",
-                title: "True Market Mean",
-              }),
-            ],
-          },
-        ],
-      },
     ],
-  } as PresetFolder;
+  } satisfies PartialPresetFolder;
 }

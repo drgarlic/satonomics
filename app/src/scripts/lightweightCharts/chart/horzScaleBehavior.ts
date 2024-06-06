@@ -1,4 +1,4 @@
-// @ts-ignore
+// @ts-nocheck
 
 // https://github.com/tradingview/lightweight-charts/blob/master/tests/e2e/graphics/test-cases/horizontal-price-scale.js
 

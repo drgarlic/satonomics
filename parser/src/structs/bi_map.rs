@@ -10,6 +10,7 @@ use crate::{bitcoin::TARGET_BLOCKS_PER_DAY, utils::LossyFrom};
 
 use super::{AnyDateMap, AnyHeightMap, AnyMap, DateMap, HeightMap, MapValue};
 
+#[derive(Default)]
 pub struct BiMap<T>
 where
     T: MapValue,
@@ -54,7 +55,7 @@ where
             .insert(date, self.height.sum_range(date_blocks_range));
     }
 
-    pub fn multiple_date_insert_sum_range(
+    pub fn multi_date_insert_sum_range(
         &mut self,
         dates: &[NaiveDate],
         first_height: &mut DateMap<usize>,
@@ -216,6 +217,26 @@ where
 
         self.date
             .multi_insert_last_x_sum(dates, &mut source.date, days);
+    }
+
+    pub fn multi_insert_simple_average<K>(
+        &mut self,
+        heights: &[usize],
+        dates: &[NaiveDate],
+        source: &mut BiMap<K>,
+        days: usize,
+    ) where
+        T: Into<f32> + From<f32>,
+        K: MapValue + Sum,
+        f32: LossyFrom<K>,
+    {
+        self.height.multi_insert_simple_average(
+            heights,
+            &mut source.height,
+            TARGET_BLOCKS_PER_DAY * days,
+        );
+        self.date
+            .multi_insert_simple_average(dates, &mut source.date, days);
     }
 
     pub fn multi_insert_net_change(

@@ -8,6 +8,8 @@ use leveldb::{
     options::{Options, ReadOptions},
 };
 
+use crate::log;
+
 use super::{BlockchainRead, OpResult};
 
 ///
@@ -65,7 +67,8 @@ impl BlocksIndexes {
 pub fn load_block_index(path: &Path) -> OpResult<Vec<BlockIndexRecord>> {
     let mut block_index_by_block_hash = BTreeMap::new();
 
-    println!("Start loading block_index");
+    log("Start loading block_index");
+
     let mut options = Options::new();
     options.create_if_missing = false;
     let db: Database<BlockKey> = Database::open(path, options)?;
@@ -102,21 +105,26 @@ pub fn load_block_index(path: &Path) -> OpResult<Vec<BlockIndexRecord>> {
         let mut block_index = Vec::with_capacity(height as usize + 1);
         let mut current_hash = hash;
         let mut current_height = height;
+
         // recursively build block index from max height block.
         while current_height >= 0 {
             let blk = block_index_by_block_hash
                 .remove(&current_hash)
                 .expect("block hash not found in block index!");
+
             assert_eq!(
                 current_height, blk.n_height,
                 "some block info missing from block index levelDB,\
                        delete Bitcoin folder and re-download!"
             );
+
             current_hash = blk.header.prev_blockhash;
             current_height -= 1;
             block_index.push(blk);
         }
+
         block_index.reverse();
+
         Ok(block_index)
     } else {
         Ok(Vec::with_capacity(0))

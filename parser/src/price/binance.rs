@@ -10,14 +10,14 @@ use serde_json::Value;
 use crate::{
     datasets::OHLC,
     io::{Json, IMPORTS_FOLDER_PATH},
-    utils::timestamp_to_naive_date,
+    utils::{log, timestamp_to_naive_date},
 };
 
 pub struct Binance;
 
 impl Binance {
     pub fn read_har_file() -> color_eyre::Result<BTreeMap<u32, OHLC>> {
-        println!("binance: read har file");
+        log("binance: read har file");
 
         let path_binance_har = Path::new(IMPORTS_FOLDER_PATH).join("binance.har");
 
@@ -104,7 +104,7 @@ impl Binance {
     }
 
     pub fn fetch_1mn_prices() -> color_eyre::Result<BTreeMap<u32, OHLC>> {
-        println!("binance: fetch 1mn");
+        log("binance: fetch 1mn");
 
         let body: Value = reqwest::blocking::get(
             "https://api.binance.com/api/v3/uiKlines?symbol=BTCUSDT&interval=1m&limit=1000",
@@ -145,7 +145,7 @@ impl Binance {
     }
 
     pub fn fetch_daily_prices() -> color_eyre::Result<BTreeMap<NaiveDate, OHLC>> {
-        println!("binance: fetch 1d");
+        log("binance: fetch 1d");
 
         let body: Value = reqwest::blocking::get(
             "https://api.binance.com/api/v3/uiKlines?symbol=BTCUSDT&interval=1d",

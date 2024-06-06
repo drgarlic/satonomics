@@ -11,7 +11,7 @@ import {
   setMinMaxMarkers,
   setTimeScale,
 } from "/src/scripts";
-import { createASS } from "/src/solid";
+import { createRWS } from "/src/solid/rws";
 
 export const PRICE_SCALE_MOMENTUM_ID = "momentum";
 
@@ -19,7 +19,6 @@ export const applyPriceSeries = <
   Scale extends ResourceScale,
   T extends SingleValueData,
 >({
-  scale,
   chart,
   datasets,
   liveCandle,
@@ -28,7 +27,6 @@ export const applyPriceSeries = <
   options,
   activeResources,
 }: {
-  scale: Scale;
   chart: IChartApi;
   datasets: Datasets;
   preset: Preset;
@@ -54,7 +52,7 @@ export const applyPriceSeries = <
     };
   }
 
-  const color = createASS<string | string[]>("");
+  const color = createRWS<string | string[]>("");
 
   if (!dataset && seriesType === "Candlestick") {
     const [series, colors] = createCandlesticksSeries(chart, {
@@ -67,7 +65,9 @@ export const applyPriceSeries = <
 
     chartState.priceSeries = series;
 
-    createEffect(() => series.setData(datasets[scale].price.values() || []));
+    createEffect(() =>
+      series.setData(datasets[preset.scale].price.values() || []),
+    );
   } else {
     color.set(lowerOpacity ? colors.darkWhite : colors.white);
 
@@ -82,7 +82,9 @@ export const applyPriceSeries = <
     // TODO: fix types
     createEffect(() => {
       const data =
-        dataset?.values() || datasets[scale].price.values() || ([] as any);
+        dataset?.values() ||
+        datasets[preset.scale].price.values() ||
+        ([] as any);
 
       // console.log(data);
 
@@ -96,8 +98,8 @@ export const applyPriceSeries = <
     createEffect(() => {
       updateLastPriceValue(
         dataset?.values()?.at(-1) ||
-          (scale === "date" ? liveCandle?.() : null) ||
-          datasets[scale].price.values()?.at(-1) ||
+          (preset.scale === "date" ? liveCandle?.() : null) ||
+          datasets[preset.scale].price.values()?.at(-1) ||
           null,
       );
     });
@@ -121,18 +123,18 @@ export const applyPriceSeries = <
   });
 
   setMinMaxMarkers({
-    scale,
+    scale: preset.scale,
     candlesticks:
-      dataset?.values() || datasets[scale].price.values() || ([] as any),
+      dataset?.values() || datasets[preset.scale].price.values() || ([] as any),
     range: chartState.range,
     lowerOpacity,
   });
 
   setTimeScale({
-    scale,
+    scale: preset.scale,
     switchBetweenCandlestickAndLine: !dataset,
     candlesticks:
-      dataset?.values() || datasets[scale].price.values() || ([] as any),
+      dataset?.values() || datasets[preset.scale].price.values() || ([] as any),
     lowerOpacity,
     activeResources,
   });

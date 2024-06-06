@@ -41,8 +41,8 @@ interface FetchedResult<
   >,
 > {
   at: Date | null;
-  loading: ASS<boolean>;
-  json: ASS<FetchedJSON<Scale, Type, Dataset> | null>;
+  loading: RWS<boolean>;
+  json: RWS<FetchedJSON<Scale, Type, Dataset> | null>;
   vec: Accessor<Value[] | null>;
 }
 

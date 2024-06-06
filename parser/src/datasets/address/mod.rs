@@ -2,13 +2,12 @@ mod all_metadata;
 mod cohort;
 mod cohort_metadata;
 
-use std::thread;
-
 use itertools::Itertools;
+use rayon::prelude::*;
 
 use crate::{
     states::SplitByAddressCohort,
-    structs::{AddressSize, AddressSplit, AddressType, DateMap, HeightMap},
+    structs::{BiMap, DateMap, HeightMap},
 };
 
 use self::{all_metadata::AllAddressesMetadataDataset, cohort::CohortDataset};
@@ -25,140 +24,31 @@ pub struct AddressDatasets {
 
 impl AddressDatasets {
     pub fn import(parent_path: &str) -> color_eyre::Result<Self> {
-        thread::scope(|scope| {
-            let all_handle =
-                scope.spawn(|| CohortDataset::import(parent_path, None, AddressSplit::All));
+        let mut cohorts = SplitByAddressCohort::<CohortDataset>::default();
 
-            let plankton_handle = scope.spawn(|| {
-                CohortDataset::import(
-                    parent_path,
-                    Some("plankton"),
-                    AddressSplit::Size(AddressSize::Plankton),
-                )
-            });
-            let shrimp_handle = scope.spawn(|| {
-                CohortDataset::import(
-                    parent_path,
-                    Some("shrimp"),
-                    AddressSplit::Size(AddressSize::Shrimp),
-                )
-            });
-            let crab_handle = scope.spawn(|| {
-                CohortDataset::import(
-                    parent_path,
-                    Some("crab"),
-                    AddressSplit::Size(AddressSize::Crab),
-                )
-            });
-            let fish_handle = scope.spawn(|| {
-                CohortDataset::import(
-                    parent_path,
-                    Some("fish"),
-                    AddressSplit::Size(AddressSize::Fish),
-                )
-            });
-            let shark_handle = scope.spawn(|| {
-                CohortDataset::import(
-                    parent_path,
-                    Some("shark"),
-                    AddressSplit::Size(AddressSize::Shark),
-                )
-            });
-            let whale_handle = scope.spawn(|| {
-                CohortDataset::import(
-                    parent_path,
-                    Some("whale"),
-                    AddressSplit::Size(AddressSize::Whale),
-                )
-            });
-            let humpback_handle = scope.spawn(|| {
-                CohortDataset::import(
-                    parent_path,
-                    Some("humpback"),
-                    AddressSplit::Size(AddressSize::Humpback),
-                )
-            });
-            let megalodon_handle = scope.spawn(|| {
-                CohortDataset::import(
-                    parent_path,
-                    Some("megalodon"),
-                    AddressSplit::Size(AddressSize::Megalodon),
-                )
-            });
+        cohorts
+            .as_vec()
+            .into_par_iter()
+            .map(|(_, id)| (id, CohortDataset::import(parent_path, id)))
+            .collect::<Vec<_>>()
+            .into_iter()
+            .try_for_each(|(id, dataset)| -> color_eyre::Result<()> {
+                *cohorts.get_mut_from_id(&id) = dataset?;
+                Ok(())
+            })?;
 
-            let p2pk_handle = scope.spawn(|| {
-                CohortDataset::import(
-                    parent_path,
-                    Some("p2pk"),
-                    AddressSplit::Type(AddressType::P2PK),
-                )
-            });
-            let p2pkh_handle = scope.spawn(|| {
-                CohortDataset::import(
-                    parent_path,
-                    Some("p2pkh"),
-                    AddressSplit::Type(AddressType::P2PKH),
-                )
-            });
-            let p2sh_handle = scope.spawn(|| {
-                CohortDataset::import(
-                    parent_path,
-                    Some("p2sh"),
-                    AddressSplit::Type(AddressType::P2SH),
-                )
-            });
-            let p2wpkh_handle = scope.spawn(|| {
-                CohortDataset::import(
-                    parent_path,
-                    Some("p2wpkh"),
-                    AddressSplit::Type(AddressType::P2WPKH),
-                )
-            });
-            let p2wsh_handle = scope.spawn(|| {
-                CohortDataset::import(
-                    parent_path,
-                    Some("p2wsh"),
-                    AddressSplit::Type(AddressType::P2WSH),
-                )
-            });
+        let mut s = Self {
+            min_initial_states: MinInitialStates::default(),
 
-            let p2tr = CohortDataset::import(
-                parent_path,
-                Some("p2tr"),
-                AddressSplit::Type(AddressType::P2TR),
-            )?;
+            metadata: AllAddressesMetadataDataset::import(parent_path)?,
 
-            let mut s = Self {
-                min_initial_states: MinInitialStates::default(),
+            cohorts,
+        };
 
-                metadata: AllAddressesMetadataDataset::import(parent_path)?,
+        s.min_initial_states
+            .consume(MinInitialStates::compute_from_datasets(&s));
 
-                cohorts: SplitByAddressCohort {
-                    all: all_handle.join().unwrap()?,
-
-                    plankton: plankton_handle.join().unwrap()?,
-                    shrimp: shrimp_handle.join().unwrap()?,
-                    crab: crab_handle.join().unwrap()?,
-                    fish: fish_handle.join().unwrap()?,
-                    shark: shark_handle.join().unwrap()?,
-                    whale: whale_handle.join().unwrap()?,
-                    humpback: humpback_handle.join().unwrap()?,
-                    megalodon: megalodon_handle.join().unwrap()?,
-
-                    p2pk: p2pk_handle.join().unwrap()?,
-                    p2pkh: p2pkh_handle.join().unwrap()?,
-                    p2sh: p2sh_handle.join().unwrap()?,
-                    p2wpkh: p2wpkh_handle.join().unwrap()?,
-                    p2wsh: p2wsh_handle.join().unwrap()?,
-                    p2tr,
-                },
-            };
-
-            s.min_initial_states
-                .consume(MinInitialStates::compute_from_datasets(&s));
-
-            Ok(s)
-        })
+        Ok(s)
     }
 
     pub fn insert(&mut self, insert_data: &InsertData) {
@@ -167,7 +57,7 @@ impl AddressDatasets {
         self.cohorts
             .as_mut_vec()
             .into_iter()
-            .for_each(|cohort| cohort.insert(insert_data))
+            .for_each(|(cohort, _)| cohort.insert(insert_data))
     }
 
     pub fn compute(
@@ -175,13 +65,16 @@ impl AddressDatasets {
         compute_data: &ComputeData,
         date_closes: &mut DateMap<f32>,
         height_closes: &mut HeightMap<f32>,
+        market_cap: &mut BiMap<f32>,
     ) {
         self.metadata.compute(compute_data);
 
         self.cohorts
             .as_mut_vec()
             .into_iter()
-            .for_each(|cohort| cohort.compute(compute_data, date_closes, height_closes))
+            .for_each(|(cohort, _)| {
+                cohort.compute(compute_data, date_closes, height_closes, market_cap)
+            })
     }
 }
 
@@ -194,7 +87,7 @@ impl AnyDatasets for AddressDatasets {
         self.cohorts
             .as_vec()
             .into_iter()
-            .map(|d| d as &(dyn AnyDataset + Send + Sync))
+            .map(|(d, _)| d as &(dyn AnyDataset + Send + Sync))
             .chain(vec![&self.metadata as &(dyn AnyDataset + Send + Sync)])
             .collect_vec()
     }
@@ -203,7 +96,7 @@ impl AnyDatasets for AddressDatasets {
         self.cohorts
             .as_mut_vec()
             .into_iter()
-            .map(|d| d as &mut dyn AnyDataset)
+            .map(|(d, _)| d as &mut dyn AnyDataset)
             .chain(vec![&mut self.metadata as &mut dyn AnyDataset])
             .collect_vec()
     }

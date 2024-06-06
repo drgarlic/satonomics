@@ -1,6 +1,6 @@
 use std::{collections::BTreeSet, time::Instant};
 
-use chrono::{offset::Local, Datelike};
+use chrono::Datelike;
 use export::ExportedData;
 use itertools::Itertools;
 
@@ -13,24 +13,24 @@ use crate::{
     datasets::{AllDatasets, ComputeData},
     states::States,
     structs::DateData,
-    utils::timestamp_to_naive_date,
+    utils::{log, timestamp_to_naive_date},
 };
 
 pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Result<()> {
     let should_insert = true;
     let should_export = true;
 
-    println!("{:?} - Starting...", Local::now());
+    log("Starting...");
 
     let mut datasets = AllDatasets::import()?;
     // RAM: 200MB at this point
 
-    println!("{:?} - Imported datasets", Local::now());
+    log("Imported datasets");
 
     let mut databases = Databases::import();
     // RAM: 200MB too
 
-    println!("{:?} - Imported databases", Local::now());
+    log("Imported databases");
 
     let mut states = States::import().unwrap_or_default();
     // ROM: 8GB of bin files
@@ -44,16 +44,17 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
 
     // while true {
     //     dbg!(memory_stats::memory_stats());
+    //     std::thread::sleep(std::time::Duration::from_secs(10))
     // }
 
-    println!("{:?} - Imported states", Local::now());
+    log("Imported states");
 
     let first_unsafe_heights =
         find_first_inserted_unsafe_height(&mut states, &mut databases, &datasets);
 
     let mut height = first_unsafe_heights.min();
 
-    println!("{:?} - Starting parsing at height: {height}", Local::now());
+    log(&format!("Starting parsing at height: {height}"));
 
     let mut block_iter = bitcoin_db.iter_block(height, block_count);
 
@@ -103,10 +104,9 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
                                 .push(DateData::new(current_block_date, vec![]));
                         }
 
-                        println!(
-                            "{:?} - Processing {current_block_date} (height: {height})...",
-                            Local::now()
-                        );
+                        log(&format!(
+                            "Processing {current_block_date} (height: {height})..."
+                        ));
                     }
 
                     let blocks_loop_date = blocks_loop_date.unwrap();
@@ -178,10 +178,10 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
         // Don't remember why -1
         let last_height = height - 1;
 
-        println!(
+        log(&format!(
             "Parsing month took {} seconds (last height: {last_height})\n",
             time.elapsed().as_secs_f32(),
-        );
+        ));
 
         if first_unsafe_heights.computed <= last_height {
             datasets.compute(ComputeData {
@@ -200,6 +200,8 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
                 height: last_height,
                 states: is_safe.then_some(&states),
             })?;
+        } else {
+            log("Skipping export");
         }
     }
 

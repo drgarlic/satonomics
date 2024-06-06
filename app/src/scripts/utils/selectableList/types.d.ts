@@ -15,7 +15,7 @@ interface JSONSelectableList<T, L extends T[] = T[]> {
 interface SelectableList<T, L extends T[] = T[]> {
   readonly selected: Accessor<T | null>;
   readonly selectedIndex: Accessor<number | null>;
-  readonly list: ASS<L>;
+  readonly list: RWS<L>;
   readonly select: <S extends L[number] = L[number]>(s: S) => void;
   readonly selectFind: <K>(
     search: K,

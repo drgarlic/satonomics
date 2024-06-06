@@ -181,22 +181,22 @@ export const fromXCohorts = [
 ] as const;
 
 export const yearCohorts = [
-  { key: "2009", name: "2009" },
-  { key: "2010", name: "2010" },
-  { key: "2011", name: "2011" },
-  { key: "2012", name: "2012" },
-  { key: "2013", name: "2013" },
-  { key: "2014", name: "2014" },
-  { key: "2015", name: "2015" },
-  { key: "2016", name: "2016" },
-  { key: "2017", name: "2017" },
-  { key: "2018", name: "2018" },
-  { key: "2019", name: "2019" },
-  { key: "2020", name: "2020" },
-  { key: "2021", name: "2021" },
-  { key: "2022", name: "2022" },
-  { key: "2023", name: "2023" },
-  { key: "2024", name: "2024" },
+  { key: "year_2009", name: "2009" },
+  { key: "year_2010", name: "2010" },
+  { key: "year_2011", name: "2011" },
+  { key: "year_2012", name: "2012" },
+  { key: "year_2013", name: "2013" },
+  { key: "year_2014", name: "2014" },
+  { key: "year_2015", name: "2015" },
+  { key: "year_2016", name: "2016" },
+  { key: "year_2017", name: "2017" },
+  { key: "year_2018", name: "2018" },
+  { key: "year_2019", name: "2019" },
+  { key: "year_2020", name: "2020" },
+  { key: "year_2021", name: "2021" },
+  { key: "year_2022", name: "2022" },
+  { key: "year_2023", name: "2023" },
+  { key: "year_2024", name: "2024" },
 ] as const;
 
 export const ageCohorts = [

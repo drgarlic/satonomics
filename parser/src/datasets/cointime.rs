@@ -177,7 +177,7 @@ impl CointimeDataset {
                 |circulating_supply| circulating_supply as f32,
             );
         self.coinblocks_created
-            .multiple_date_insert_sum_range(dates, first_height, last_height);
+            .multi_date_insert_sum_range(dates, first_height, last_height);
 
         self.cumulative_coinblocks_created.multi_insert_cumulative(
             heights,
@@ -191,7 +191,7 @@ impl CointimeDataset {
             &mut self.coinblocks_destroyed.height,
         );
         self.coinblocks_stored
-            .multiple_date_insert_sum_range(dates, first_height, last_height);
+            .multi_date_insert_sum_range(dates, first_height, last_height);
 
         self.cumulative_coinblocks_stored.multi_insert_cumulative(
             heights,
@@ -406,8 +406,8 @@ impl CointimeDataset {
             .multi_insert_complex_transform(
                 dates,
                 &mut self.active_cap.date,
-                |(active_cap, date)| {
-                    let investor_cap = self.investor_cap.date.get(*date).unwrap();
+                |(active_cap, date, _)| {
+                    let investor_cap = self.investor_cap.date.get(date).unwrap();
                     (active_cap - investor_cap) / active_cap
                 },
             );

@@ -4,6 +4,7 @@ use crate::{
     structs::{AnyBiMap, BiMap},
 };
 
+#[derive(Default)]
 pub struct InputSubDataset {
     min_initial_states: MinInitialStates,
 

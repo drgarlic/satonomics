@@ -266,39 +266,32 @@ impl AnyDatabaseGroup for AddressToAddressIndex {
             s.spawn(|| {
                 mem::take(&mut self.p2pk)
                     .into_par_iter()
-                    .try_for_each(|(_, db)| db.export())
-            });
-            s.spawn(|| {
-                mem::take(&mut self.p2pkh)
-                    .into_par_iter()
-                    .try_for_each(|(_, db)| db.export())
-            });
-            s.spawn(|| {
-                mem::take(&mut self.p2sh)
-                    .into_par_iter()
-                    .try_for_each(|(_, db)| db.export())
-            });
-            s.spawn(|| {
-                mem::take(&mut self.p2wpkh)
-                    .into_par_iter()
-                    .try_for_each(|(_, db)| db.export())
-            });
-            s.spawn(|| {
-                mem::take(&mut self.p2wsh)
-                    .into_par_iter()
-                    .try_for_each(|(_, db)| db.export())
-            });
-            s.spawn(|| {
-                mem::take(&mut self.p2tr)
-                    .into_par_iter()
+                    .chain(mem::take(&mut self.p2pkh).into_par_iter())
+                    .chain(mem::take(&mut self.p2sh).into_par_iter())
+                    .chain(mem::take(&mut self.p2wpkh).into_par_iter())
                     .try_for_each(|(_, db)| db.export())
             });
 
-            s.spawn(|| self.unknown.take().map(|db| db.export()));
-            s.spawn(|| self.op_return.take().map(|db| db.export()));
-            s.spawn(|| self.push_only.take().map(|db| db.export()));
-            s.spawn(|| self.empty.take().map(|db| db.export()));
-            s.spawn(|| self.multisig.take().map(|db| db.export()));
+            s.spawn(|| {
+                mem::take(&mut self.p2wsh)
+                    .into_par_iter()
+                    .chain(mem::take(&mut self.p2tr).into_par_iter())
+                    .try_for_each(|(_, db)| db.export())
+            });
+
+            s.spawn(|| {
+                [
+                    self.unknown.take(),
+                    self.op_return.take(),
+                    self.push_only.take(),
+                    self.empty.take(),
+                ]
+                .into_par_iter()
+                .flatten()
+                .try_for_each(|db| db.export())
+            });
+
+            self.multisig.take().map(|db| db.export());
         });
 
         self.metadata.export(height, date)?;

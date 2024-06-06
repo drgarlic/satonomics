@@ -1,5 +1,5 @@
 import { scrollIntoView, sleep, tick } from "/src/scripts";
-import { createASS } from "/src/solid";
+import { createRWS } from "/src/solid/rws";
 
 import { Box } from "../box";
 import { Button } from "../button";
@@ -14,7 +14,7 @@ export function TreeFrame({
   presets: Presets;
   selectedFrame: Accessor<FrameName>;
 }) {
-  const div = createASS<HTMLDivElement | undefined>(undefined);
+  const div = createRWS<HTMLDivElement | undefined>(undefined);
 
   onMount(() => {
     goToSelected(presets);

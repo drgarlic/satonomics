@@ -2,6 +2,8 @@ use std::{fs, io};
 
 use chrono::NaiveDate;
 
+use crate::utils::log;
+
 use super::databases_folder_path;
 
 pub trait AnyDatabaseGroup
@@ -15,7 +17,7 @@ where
     fn folder<'a>() -> &'a str;
 
     fn reset(&mut self) -> color_eyre::Result<(), io::Error> {
-        println!("Reset {}", Self::folder());
+        log(&format!("Reset {}", Self::folder()));
 
         self.reset_metadata();
 

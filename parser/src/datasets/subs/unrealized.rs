@@ -4,6 +4,7 @@ use crate::{
     structs::{AnyBiMap, BiMap},
 };
 
+#[derive(Default)]
 pub struct UnrealizedSubDataset {
     min_initial_states: MinInitialStates,
 

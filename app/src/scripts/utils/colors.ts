@@ -32,6 +32,7 @@ const lime = limeTailwind[500];
 const darkLime = limeTailwind[900];
 const green = greenTailwind[500];
 const darkGreen = greenTailwind[900];
+const lightEmerald = emeraldTailwind[300];
 const emerald = emeraldTailwind[500];
 const darkEmerald = emeraldTailwind[900];
 const teal = tealTailwind[500];
@@ -89,16 +90,30 @@ export const colors = {
   white,
   darkWhite,
   gray,
+  lightBitcoin: yellow,
   bitcoin: orange,
   darkBitcoin: darkOrange,
+  lightDollars: lime,
   dollars: emerald,
-  closes7DMA: yellow,
-  closes30DMA: orange,
-  closes111DMA: green,
-  closes200DMA: blue,
-  closes1YMA: red,
-  closes2YMA: purple,
-  closes4YMA: pink,
+  darkDollars: darkEmerald,
+
+  _1d: lightRed,
+  _1w: red,
+  _8d: orange,
+  _13d: amber,
+  _21d: yellow,
+  _1m: lime,
+  _34d: green,
+  _55d: emerald,
+  _89d: teal,
+  _144d: cyan,
+  _6m: sky,
+  _1y: blue,
+  _2y: indigo,
+  _200w: violet,
+  _4y: purple,
+  _10y: fuchsia,
+
   p2pk: lime,
   p2pkh: violet,
   p2sh: emerald,
@@ -133,7 +148,7 @@ export const colors = {
   darkProfit: darkGreen,
   thermoCap: green,
   investorCap: rose,
-  realizedCap: purple,
+  realizedCap: orange,
   ethereum: indigo,
   usdt: emerald,
   usdc: blue,

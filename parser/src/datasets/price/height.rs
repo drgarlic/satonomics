@@ -7,6 +7,7 @@ use crate::{
     datasets::{AnyDataset, ComputeData, MinInitialStates},
     price::{Binance, Kraken},
     structs::{AnyHeightMap, HeightMap},
+    timestamp_to_naive_date,
 };
 
 use super::OHLC;
@@ -23,6 +24,7 @@ pub struct HeightDataset {
 
     // Computed
     pub closes: HeightMap<f32>,
+    pub market_cap: HeightMap<f32>,
 }
 
 impl HeightDataset {
@@ -36,6 +38,7 @@ impl HeightDataset {
 
             ohlcs: HeightMap::_new_json(1, &format!("{price_path}/ohlc"), usize::MAX, false),
             closes: HeightMap::_new_json(1, &format!("{dataset_path}/close"), usize::MAX, false),
+            market_cap: HeightMap::new_bin(1, &f("market_cap")),
         };
 
         s.min_initial_states
@@ -76,8 +79,10 @@ impl HeightDataset {
         let ohlc = self.get_from_1mn_kraken(timestamp, previous_timestamp).unwrap_or_else(|_| {
                 self.get_from_1mn_binance(timestamp, previous_timestamp)
                     .unwrap_or_else(|_| self.get_from_har_binance(timestamp, previous_timestamp).unwrap_or_else(|_| {
+                        let date = timestamp_to_naive_date(timestamp);
+
                         panic!(
-                            "Can't find price for {height} - {timestamp}, please update binance.har file"
+                            "Can't find price for {height} - {timestamp} - {date}, please update binance.har file"
                         )
                     }))
             });
@@ -184,9 +189,16 @@ impl HeightDataset {
         Ok(final_ohlc)
     }
 
-    pub fn compute(&mut self, &ComputeData { heights, .. }: &ComputeData) {
+    pub fn compute(
+        &mut self,
+        &ComputeData { heights, .. }: &ComputeData,
+        circulating_supply: &mut HeightMap<f64>,
+    ) {
         self.closes
             .multi_insert_simple_transform(heights, &mut self.ohlcs, |ohlc| ohlc.close);
+
+        self.market_cap
+            .multi_insert_multiply(heights, &mut self.closes, circulating_supply);
     }
 }
 
@@ -204,10 +216,10 @@ impl AnyDataset for HeightDataset {
     }
 
     fn to_computed_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
-        vec![&self.closes]
+        vec![&self.closes, &self.market_cap]
     }
 
     fn to_computed_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
-        vec![&mut self.closes]
+        vec![&mut self.closes, &mut self.market_cap]
     }
 }

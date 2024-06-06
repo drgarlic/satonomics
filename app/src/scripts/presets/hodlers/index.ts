@@ -179,5 +179,5 @@ export function createPresets({
         ),
       },
     ],
-  } satisfies PresetFolder;
+  } satisfies PartialPresetFolder;
 }

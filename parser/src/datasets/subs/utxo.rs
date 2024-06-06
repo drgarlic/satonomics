@@ -4,6 +4,7 @@ use crate::{
     structs::{AnyBiMap, BiMap},
 };
 
+#[derive(Default)]
 pub struct UTXOSubDataset {
     min_initial_states: MinInitialStates,
 

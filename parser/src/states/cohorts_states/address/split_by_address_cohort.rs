@@ -1,5 +1,7 @@
 use crate::structs::{AddressData, AddressSize, AddressSplit, AddressType};
 
+use super::AddressCohortId;
+
 #[derive(Default)]
 pub struct SplitByAddressCohort<T> {
     pub all: T,
@@ -55,22 +57,23 @@ impl<T> SplitByAddressCohort<T> {
     }
 
     pub fn iterate(&mut self, address_data: &AddressData, iterate: impl Fn(&mut T)) {
-        if let Some(state) = self.get_mut(&AddressSplit::All) {
+        if let Some(state) = self.get_mut_from_split(&AddressSplit::All) {
             iterate(state);
         }
 
-        if let Some(state) = self.get_mut(&AddressSplit::Type(address_data.address_type)) {
+        if let Some(state) = self.get_mut_from_split(&AddressSplit::Type(address_data.address_type))
+        {
             iterate(state);
         }
 
-        if let Some(state) = self.get_mut(&AddressSplit::Size(AddressSize::from_amount(
+        if let Some(state) = self.get_mut_from_split(&AddressSplit::Size(AddressSize::from_amount(
             *address_data.amount,
         ))) {
             iterate(state);
         }
     }
 
-    fn get_mut(&mut self, split: &AddressSplit) -> Option<&mut T> {
+    fn get_mut_from_split(&mut self, split: &AddressSplit) -> Option<&mut T> {
         match &split {
             AddressSplit::All => Some(&mut self.all),
 
@@ -102,43 +105,65 @@ impl<T> SplitByAddressCohort<T> {
         }
     }
 
-    pub fn as_vec(&self) -> Vec<&T> {
+    pub fn get_mut_from_id(&mut self, id: &AddressCohortId) -> &mut T {
+        match id {
+            AddressCohortId::All => &mut self.all,
+
+            AddressCohortId::Plankton => &mut self.plankton,
+            AddressCohortId::Shrimp => &mut self.shrimp,
+            AddressCohortId::Crab => &mut self.crab,
+            AddressCohortId::Fish => &mut self.fish,
+            AddressCohortId::Shark => &mut self.shark,
+            AddressCohortId::Whale => &mut self.whale,
+            AddressCohortId::Humpback => &mut self.humpback,
+            AddressCohortId::Megalodon => &mut self.megalodon,
+
+            AddressCohortId::P2PK => &mut self.p2pk,
+            AddressCohortId::P2PKH => &mut self.p2pkh,
+            AddressCohortId::P2SH => &mut self.p2sh,
+            AddressCohortId::P2WPKH => &mut self.p2wpkh,
+            AddressCohortId::P2WSH => &mut self.p2wsh,
+            AddressCohortId::P2TR => &mut self.p2tr,
+        }
+    }
+
+    pub fn as_vec(&self) -> Vec<(&T, AddressCohortId)> {
         vec![
-            &self.all,
-            &self.plankton,
-            &self.shrimp,
-            &self.crab,
-            &self.fish,
-            &self.shark,
-            &self.whale,
-            &self.humpback,
-            &self.megalodon,
-            &self.p2pk,
-            &self.p2pkh,
-            &self.p2sh,
-            &self.p2wpkh,
-            &self.p2wsh,
-            &self.p2tr,
+            (&self.all, AddressCohortId::All),
+            (&self.plankton, AddressCohortId::Plankton),
+            (&self.shrimp, AddressCohortId::Shrimp),
+            (&self.crab, AddressCohortId::Crab),
+            (&self.fish, AddressCohortId::Fish),
+            (&self.shark, AddressCohortId::Shark),
+            (&self.whale, AddressCohortId::Whale),
+            (&self.humpback, AddressCohortId::Humpback),
+            (&self.megalodon, AddressCohortId::Megalodon),
+            (&self.p2pk, AddressCohortId::P2PK),
+            (&self.p2pkh, AddressCohortId::P2PKH),
+            (&self.p2sh, AddressCohortId::P2SH),
+            (&self.p2wpkh, AddressCohortId::P2WPKH),
+            (&self.p2wsh, AddressCohortId::P2WSH),
+            (&self.p2tr, AddressCohortId::P2TR),
         ]
     }
 
-    pub fn as_mut_vec(&mut self) -> Vec<&mut T> {
+    pub fn as_mut_vec(&mut self) -> Vec<(&mut T, AddressCohortId)> {
         vec![
-            &mut self.all,
-            &mut self.plankton,
-            &mut self.shrimp,
-            &mut self.crab,
-            &mut self.fish,
-            &mut self.shark,
-            &mut self.whale,
-            &mut self.humpback,
-            &mut self.megalodon,
-            &mut self.p2pk,
-            &mut self.p2pkh,
-            &mut self.p2sh,
-            &mut self.p2wpkh,
-            &mut self.p2wsh,
-            &mut self.p2tr,
+            (&mut self.all, AddressCohortId::All),
+            (&mut self.plankton, AddressCohortId::Plankton),
+            (&mut self.shrimp, AddressCohortId::Shrimp),
+            (&mut self.crab, AddressCohortId::Crab),
+            (&mut self.fish, AddressCohortId::Fish),
+            (&mut self.shark, AddressCohortId::Shark),
+            (&mut self.whale, AddressCohortId::Whale),
+            (&mut self.humpback, AddressCohortId::Humpback),
+            (&mut self.megalodon, AddressCohortId::Megalodon),
+            (&mut self.p2pk, AddressCohortId::P2PK),
+            (&mut self.p2pkh, AddressCohortId::P2PKH),
+            (&mut self.p2sh, AddressCohortId::P2SH),
+            (&mut self.p2wpkh, AddressCohortId::P2WPKH),
+            (&mut self.p2wsh, AddressCohortId::P2WSH),
+            (&mut self.p2tr, AddressCohortId::P2TR),
         ]
     }
 }

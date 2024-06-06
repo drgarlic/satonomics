@@ -4,12 +4,13 @@ use crate::{
     datasets::{
         AnyDataset, AnyDatasetGroup, ComputeData, InsertData, MinInitialStates, SubDataset,
     },
-    states::AddressCohortDurableStates,
-    structs::{AddressSplit, AnyBiMap, AnyDateMap, AnyHeightMap, DateMap, HeightMap},
+    states::{AddressCohortDurableStates, AddressCohortId},
+    structs::{AddressSplit, AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, DateMap, HeightMap},
 };
 
 use super::cohort_metadata::MetadataDataset;
 
+#[derive(Default)]
 pub struct CohortDataset {
     min_initial_states: MinInitialStates,
 
@@ -24,11 +25,10 @@ pub struct CohortDataset {
 }
 
 impl CohortDataset {
-    pub fn import(
-        parent_path: &str,
-        name: Option<&str>,
-        split: AddressSplit,
-    ) -> color_eyre::Result<Self> {
+    pub fn import(parent_path: &str, id: AddressCohortId) -> color_eyre::Result<Self> {
+        let name = id.as_name();
+        let split = id.as_split();
+
         let folder_path = {
             if let Some(name) = name {
                 format!("{parent_path}/{name}")
@@ -387,11 +387,11 @@ impl CohortDataset {
             .any(|sub| sub.price_paid.should_compute(compute_data))
     }
 
-    // fn should_compute_realized(&self, compute_data: &ComputeData) -> bool {
-    //     self.sub_datasets_vec()
-    //         .iter()
-    //         .any(|sub| sub.realized.should_compute(compute_data))
-    // }
+    fn should_compute_realized(&self, compute_data: &ComputeData) -> bool {
+        self.sub_datasets_vec()
+            .iter()
+            .any(|sub| sub.realized.should_compute(compute_data))
+    }
 
     fn should_compute_unrealized(&self, compute_data: &ComputeData) -> bool {
         self.sub_datasets_vec()
@@ -452,6 +452,18 @@ impl CohortDataset {
             .compute(compute_data, &mut self.highly_liquid.supply.total);
     }
 
+    fn compute_realized_data(&mut self, compute_data: &ComputeData, market_cap: &mut BiMap<f32>) {
+        self.all.realized.compute(compute_data, market_cap);
+
+        self.illiquid.realized.compute(compute_data, market_cap);
+
+        self.liquid.realized.compute(compute_data, market_cap);
+
+        self.highly_liquid
+            .realized
+            .compute(compute_data, market_cap);
+    }
+
     fn compute_price_paid_data(
         &mut self,
         compute_data: &ComputeData,
@@ -510,6 +522,7 @@ impl CohortDataset {
         compute_data: &ComputeData,
         date_closes: &mut DateMap<f32>,
         height_closes: &mut HeightMap<f32>,
+        market_cap: &mut BiMap<f32>,
     ) {
         if self.should_compute_supply(compute_data) {
             self.compute_supply_data(compute_data, date_closes, height_closes);
@@ -517,6 +530,10 @@ impl CohortDataset {
 
         if self.should_compute_unrealized(compute_data) {
             self.compute_unrealized_data(compute_data);
+        }
+
+        if self.should_compute_realized(compute_data) {
+            self.compute_realized_data(compute_data, market_cap);
         }
 
         // MUST BE after compute_supply

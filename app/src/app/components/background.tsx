@@ -1,4 +1,4 @@
-import { createASS } from "/src/solid";
+import { createRWS } from "/src/solid/rws";
 
 const texts = [
   "satonomics",
@@ -114,7 +114,7 @@ function TextWrapper({
 }) {
   const seconds = joined.length * 2;
 
-  const wasOnceOn = createASS(false);
+  const wasOnceOn = createRWS(false);
 
   createEffect(() => {
     if (!wasOnceOn() && on()) {

@@ -4,7 +4,7 @@ export function SettingsFrame({
   marquee,
   selectedFrame,
 }: {
-  marquee: ASS<boolean>;
+  marquee: RWS<boolean>;
   selectedFrame: Accessor<FrameName>;
 }) {
   const value = marquee();

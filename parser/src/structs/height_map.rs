@@ -15,14 +15,14 @@ use savefile_derive::Savefile;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    bitcoin::{BLOCKS_PER_HAVLING_EPOCH, NUMBER_OF_UNSAFE_BLOCKS},
+    bitcoin::NUMBER_OF_UNSAFE_BLOCKS,
     io::{format_path, Serialization},
     utils::LossyFrom,
 };
 
 use super::{AnyMap, MapValue};
 
-pub const HEIGHT_MAP_CHUNK_SIZE: usize = BLOCKS_PER_HAVLING_EPOCH / 16;
+pub const HEIGHT_MAP_CHUNK_SIZE: usize = 10_000;
 
 #[derive(Debug, Savefile, Serialize, Deserialize)]
 pub struct SerializedHeightMap<T> {
@@ -30,6 +30,7 @@ pub struct SerializedHeightMap<T> {
     map: Vec<T>,
 }
 
+#[derive(Default)]
 pub struct HeightMap<T>
 where
     T: MapValue,
@@ -132,6 +133,10 @@ where
                 if let Ok(serialized) = s.import(&path) {
                     if serialized.version == s.version {
                         s.imported.insert(chunk_start, serialized);
+                    } else {
+                        s.read_dir()
+                            .iter()
+                            .for_each(|(_, path)| fs::remove_file(path).unwrap())
                     }
                 }
             });
@@ -619,6 +624,45 @@ where
         });
     }
 
+    pub fn multi_insert_simple_average<K>(
+        &mut self,
+        heights: &[usize],
+        source: &mut HeightMap<K>,
+        block_time: usize,
+    ) where
+        T: Into<f32> + From<f32>,
+        K: MapValue + Sum,
+        f32: LossyFrom<K>,
+    {
+        if block_time <= 1 {
+            panic!("Average of 1 or less is not useful");
+        }
+
+        let mut average = None;
+
+        heights.iter().for_each(|height| {
+            let height = *height;
+
+            let previous_average: f32 = average
+                .unwrap_or_else(|| {
+                    height
+                        .checked_sub(block_time)
+                        .and_then(|previous_average_height| self.get(&previous_average_height))
+                        .unwrap_or_default()
+                })
+                .into();
+
+            let last_value = f32::lossy_from(source.get_or_import(&height));
+
+            average.replace(
+                ((previous_average * (block_time as f32 - 1.0) + last_value) / block_time as f32)
+                    .into(),
+            );
+
+            self.insert(height, average.unwrap());
+        });
+    }
+
     pub fn multi_insert_net_change(
         &mut self,
         heights: &[usize],
@@ -678,8 +722,7 @@ where
             let height = *height;
 
             let value = {
-                if let Some(start) = block_time.map_or(Some(0), |size| height.checked_sub(size - 1))
-                {
+                if let Some(start) = block_time.map_or(Some(0), |size| height.checked_sub(size)) {
                     if ordered_vec.is_none() {
                         let mut vec = (start..=height)
                             .map(|height| OrderedFloat(source.get_or_import(&height)))

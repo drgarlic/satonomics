@@ -18,6 +18,8 @@ use tx_index_to_tx_data::*;
 use txout_index_to_address_index::*;
 use txout_index_to_sats::*;
 
+use crate::utils::log;
+
 #[derive(Default)]
 pub struct States {
     pub address_index_to_address_data: AddressIndexToAddressData,
@@ -72,7 +74,7 @@ impl States {
     }
 
     pub fn reset(&mut self, include_addresses: bool) {
-        println!("Reseting all states...");
+        log("Reseting all states...");
 
         let _ = self.date_data_vec.reset();
         let _ = self.tx_index_to_tx_data.reset();

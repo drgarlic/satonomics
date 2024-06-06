@@ -2,7 +2,7 @@ import uFuzzy from "@leeoniya/ufuzzy";
 import { createVisibilityObserver } from "@solid-primitives/intersection-observer";
 
 import { scrollIntoView } from "/src/scripts";
-import { createASS } from "/src/solid";
+import { createRWS } from "/src/solid/rws";
 
 import { Box } from "./box";
 import { Button } from "./button";
@@ -19,13 +19,13 @@ export function SearchFrame({
   presets: Presets;
   selectedFrame: Accessor<FrameName>;
 }) {
-  const counterRef = createASS<HTMLDivElement | undefined>(undefined);
+  const counterRef = createRWS<HTMLDivElement | undefined>(undefined);
 
-  const search = createASS("", {
+  const search = createRWS("", {
     equals: false,
   });
 
-  const inputRef = createASS<HTMLInputElement | undefined>(undefined);
+  const inputRef = createRWS<HTMLInputElement | undefined>(undefined);
 
   const config: uFuzzy.Options = {
     intraIns: Infinity,
@@ -208,7 +208,7 @@ function ListSection({
   haystack: string[];
   presets: Presets;
 }) {
-  const div = createASS<HTMLDivElement | undefined>(undefined);
+  const div = createRWS<HTMLDivElement | undefined>(undefined);
 
   const useVisibilityObserver = createVisibilityObserver();
 

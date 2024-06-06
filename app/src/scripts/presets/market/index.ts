@@ -1,32 +1,39 @@
 import { PriceScaleMode } from "lightweight-charts";
 
-import { applyMultipleSeries } from "/src/scripts";
+import { applyMultipleSeries, colors } from "/src/scripts";
 
+import { createPresets as createAveragesPresets } from "./averages";
 import description from "./description.md?raw";
+import { createPresets as createIndicatorsPresets } from "./indicators";
+import { createPresets as createReturnsPresets } from "./returns";
 
-export function createPresets(scale: ResourceScale) {
+export function createPresets({
+  scale,
+  datasets,
+}: {
+  scale: ResourceScale;
+  datasets: Datasets;
+}) {
   return {
-    id: `${scale}-market`,
     name: "Market",
     tree: [
       {
-        id: `${scale}-to-market-price`,
+        scale,
         icon: IconTablerCurrencyDollar,
         name: "Price",
-        title: "Bitcoin Price In US Dollars - USD",
+        title: "Market Price",
         applyPreset(params) {
-          return applyMultipleSeries({ ...params, scale });
+          return applyMultipleSeries({ ...params });
         },
         description,
       },
       {
-        id: `${scale}-to-market-performance`,
+        scale,
         icon: IconTablerPercentage,
         name: "Performance",
-        title: "Bitcoin USD Performance",
+        title: "Market Performance",
         applyPreset(params) {
           return applyMultipleSeries({
-            scale,
             ...params,
             priceOptions: {
               id: "performance",
@@ -40,23 +47,30 @@ export function createPresets(scale: ResourceScale) {
         description,
       },
       {
-        id: `${scale}-to-market-cap`,
+        scale,
         icon: IconTablerInfinity,
         name: "Capitalization",
-        title: "Bitcoin USD Market Capitalization",
+        title: "Market Capitalization",
         applyPreset(params) {
           return applyMultipleSeries({
-            scale,
             ...params,
-            priceDataset: params.datasets[scale].market_cap,
-            priceOptions: {
-              id: "market-cap",
-              title: "Market Cap.",
+            priceScaleOptions: {
+              halved: true,
             },
+            list: [
+              {
+                title: "Market Cap.",
+                dataset: params.datasets[scale].market_cap,
+                color: colors.bitcoin,
+              },
+            ],
           });
         },
         description,
       },
+      createAveragesPresets(datasets),
+      createReturnsPresets(datasets),
+      createIndicatorsPresets(datasets),
     ],
-  } satisfies PresetFolder;
+  } satisfies PartialPresetFolder;
 }

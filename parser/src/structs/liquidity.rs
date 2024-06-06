@@ -96,3 +96,43 @@ where
     pub liquid: T,
     pub highly_liquid: T,
 }
+
+impl<T> SplitByLiquidity<T>
+where
+    T: Default,
+{
+    // pub fn get(&self, id: &LiquidityId) -> &T {
+    //     match id {
+    //         LiquidityId::All => &self.all,
+    //         LiquidityId::Illiquid => &self.illiquid,
+    //         LiquidityId::Liquid => &self.liquid,
+    //         LiquidityId::HighlyLiquid => &self.highly_liquid,
+    //     }
+    // }
+
+    pub fn get_mut(&mut self, id: &LiquidityId) -> &mut T {
+        match id {
+            LiquidityId::All => &mut self.all,
+            LiquidityId::Illiquid => &mut self.illiquid,
+            LiquidityId::Liquid => &mut self.liquid,
+            LiquidityId::HighlyLiquid => &mut self.highly_liquid,
+        }
+    }
+
+    pub fn as_vec(&self) -> Vec<(&T, LiquidityId)> {
+        vec![
+            (&self.all, LiquidityId::All),
+            (&self.illiquid, LiquidityId::Illiquid),
+            (&self.liquid, LiquidityId::Liquid),
+            (&self.highly_liquid, LiquidityId::HighlyLiquid),
+        ]
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum LiquidityId {
+    All,
+    Illiquid,
+    Liquid,
+    HighlyLiquid,
+}

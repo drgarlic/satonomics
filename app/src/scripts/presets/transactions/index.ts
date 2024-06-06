@@ -1,98 +1,186 @@
+import { PriceScaleMode } from "lightweight-charts";
+
 import { applyMultipleSeries, colors } from "/src/scripts";
 
 export function createPresets(scale: ResourceScale) {
   return {
-    id: `${scale}-transactions`,
     name: "Transactions",
     tree: [
       {
-        id: `${scale}-transaction-count`,
+        scale,
         icon: IconTablerHandThreeFingers,
         name: "Count",
         title: "Transaction Count",
         description: "",
         applyPreset(params) {
           return applyMultipleSeries({
-            scale,
             ...params,
             priceScaleOptions: {
               halved: true,
             },
             list: [
               {
-                id: "transaction-count",
-                title: "Transaction Count",
+                title: "1M SMA",
+                color: colors.momentumYellow,
+                dataset: params.datasets[scale].transaction_count_1m_sma,
+              },
+              {
+                title: "1W SMA",
                 color: colors.bitcoin,
+                dataset: params.datasets[scale].transaction_count_1w_sma,
+              },
+              {
+                title: "Raw",
+                color: colors.darkBitcoin,
                 dataset: params.datasets[scale].transaction_count,
               },
             ],
           });
         },
       },
+
       {
-        id: `${scale}-transaction-volume`,
-        icon: IconTablerVolume2,
         name: "Volume",
-        title: "Transaction Volume",
-        description: "",
-        applyPreset(params) {
-          return applyMultipleSeries({
+        tree: [
+          {
             scale,
-            ...params,
-            priceScaleOptions: {
-              halved: true,
+            icon: IconTablerCoinBitcoin,
+            name: "In Bitcoin",
+            title: "Transaction Volume",
+            description: "",
+            applyPreset(params) {
+              return applyMultipleSeries({
+                ...params,
+                priceScaleOptions: {
+                  halved: true,
+                },
+                list: [
+                  {
+                    title: "1M SMA",
+                    color: colors.momentumYellow,
+                    dataset: params.datasets[scale].transaction_volume_1m_sma,
+                  },
+                  {
+                    title: "1W SMA",
+                    color: colors.bitcoin,
+                    dataset: params.datasets[scale].transaction_volume_1w_sma,
+                  },
+                  {
+                    title: "Raw",
+                    color: colors.darkBitcoin,
+                    dataset: params.datasets[scale].transaction_volume,
+                  },
+                ],
+              });
             },
-            list: [
-              {
-                id: "transaction-volume",
-                title: "Transaction Volume",
-                color: colors.bitcoin,
-                dataset: params.datasets[scale].transaction_volume,
-              },
-            ],
-          });
-        },
+          },
+          {
+            scale,
+            icon: IconTablerCoin,
+            name: "In Dollars",
+            title: "Transaction Volume In Dollars",
+            description: "",
+            applyPreset(params) {
+              return applyMultipleSeries({
+                ...params,
+                priceScaleOptions: {
+                  halved: true,
+                  mode: PriceScaleMode.Logarithmic,
+                },
+                list: [
+                  {
+                    title: "1M SMA",
+                    color: colors.lightDollars,
+                    dataset:
+                      params.datasets[scale]
+                        .transaction_volume_in_dollars_1m_sma,
+                  },
+                  {
+                    title: "1W SMA",
+                    color: colors.dollars,
+                    dataset:
+                      params.datasets[scale]
+                        .transaction_volume_in_dollars_1w_sma,
+                  },
+                  {
+                    title: "Raw",
+                    color: colors.darkDollars,
+                    dataset:
+                      params.datasets[scale].transaction_volume_in_dollars,
+                  },
+                ],
+              });
+            },
+          },
+        ],
+      },
+
+      {
+        name: "Annualized Volume",
+        tree: [
+          {
+            scale,
+            icon: IconTablerCoinBitcoin,
+            name: "In Bitcoin",
+            title: "Annualized Transaction Volume",
+            description: "",
+            applyPreset(params) {
+              return applyMultipleSeries({
+                ...params,
+                priceScaleOptions: {
+                  halved: true,
+                },
+                list: [
+                  {
+                    title: "Volume",
+                    color: colors.bitcoin,
+                    dataset:
+                      params.datasets[scale].annualized_transaction_volume,
+                  },
+                ],
+              });
+            },
+          },
+          {
+            scale,
+            icon: IconTablerCoin,
+            name: "In Dollars",
+            title: "Annualized Transaction Volume In Dollars",
+            description: "",
+            applyPreset(params) {
+              return applyMultipleSeries({
+                ...params,
+                priceScaleOptions: {
+                  halved: true,
+                },
+                list: [
+                  {
+                    title: "Volume",
+                    color: colors.dollars,
+                    dataset:
+                      params.datasets[scale]
+                        .annualized_transaction_volume_in_dollars,
+                  },
+                ],
+              });
+            },
+          },
+        ],
       },
       {
-        id: `${scale}-transaction-volume-annualized`,
-        icon: IconTablerVolume,
-        name: "Volume Annualized",
-        title: "Transaction Volume Annualized",
-        description: "",
-        applyPreset(params) {
-          return applyMultipleSeries({
-            scale,
-            ...params,
-            priceScaleOptions: {
-              halved: true,
-            },
-            list: [
-              {
-                id: "transaction-volume-annualized",
-                title: "Transaction Volume Annualized",
-                color: colors.bitcoin,
-                dataset: params.datasets[scale].annualized_transaction_volume,
-              },
-            ],
-          });
-        },
-      },
-      {
-        id: `${scale}-transactions-velocity`,
+        scale,
         icon: IconTablerWind,
         name: "Velocity",
         title: "Transactions Velocity",
         description: "",
         applyPreset(params) {
           return applyMultipleSeries({
-            scale,
             ...params,
             priceScaleOptions: {
               halved: true,
             },
             list: [
               {
-                id: "transactions-velocity",
                 title: "Transactions Velocity",
                 color: colors.bitcoin,
                 dataset: params.datasets[scale].transaction_velocity,
@@ -101,6 +189,38 @@ export function createPresets(scale: ResourceScale) {
           });
         },
       },
+      {
+        scale,
+        icon: IconTablerAlarm,
+        name: "Per Second",
+        title: "Transactions Per Second",
+        description: "",
+        applyPreset(params) {
+          return applyMultipleSeries({
+            ...params,
+            priceScaleOptions: {
+              halved: true,
+            },
+            list: [
+              {
+                title: "1M SMA",
+                color: colors.lightBitcoin,
+                dataset: params.datasets[scale].transactions_per_second_1m_sma,
+              },
+              {
+                title: "1W SMA",
+                color: colors.bitcoin,
+                dataset: params.datasets[scale].transactions_per_second_1w_sma,
+              },
+              {
+                title: "Raw",
+                color: colors.darkBitcoin,
+                dataset: params.datasets[scale].transactions_per_second,
+              },
+            ],
+          });
+        },
+      },
     ],
-  } satisfies PresetFolder;
+  } satisfies PartialPresetFolder;
 }

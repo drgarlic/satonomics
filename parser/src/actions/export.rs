@@ -1,8 +1,13 @@
 use std::thread;
 
-use chrono::{Local, NaiveDate};
+use chrono::NaiveDate;
 
-use crate::{databases::Databases, datasets::AllDatasets, states::States, utils::time};
+use crate::{
+    databases::Databases,
+    datasets::AllDatasets,
+    states::States,
+    utils::{log, time},
+};
 
 pub struct ExportedData<'a> {
     pub databases: Option<&'a mut Databases>,
@@ -21,7 +26,7 @@ pub fn export(
         date,
     }: ExportedData,
 ) -> color_eyre::Result<()> {
-    println!("{:?} - Saving... (Don't close !!)", Local::now());
+    log("Exporting... (Don't close !!)");
 
     time("Total save time", || -> color_eyre::Result<()> {
         time("Datasets saved", || datasets.export())?;

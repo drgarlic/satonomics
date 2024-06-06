@@ -112,6 +112,32 @@ where
         self.cached_puts.insert(key, value)
     }
 
+    fn db_get(&self, key: &KeyTree) -> Option<&Value> {
+        let k = (self.key_tree_to_key_db)(key);
+
+        let option = btree::get(&self.txn, &self.db, k, None).unwrap();
+
+        if let Some((k_found, v)) = option {
+            if k == k_found {
+                return Some(v);
+            }
+        }
+
+        None
+    }
+
+    fn init_txn(folder: &str, file: &str) -> color_eyre::Result<MutTxn<Env, ()>> {
+        let path = databases_folder_path(folder);
+
+        fs::create_dir_all(&path)?;
+
+        let env = unsafe { Env::new_nolock(format!("{path}/{file}"), PAGE_SIZE, 1).unwrap() };
+
+        let txn = Env::mut_txn_begin(env)?;
+
+        Ok(txn)
+    }
+
     pub fn export(mut self) -> color_eyre::Result<(), Error> {
         if self.cached_dels.is_empty() && self.cached_puts.is_empty() {
             return Ok(());
@@ -147,32 +173,6 @@ where
 
         self.txn.commit()
     }
-
-    fn db_get(&self, key: &KeyTree) -> Option<&Value> {
-        let k = (self.key_tree_to_key_db)(key);
-
-        let option = btree::get(&self.txn, &self.db, k, None).unwrap();
-
-        if let Some((k_found, v)) = option {
-            if k == k_found {
-                return Some(v);
-            }
-        }
-
-        None
-    }
-
-    fn init_txn(folder: &str, file: &str) -> color_eyre::Result<MutTxn<Env, ()>> {
-        let path = databases_folder_path(folder);
-
-        fs::create_dir_all(&path)?;
-
-        let env = unsafe { Env::new_nolock(format!("{path}/{file}"), PAGE_SIZE, 1).unwrap() };
-
-        let txn = Env::mut_txn_begin(env)?;
-
-        Ok(txn)
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Default, Copy)]
@@ -186,17 +186,6 @@ impl From<&[u8]> for U8x19 {
     }
 }
 
-// #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Default, Copy)]
-// pub struct U8x20([u8; 20]);
-// direct_repr!(U8x20);
-// impl From<&[u8]> for U8x20 {
-//     fn from(slice: &[u8]) -> Self {
-//         let mut arr = Self::default();
-//         arr.copy_from_slice(slice);
-//         arr
-//     }
-// }
-
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Default, Copy)]
 pub struct U8x31([u8; 31]);
 direct_repr!(U8x31);
@@ -207,17 +196,6 @@ impl From<&[u8]> for U8x31 {
         arr
     }
 }
-
-// #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Default, Copy)]
-// pub struct U8x32([u8; 32]);
-// direct_repr!(U8x32);
-// impl From<&[u8]> for U8x32 {
-//     fn from(slice: &[u8]) -> Self {
-//         let mut arr = Self::default();
-//         arr.copy_from_slice(slice);
-//         arr
-//     }
-// }
 
 pub fn databases_folder_path(folder: &str) -> String {
     format!("{OUTPUTS_FOLDER_PATH}/databases/{folder}")

@@ -25,7 +25,7 @@ export function createCohortPresetFolder<Scale extends ResourceScale>({
   datasetKey: AnyPossibleCohortKey;
   color: string;
   title: string;
-}): PresetFolder {
+}) {
   return {
     id: `${scale}-cohort-${id}`,
     name,
@@ -37,7 +37,7 @@ export function createCohortPresetFolder<Scale extends ResourceScale>({
       datasetKey,
       id,
     }),
-  };
+  } satisfies PartialPresetFolder;
 }
 
 export function createCohortPresetList<Scale extends ResourceScale>({
@@ -54,31 +54,33 @@ export function createCohortPresetList<Scale extends ResourceScale>({
   datasetKey: AnyPossibleCohortKey;
   title: string;
   color: string;
-}): PresetTree {
+}) {
   return [
     {
-      id: `${scale}-${id}-utxos`,
       name: "UTXOs - Unspent Transaction Outputs",
       tree: [
         {
-          id: `${scale}-${id}-utxo-count`,
+          scale,
           name: `Count`,
           title: `${title} UTXO Count`,
           icon: () => IconTablerTicket,
           applyPreset(params) {
             return applyMultipleSeries({
-              scale,
               ...params,
               priceScaleOptions: {
                 halved: true,
               },
               list: [
                 {
-                  id: "utxo-count",
                   title: "UTXO Count",
                   color,
                   seriesType: SeriesType.Area,
-                  dataset: params.datasets[scale][`${datasetKey}_utxo`],
+                  dataset:
+                    params.datasets[scale][
+                      datasetKey
+                        ? (`${datasetKey}_utxo_count` as const)
+                        : "utxo_count"
+                    ],
                 },
               ],
             });
@@ -88,68 +90,61 @@ export function createCohortPresetList<Scale extends ResourceScale>({
       ],
     },
     {
-      id: `${scale}-${id}-realized`,
       name: "Realized",
       tree: [
         {
-          id: `${scale}-${id}-realized-capitalization`,
+          scale,
           name: `Capitalization`,
           title: `${title} Realized Capitalization`,
           icon: () => IconTablerPigMoney,
           applyPreset(params) {
             return applyMultipleSeries({
-              scale,
               ...params,
               priceScaleOptions: {
                 halved: true,
               },
               list: [
-                ...(id && id !== "all"
+                {
+                  title: "Realized Capitalization",
+                  color: colors.bitcoin,
+                  dataset: params.datasets[scale].realized_cap,
+                },
+                ...(datasetKey
                   ? [
                       {
-                        id: "realized-capitalization",
-                        title: "Realized Capitalization",
-                        color: colors.bitcoin,
+                        title: `${title} Realized Capitalization`,
+                        color,
+                        seriesType: SeriesType.Area,
                         dataset:
-                          params.datasets[scale][`RealizedCapitalization`],
+                          params.datasets[scale][`${datasetKey}_realized_cap`],
                       },
                     ]
                   : []),
-                {
-                  id: `${scale}-${id}-realized-capitalization`,
-                  title: `${title} Realized Capitalization`,
-                  color,
-                  seriesType: SeriesType.Area,
-                  dataset:
-                    params.datasets[scale][
-                      `${datasetKey}RealizedCapitalization`
-                    ],
-                },
               ],
             });
           },
           description: "",
         },
         {
-          id: `${scale}-${id}-realized-capitalization-30d-change`,
-          name: `Capitalization 30 Day Change`,
-          title: `${title} Realized Capitalization 30 Day Change`,
+          scale,
+          name: `Capitalization 1M Net Change`,
+          title: `${title} Realized Capitalization 1 Month Net Change`,
           icon: () => IconTablerStatusChange,
           applyPreset(params) {
             return applyMultipleSeries({
-              scale,
               ...params,
               priceScaleOptions: {
                 halved: true,
               },
               list: [
                 {
-                  id: `${scale}-${id}-realized-capitalization-30d-change`,
                   title: `${title} Realized Cap. 30 Day Change`,
                   seriesType: SeriesType.Based,
                   dataset:
                     params.datasets[scale][
-                      `${datasetKey}RealizedCapitalization30dChange`
+                      datasetKey
+                        ? (`${datasetKey}_realized_cap_1m_net_change` as const)
+                        : "realized_cap_1m_net_change"
                     ],
                 },
               ],
@@ -158,59 +153,62 @@ export function createCohortPresetList<Scale extends ResourceScale>({
           description: "",
         },
         {
-          id: `${scale}-${id}-realized-price-folder`,
           name: "Price",
           tree: [
             {
-              id: `${scale}-${id}-realized-price`,
+              scale,
               name: `Value`,
               title: `${title} Realized Price`,
               icon: () => IconTablerMathAvg,
               applyPreset(params) {
                 return applyMultipleSeries({
-                  scale,
                   ...params,
                   list: [
                     {
-                      id: "realized-price",
                       title: "Realized Price",
                       color,
                       dataset:
-                        params.datasets[scale][`${datasetKey}RealizedPrice`],
+                        params.datasets[scale][
+                          datasetKey
+                            ? (`${datasetKey}_realized_price` as const)
+                            : "realized_price"
+                        ],
                     },
                   ],
                 });
               },
               description: "",
             },
-            createRatioPresetFolder({
-              datasets: datasets[scale],
-              scale,
-              id: `${id}-realized-price`,
-              color,
-              title: `${title} Realized Price`,
-              datasetKey: `${datasetKey}RealizedPrice`,
-            }),
+            // createRatioPresetFolder({
+            //   datasets: datasets[scale],
+            //   scale,
+            //   id: `${id}-realized-price`,
+            //   color,
+            //   title: `${title} Realized Price`,
+            //   datasetKey: `${datasetKey}RealizedPrice`,
+            // }),
           ],
         },
         {
-          id: `${scale}-${id}-realized-profit`,
+          scale,
           name: `Profit`,
           title: `${title} Realized Profit`,
           icon: () => IconTablerCash,
           applyPreset(params) {
             return applyMultipleSeries({
-              scale,
               ...params,
               priceScaleOptions: {
                 halved: true,
               },
               list: [
                 {
-                  id: "realized-profit",
                   title: "Realized Profit",
                   dataset:
-                    params.datasets[scale][`${datasetKey}RealizedProfit`],
+                    params.datasets[scale][
+                      datasetKey
+                        ? (`${datasetKey}_realized_profit` as const)
+                        : "realized_profit"
+                    ],
                   color: colors.profit,
                   seriesType: SeriesType.Area,
                 },
@@ -220,22 +218,25 @@ export function createCohortPresetList<Scale extends ResourceScale>({
           description: "",
         },
         {
-          id: `${scale}-${id}-realized-loss`,
+          scale,
           name: "Loss",
           title: `${title} Realized Loss`,
           icon: () => IconTablerCoffin,
           applyPreset(params) {
             return applyMultipleSeries({
-              scale,
               ...params,
               priceScaleOptions: {
                 halved: true,
               },
               list: [
                 {
-                  id: "realized-loss",
                   title: "Realized Loss",
-                  dataset: params.datasets[scale][`${datasetKey}RealizedLoss`],
+                  dataset:
+                    params.datasets[scale][
+                      datasetKey
+                        ? (`${datasetKey}_realized_loss` as const)
+                        : "realized_loss"
+                    ],
                   color: colors.loss,
                   seriesType: SeriesType.Area,
                 },
@@ -245,32 +246,37 @@ export function createCohortPresetList<Scale extends ResourceScale>({
           description: "",
         },
         {
-          id: `${scale}-${id}-realized-profit-and-loss`,
+          scale,
           name: `PNL - Profit And Loss`,
           title: `${title} PNL - Profit And Loss`,
           icon: () => IconTablerArrowsVertical,
           applyPreset(params) {
             return applyMultipleSeries({
-              scale,
               ...params,
               priceScaleOptions: {
                 halved: true,
               },
               list: [
                 {
-                  id: "realized-profit",
                   title: "Realized Profit",
                   color: colors.profit,
                   dataset:
-                    params.datasets[scale][`${datasetKey}RealizedProfit`],
+                    params.datasets[scale][
+                      datasetKey
+                        ? (`${datasetKey}_realized_profit` as const)
+                        : "realized_profit"
+                    ],
                   seriesType: SeriesType.Based,
                 },
                 {
-                  id: "realized-loss",
                   title: "Realized Loss",
                   color: colors.loss,
                   dataset:
-                    params.datasets[scale][`${datasetKey}RealizedLossNegative`],
+                    params.datasets[scale][
+                      datasetKey
+                        ? (`${datasetKey}_negative_realized_loss` as const)
+                        : "negative_realized_loss"
+                    ],
                   seriesType: SeriesType.Based,
                 },
               ],
@@ -279,25 +285,25 @@ export function createCohortPresetList<Scale extends ResourceScale>({
           description: "",
         },
         {
-          id: `${scale}-${id}-net-realized-profit-and-loss`,
+          scale,
           name: `Net PNL`,
           title: `${title} Net Realized Profit And Loss`,
           icon: () => IconTablerScale,
           applyPreset(params) {
             return applyMultipleSeries({
-              scale,
               ...params,
               priceScaleOptions: {
                 halved: true,
               },
               list: [
                 {
-                  id: "net-realized-profit-and-loss",
                   title: "Net PNL",
                   seriesType: SeriesType.Based,
                   dataset:
                     params.datasets[scale][
-                      `${datasetKey}NetRealizedProfitAndLoss`
+                      datasetKey
+                        ? (`${datasetKey}_net_realized_profit_and_loss` as const)
+                        : "net_realized_profit_and_loss"
                     ],
                 },
               ],
@@ -306,9 +312,9 @@ export function createCohortPresetList<Scale extends ResourceScale>({
           description: "",
         },
         {
-          id: `${scale}-${id}-relative-net-realized-profit-and-loss`,
+          scale,
           name: `Relative Net PNL`,
-          title: `${title} Net Realized Profit And Loss Relative To Total Market Capitalization`,
+          title: `${title} Net Realized Profit And Loss Relative To Market Cap`,
           icon: () => IconTablerDivide,
           applyPreset(params) {
             return applyMultipleSeries({
@@ -319,8 +325,6 @@ export function createCohortPresetList<Scale extends ResourceScale>({
               },
               list: [
                 {
-                  id: "relative-net-realized-profit-and-loss",
-                  title: "Relative Net PNL",
                   seriesType: SeriesType.Based,
                   dataset:
                     params.datasets[scale][
@@ -1214,5 +1218,5 @@ export function createCohortPresetList<Scale extends ResourceScale>({
         ),
       ],
     },
-  ];
+  ] satisfies PartialPresetTree;
 }

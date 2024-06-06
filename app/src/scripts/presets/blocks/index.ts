@@ -3,29 +3,27 @@ import { LineStyle } from "lightweight-charts";
 import { applyMultipleSeries, colors, SeriesType } from "/src/scripts";
 
 export function createPresets() {
+  const scale: ResourceScale = "date";
+
   return {
-    id: `date-blocks`,
     name: "Blocks",
     tree: [
       {
-        id: `date-total-block-height`,
+        scale,
         icon: IconTablerWall,
         name: "Height",
         title: "Block Height",
         description: "",
         applyPreset(params) {
           return applyMultipleSeries({
-            scale: "date",
             ...params,
             priceScaleOptions: {
               halved: true,
             },
             list: [
               {
-                id: "height",
                 title: "Height",
                 color: colors.bitcoin,
-                seriesType: SeriesType.Area,
                 dataset: params.datasets.date.last_height,
               },
             ],
@@ -33,76 +31,188 @@ export function createPresets() {
         },
       },
       {
-        id: `date-blocks-mined`,
-        icon: IconTablerCube,
+        scale,
         name: "Mined",
-        title: "Blocks Mined",
-        description: "",
-        applyPreset(params) {
-          return applyMultipleSeries({
-            scale: "date",
-            ...params,
-            priceScaleOptions: {
-              halved: true,
-            },
-            list: [
-              {
-                id: "raw",
-                title: "Mined",
-                color: colors.darkBitcoin,
-                dataset: params.datasets.date.blocks_mined,
-              },
-              {
-                id: "30d",
-                title: "Monthly Avg.",
-                color: colors.bitcoin,
-                dataset: params.datasets.date.blocks_mined_1m_sma,
-              },
-              {
-                id: "1w",
-                title: "Weekly Avg.",
-                color: colors.momentumYellow,
-                dataset: params.datasets.date.blocks_mined_1w_sma,
-                defaultVisible: false,
-              },
-              {
-                id: "target",
-                title: "Target",
-                color: colors.white,
-                dataset: params.datasets.date.blocks_mined_target,
-                options: {
-                  lineStyle: LineStyle.LargeDashed,
+        tree: [
+          {
+            scale,
+            icon: IconTablerCube,
+            name: "Daily Sum",
+            title: "Daily Sum Of Blocks Mined",
+            description: "",
+            applyPreset(params) {
+              return applyMultipleSeries({
+                ...params,
+                priceScaleOptions: {
+                  halved: true,
                 },
-              },
-            ],
-          });
-        },
+                list: [
+                  {
+                    title: "Target",
+                    color: colors.white,
+                    dataset: params.datasets.date.blocks_mined_target,
+                    options: {
+                      lineStyle: LineStyle.LargeDashed,
+                    },
+                  },
+                  {
+                    title: "1W Avg.",
+                    color: colors.momentumYellow,
+                    dataset: params.datasets.date.blocks_mined_1w_sma,
+                    defaultVisible: false,
+                  },
+                  {
+                    title: "1M Avg.",
+                    color: colors.bitcoin,
+                    dataset: params.datasets.date.blocks_mined_1m_sma,
+                  },
+                  {
+                    title: "Mined",
+                    color: colors.darkBitcoin,
+                    dataset: params.datasets.date.blocks_mined,
+                  },
+                ],
+              });
+            },
+          },
+          {
+            scale,
+            icon: IconTablerCubeUnfolded,
+            name: "Weekly Sum",
+            title: "Weekly Sum Of Blocks Mined",
+            description: "",
+            applyPreset(params) {
+              return applyMultipleSeries({
+                ...params,
+                priceScaleOptions: {
+                  halved: true,
+                },
+                list: [
+                  {
+                    title: "Target",
+                    color: colors.white,
+                    dataset: params.datasets.date.blocks_mined_1w_target,
+                    options: {
+                      lineStyle: LineStyle.LargeDashed,
+                    },
+                  },
+                  {
+                    title: "Sum Mined",
+                    color: colors.bitcoin,
+                    dataset: params.datasets.date.blocks_mined_1w_sum,
+                  },
+                ],
+              });
+            },
+          },
+          {
+            scale,
+            icon: IconTablerCubeUnfolded,
+            name: "Monthly Sum",
+            title: "Monthly Sum Of Blocks Mined",
+            description: "",
+            applyPreset(params) {
+              return applyMultipleSeries({
+                ...params,
+                priceScaleOptions: {
+                  halved: true,
+                },
+                list: [
+                  {
+                    title: "Target",
+                    color: colors.white,
+                    dataset: params.datasets.date.blocks_mined_1m_target,
+                    options: {
+                      lineStyle: LineStyle.LargeDashed,
+                    },
+                  },
+                  {
+                    title: "Sum Mined",
+                    color: colors.bitcoin,
+                    dataset: params.datasets.date.blocks_mined_1m_sum,
+                  },
+                ],
+              });
+            },
+          },
+          {
+            scale,
+            icon: IconTablerCubeUnfolded,
+            name: "Yearly Sum",
+            title: "Yearly Sum Of Blocks Mined",
+            description: "",
+            applyPreset(params) {
+              return applyMultipleSeries({
+                ...params,
+                priceScaleOptions: {
+                  halved: true,
+                },
+                list: [
+                  {
+                    title: "Target",
+                    color: colors.white,
+                    dataset: params.datasets.date.blocks_mined_1y_target,
+                    options: {
+                      lineStyle: LineStyle.LargeDashed,
+                    },
+                  },
+                  {
+                    title: "Sum Mined",
+                    color: colors.bitcoin,
+                    dataset: params.datasets.date.blocks_mined_1y_sum,
+                  },
+                ],
+              });
+            },
+          },
+          {
+            scale,
+            icon: IconTablerWall,
+            name: "Total",
+            title: "Total Blocks Mined",
+            description: "",
+            applyPreset(params) {
+              return applyMultipleSeries({
+                ...params,
+                priceScaleOptions: {
+                  halved: true,
+                },
+                list: [
+                  {
+                    title: "Mined",
+                    color: colors.bitcoin,
+                    seriesType: SeriesType.Area,
+                    dataset: params.datasets.date.total_blocks_mined,
+                  },
+                ],
+              });
+            },
+          },
+        ],
       },
       {
-        id: `date-total-blocks-mined`,
-        icon: IconTablerWall,
-        name: "Total Mined",
-        title: "Total Blocks Mined",
+        scale,
+        icon: IconTablerStack3,
+        name: "Cumulative Size",
+        title: "Cumulative Block Size",
         description: "",
         applyPreset(params) {
           return applyMultipleSeries({
-            scale: "date",
             ...params,
             priceScaleOptions: {
               halved: true,
             },
             list: [
               {
-                id: "total-blocks",
-                title: "Total",
-                color: colors.bitcoin,
+                title: "Size (MB)",
+                color: colors.darkWhite,
                 seriesType: SeriesType.Area,
-                dataset: params.datasets.date.total_blocks_mined,
+                dataset: params.datasets.date.cumulative_block_size,
               },
             ],
           });
         },
       },
     ],
-  } satisfies PresetFolder;
+  } satisfies PartialPresetFolder;
 }

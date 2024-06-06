@@ -4,8 +4,9 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use crate::io::{Binary, Json};
 
-#[derive(PartialEq, PartialOrd, Ord, Eq, Debug, Clone, Copy)]
+#[derive(PartialEq, PartialOrd, Ord, Eq, Debug, Clone, Copy, Default)]
 pub enum Serialization {
+    #[default]
     Binary,
     Json,
 }
