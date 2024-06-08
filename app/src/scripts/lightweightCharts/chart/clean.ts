@@ -1,4 +1,4 @@
-import { chartState } from "/src/scripts";
+import { chartState } from "./state";
 
 export const cleanChart = () => {
   console.log("chart: clean");

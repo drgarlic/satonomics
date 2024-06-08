@@ -1,4 +1,4 @@
-import { defaultSeriesOptions } from "/src/scripts";
+import { defaultSeriesOptions } from "./options";
 
 type AreaOptions = DeepPartial<AreaStyleOptions & SeriesOptionsCommon>;
 

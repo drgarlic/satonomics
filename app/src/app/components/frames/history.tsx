@@ -1,4 +1,4 @@
-import { run } from "/src/scripts";
+import { run } from "/src/scripts/utils/run";
 
 import { Header } from "./header";
 import { Line } from "./line";

@@ -4,9 +4,11 @@ import {
   CrosshairMode,
 } from "lightweight-charts";
 
-import { chartState, cleanChart, colors, priceToUSLocale } from "/src/scripts";
-
+import { colors } from "../../utils/colors";
+import { priceToUSLocale } from "../../utils/locale";
+import { cleanChart } from "./clean";
 import { HorzScaleBehaviorHeight } from "./horzScaleBehavior";
+import { chartState } from "./state";
 
 export const createChart = (scale: ResourceScale) => {
   cleanChart();

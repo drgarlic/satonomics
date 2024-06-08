@@ -1,4 +1,6 @@
-import { createLineSeries, dateToString, ONE_DAY_IN_MS } from "/src/scripts";
+import { dateToString } from "../../utils/date";
+import { ONE_DAY_IN_MS } from "../../utils/time";
+import { createLineSeries } from "../series/creators/line";
 
 export const DAY_BEFORE_GENESIS_DAY = "2009-01-02";
 export const GENESIS_DAY = "2009-01-03";

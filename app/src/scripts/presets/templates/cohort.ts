@@ -1,18 +1,12 @@
 import { LineStyle } from "lightweight-charts";
 
-import {
-  applyMultipleSeries,
-  colors,
-  createMomentumPresetFolder,
-  createRatioPresetFolder,
-  percentiles,
-  SeriesType,
-} from "/src/scripts";
+import { percentiles } from "../../datasets/cohorts/base";
+import { colors } from "../../utils/colors";
+import { applyMultipleSeries, SeriesType } from "./multiple";
 
 export function createCohortPresetFolder<Scale extends ResourceScale>({
   datasets,
   scale,
-  id,
   color,
   name,
   datasetKey,
@@ -20,49 +14,51 @@ export function createCohortPresetFolder<Scale extends ResourceScale>({
 }: {
   datasets: Datasets;
   scale: Scale;
-  id: string;
   name: string;
   datasetKey: AnyPossibleCohortKey;
   color: string;
   title: string;
 }) {
   return {
-    id: `${scale}-cohort-${id}`,
     name,
     tree: createCohortPresetList({
       title,
       datasets,
+      name,
       scale,
       color,
       datasetKey,
-      id,
     }),
   } satisfies PartialPresetFolder;
 }
 
 export function createCohortPresetList<Scale extends ResourceScale>({
+  name,
   datasets,
   scale,
-  id,
   color,
   datasetKey,
   title,
 }: {
+  name: string;
   datasets: Datasets;
   scale: Scale;
-  id: string;
   datasetKey: AnyPossibleCohortKey;
   title: string;
   color: string;
 }) {
+  const datasetPrefix = datasetKey
+    ? (`${datasetKey}_` as const)
+    : ("" as const);
+
   return [
     {
-      name: "UTXOs - Unspent Transaction Outputs",
+      name: "UTXOs",
       tree: [
         {
           scale,
           name: `Count`,
-          title: `${title} UTXO Count`,
+          title: `${title} Unspent Transaction Outputs Count`,
           icon: () => IconTablerTicket,
           applyPreset(params) {
             return applyMultipleSeries({
@@ -72,15 +68,10 @@ export function createCohortPresetList<Scale extends ResourceScale>({
               },
               list: [
                 {
-                  title: "UTXO Count",
+                  title: "Count",
                   color,
                   seriesType: SeriesType.Area,
-                  dataset:
-                    params.datasets[scale][
-                      datasetKey
-                        ? (`${datasetKey}_utxo_count` as const)
-                        : "utxo_count"
-                    ],
+                  dataset: params.datasets[scale][`${datasetPrefix}utxo_count`],
                 },
               ],
             });
@@ -94,6 +85,26 @@ export function createCohortPresetList<Scale extends ResourceScale>({
       tree: [
         {
           scale,
+          name: `Price`,
+          title: `${title} Realized Price`,
+          description: "",
+          icon: () => IconTablerTag,
+          applyPreset(params) {
+            return applyMultipleSeries({
+              ...params,
+              list: [
+                {
+                  title: "Realized Price",
+                  color,
+                  dataset:
+                    params.datasets[scale][`${datasetPrefix}realized_price`],
+                },
+              ],
+            });
+          },
+        },
+        {
+          scale,
           name: `Capitalization`,
           title: `${title} Realized Capitalization`,
           icon: () => IconTablerPigMoney,
@@ -104,22 +115,25 @@ export function createCohortPresetList<Scale extends ResourceScale>({
                 halved: true,
               },
               list: [
+                ...(datasetKey
+                  ? [
+                      {
+                        title: `${name} Realized Capitalization`,
+                        color,
+                        seriesType: SeriesType.Area,
+                        dataset:
+                          params.datasets[scale][
+                            `${datasetPrefix}realized_cap`
+                          ],
+                      },
+                    ]
+                  : []),
                 {
                   title: "Realized Capitalization",
                   color: colors.bitcoin,
                   dataset: params.datasets[scale].realized_cap,
+                  defaultVisible: false,
                 },
-                ...(datasetKey
-                  ? [
-                      {
-                        title: `${title} Realized Capitalization`,
-                        color,
-                        seriesType: SeriesType.Area,
-                        dataset:
-                          params.datasets[scale][`${datasetKey}_realized_cap`],
-                      },
-                    ]
-                  : []),
               ],
             });
           },
@@ -138,56 +152,17 @@ export function createCohortPresetList<Scale extends ResourceScale>({
               },
               list: [
                 {
-                  title: `${title} Realized Cap. 30 Day Change`,
+                  title: `Net Change`,
                   seriesType: SeriesType.Based,
                   dataset:
                     params.datasets[scale][
-                      datasetKey
-                        ? (`${datasetKey}_realized_cap_1m_net_change` as const)
-                        : "realized_cap_1m_net_change"
+                      `${datasetPrefix}realized_cap_1m_net_change`
                     ],
                 },
               ],
             });
           },
           description: "",
-        },
-        {
-          name: "Price",
-          tree: [
-            {
-              scale,
-              name: `Value`,
-              title: `${title} Realized Price`,
-              icon: () => IconTablerMathAvg,
-              applyPreset(params) {
-                return applyMultipleSeries({
-                  ...params,
-                  list: [
-                    {
-                      title: "Realized Price",
-                      color,
-                      dataset:
-                        params.datasets[scale][
-                          datasetKey
-                            ? (`${datasetKey}_realized_price` as const)
-                            : "realized_price"
-                        ],
-                    },
-                  ],
-                });
-              },
-              description: "",
-            },
-            // createRatioPresetFolder({
-            //   datasets: datasets[scale],
-            //   scale,
-            //   id: `${id}-realized-price`,
-            //   color,
-            //   title: `${title} Realized Price`,
-            //   datasetKey: `${datasetKey}RealizedPrice`,
-            // }),
-          ],
         },
         {
           scale,
@@ -204,11 +179,7 @@ export function createCohortPresetList<Scale extends ResourceScale>({
                 {
                   title: "Realized Profit",
                   dataset:
-                    params.datasets[scale][
-                      datasetKey
-                        ? (`${datasetKey}_realized_profit` as const)
-                        : "realized_profit"
-                    ],
+                    params.datasets[scale][`${datasetPrefix}realized_profit`],
                   color: colors.profit,
                   seriesType: SeriesType.Area,
                 },
@@ -232,11 +203,7 @@ export function createCohortPresetList<Scale extends ResourceScale>({
                 {
                   title: "Realized Loss",
                   dataset:
-                    params.datasets[scale][
-                      datasetKey
-                        ? (`${datasetKey}_realized_loss` as const)
-                        : "realized_loss"
-                    ],
+                    params.datasets[scale][`${datasetPrefix}realized_loss`],
                   color: colors.loss,
                   seriesType: SeriesType.Area,
                 },
@@ -247,8 +214,8 @@ export function createCohortPresetList<Scale extends ResourceScale>({
         },
         {
           scale,
-          name: `PNL - Profit And Loss`,
-          title: `${title} PNL - Profit And Loss`,
+          name: `PNL`,
+          title: `${title} Realized Profit And Loss`,
           icon: () => IconTablerArrowsVertical,
           applyPreset(params) {
             return applyMultipleSeries({
@@ -258,24 +225,18 @@ export function createCohortPresetList<Scale extends ResourceScale>({
               },
               list: [
                 {
-                  title: "Realized Profit",
+                  title: "Profit",
                   color: colors.profit,
                   dataset:
-                    params.datasets[scale][
-                      datasetKey
-                        ? (`${datasetKey}_realized_profit` as const)
-                        : "realized_profit"
-                    ],
+                    params.datasets[scale][`${datasetPrefix}realized_profit`],
                   seriesType: SeriesType.Based,
                 },
                 {
-                  title: "Realized Loss",
+                  title: "Loss",
                   color: colors.loss,
                   dataset:
                     params.datasets[scale][
-                      datasetKey
-                        ? (`${datasetKey}_negative_realized_loss` as const)
-                        : "negative_realized_loss"
+                      `${datasetPrefix}negative_realized_loss`
                     ],
                   seriesType: SeriesType.Based,
                 },
@@ -301,9 +262,7 @@ export function createCohortPresetList<Scale extends ResourceScale>({
                   seriesType: SeriesType.Based,
                   dataset:
                     params.datasets[scale][
-                      datasetKey
-                        ? (`${datasetKey}_net_realized_profit_and_loss` as const)
-                        : "net_realized_profit_and_loss"
+                      `${datasetPrefix}net_realized_profit_and_loss`
                     ],
                 },
               ],
@@ -313,22 +272,22 @@ export function createCohortPresetList<Scale extends ResourceScale>({
         },
         {
           scale,
-          name: `Relative Net PNL`,
-          title: `${title} Net Realized Profit And Loss Relative To Market Cap`,
+          name: `Net PNL Relative To Market Cap`,
+          title: `${title} Net Realized Profit And Loss Relative To Market Capitalization`,
           icon: () => IconTablerDivide,
           applyPreset(params) {
             return applyMultipleSeries({
-              scale,
               ...params,
               priceScaleOptions: {
                 halved: true,
               },
               list: [
                 {
+                  title: "Net",
                   seriesType: SeriesType.Based,
                   dataset:
                     params.datasets[scale][
-                      `${datasetKey}RelativeNetRealizedProfitAndLoss`
+                      `${datasetPrefix}net_realized_profit_and_loss_to_market_cap_ratio`
                     ],
                 },
               ],
@@ -337,26 +296,24 @@ export function createCohortPresetList<Scale extends ResourceScale>({
           description: "",
         },
         {
-          id: `${scale}-${id}-cumulative-realized-profit`,
+          scale,
           name: `Cumulative Profit`,
           title: `${title} Cumulative Realized Profit`,
           icon: () => IconTablerSum,
           applyPreset(params) {
             return applyMultipleSeries({
-              scale,
               ...params,
               priceScaleOptions: {
                 halved: true,
               },
               list: [
                 {
-                  id: "cumulative-realized-profit",
                   title: "Cumulative Realized Profit",
                   color: colors.profit,
                   seriesType: SeriesType.Area,
                   dataset:
                     params.datasets[scale][
-                      `${datasetKey}CumulatedRealizedProfit`
+                      `${datasetPrefix}cumulative_realized_profit`
                     ],
                 },
               ],
@@ -365,26 +322,24 @@ export function createCohortPresetList<Scale extends ResourceScale>({
           description: "",
         },
         {
-          id: `${scale}-${id}-cumulative-realized-loss`,
+          scale,
           name: "Cumulative Loss",
           title: `${title} Cumulative Realized Loss`,
           icon: () => IconTablerSum,
           applyPreset(params) {
             return applyMultipleSeries({
-              scale,
               ...params,
               priceScaleOptions: {
                 halved: true,
               },
               list: [
                 {
-                  id: "cumulative-realized-loss",
                   title: "Cumulative Realized Loss",
                   color: colors.loss,
                   seriesType: SeriesType.Area,
                   dataset:
                     params.datasets[scale][
-                      `${datasetKey}CumulatedRealizedLoss`
+                      `${datasetPrefix}cumulative_realized_loss`
                     ],
                 },
               ],
@@ -393,25 +348,23 @@ export function createCohortPresetList<Scale extends ResourceScale>({
           description: "",
         },
         {
-          id: `${scale}-${id}-cumulative-net-realized-profit-and-loss`,
+          scale,
           name: `Cumulative Net PNL`,
           title: `${title} Cumulative Net Realized Profit And Loss`,
           icon: () => IconTablerSum,
           applyPreset(params) {
             return applyMultipleSeries({
-              scale,
               ...params,
               priceScaleOptions: {
                 halved: true,
               },
               list: [
                 {
-                  id: "cumulative-net-realized-profit-and-loss",
                   title: "Cumulative Net Realized PNL",
                   seriesType: SeriesType.Based,
                   dataset:
                     params.datasets[scale][
-                      `${datasetKey}CumulatedNetRealizedProfitAndLoss`
+                      `${datasetPrefix}cumulative_net_realized_profit_and_loss`
                     ],
                 },
               ],
@@ -420,24 +373,22 @@ export function createCohortPresetList<Scale extends ResourceScale>({
           description: "",
         },
         {
-          id: `${scale}-${id}-cumulative-net-realized-profit-and-loss-30d-change`,
+          scale,
           name: `Cumulative Net PNL 30 Day Change`,
           title: `${title} Cumulative Net Realized Profit And Loss 30 Day Change`,
           icon: () => IconTablerTimeDuration30,
           applyPreset(params) {
             return applyMultipleSeries({
-              scale,
               ...params,
               priceScaleOptions: {
                 halved: true,
               },
               list: [
                 {
-                  id: "cumulative-net-realized-profit-and-loss-30d-change",
                   title: "Cumulative Net Realized PNL 30d Change",
                   dataset:
                     params.datasets[scale][
-                      `${datasetKey}CumulatedNetRealizedProfitAndLoss30dChange`
+                      `${datasetPrefix}cumulative_net_realized_profit_and_loss_1m_net_change`
                     ],
                   seriesType: SeriesType.Based,
                 },
@@ -449,27 +400,24 @@ export function createCohortPresetList<Scale extends ResourceScale>({
       ],
     },
     {
-      id: `${scale}-${id}-unrealized`,
       name: "Unrealized",
       tree: [
         {
-          id: `${scale}-${id}-unrealized-profit`,
+          scale,
           name: `Profit`,
           title: `${title} Unrealized Profit`,
           icon: () => IconTablerMoodDollar,
           applyPreset(params) {
             return applyMultipleSeries({
-              scale,
               ...params,
               priceScaleOptions: {
                 halved: true,
               },
               list: [
                 {
-                  id: "unrealized-profit",
                   title: "Unrealized Profit",
                   dataset:
-                    params.datasets[scale][`${datasetKey}UnrealizedProfit`],
+                    params.datasets[scale][`${datasetPrefix}unrealized_profit`],
                   color: colors.profit,
                   seriesType: SeriesType.Area,
                 },
@@ -478,24 +426,23 @@ export function createCohortPresetList<Scale extends ResourceScale>({
           },
           description: "",
         },
+
         {
-          id: `${scale}-${id}-unrealized-loss`,
+          scale,
           name: "Loss",
           title: `${title} Unrealized Loss`,
           icon: () => IconTablerMoodSadDizzy,
           applyPreset(params) {
             return applyMultipleSeries({
-              scale,
               ...params,
               priceScaleOptions: {
                 halved: true,
               },
               list: [
                 {
-                  id: "unrealized-loss",
-                  title: "Unrealized Loss",
+                  title: "Loss",
                   dataset:
-                    params.datasets[scale][`${datasetKey}UnrealizedLoss`],
+                    params.datasets[scale][`${datasetPrefix}unrealized_loss`],
                   color: colors.loss,
                   seriesType: SeriesType.Area,
                 },
@@ -505,33 +452,30 @@ export function createCohortPresetList<Scale extends ResourceScale>({
           description: "",
         },
         {
-          id: `${scale}-${id}-unrealized-profit-and-loss`,
-          name: `PNL - Profit And Loss`,
-          title: `${title} Unrealized PNL - Profit And Loss`,
+          scale,
+          name: `PNL`,
+          title: `${title} Unrealized Profit And Loss`,
           icon: () => IconTablerArrowsVertical,
           applyPreset(params) {
             return applyMultipleSeries({
-              scale,
               ...params,
               priceScaleOptions: {
                 halved: true,
               },
               list: [
                 {
-                  id: "unrealized-loss",
-                  title: "Unrealized Profit",
+                  title: "Profit",
                   color: colors.profit,
                   dataset:
-                    params.datasets[scale][`${datasetKey}UnrealizedProfit`],
+                    params.datasets[scale][`${datasetPrefix}unrealized_profit`],
                   seriesType: SeriesType.Based,
                 },
                 {
-                  id: "unrealized-loss",
-                  title: "Unrealized Loss",
+                  title: "Loss",
                   color: colors.loss,
                   dataset:
                     params.datasets[scale][
-                      `${datasetKey}UnrealizedLossNegative`
+                      `${datasetPrefix}negative_unrealized_loss`
                     ],
                   seriesType: SeriesType.Based,
                 },
@@ -541,24 +485,22 @@ export function createCohortPresetList<Scale extends ResourceScale>({
           description: "",
         },
         {
-          id: `${scale}-${id}-net-unrealized-profit-and-loss`,
+          scale,
           name: `Net PNL`,
           title: `${title} Net Unrealized Profit And Loss`,
           icon: () => IconTablerScale,
           applyPreset(params) {
             return applyMultipleSeries({
-              scale,
               ...params,
               priceScaleOptions: {
                 halved: true,
               },
               list: [
                 {
-                  id: "net-unrealized-profit-and-loss",
                   title: "Net Unrealized PNL",
                   dataset:
                     params.datasets[scale][
-                      `${datasetKey}NetUnrealizedProfitAndLoss`
+                      `${datasetPrefix}net_unrealized_profit_and_loss`
                     ],
                   seriesType: SeriesType.Based,
                 },
@@ -568,24 +510,22 @@ export function createCohortPresetList<Scale extends ResourceScale>({
           description: "",
         },
         {
-          id: `${scale}-${id}-relative-net-unrealized-profit-and-loss`,
-          name: `Relative Net PNL`,
+          scale,
+          name: `Net PNL Relative To Market Cap`,
           title: `${title} Net Unrealized Profit And Loss Relative To Total Market Capitalization`,
           icon: () => IconTablerDivide,
           applyPreset(params) {
             return applyMultipleSeries({
-              scale,
               ...params,
               priceScaleOptions: {
                 halved: true,
               },
               list: [
                 {
-                  id: "relative-net-unrealized-profit-and-loss",
                   title: "Relative Net Unrealized PNL",
                   dataset:
                     params.datasets[scale][
-                      `${datasetKey}RelativeNetUnrealizedProfitAndLoss`
+                      `${datasetPrefix}net_unrealized_profit_and_loss_to_market_cap_ratio`
                     ],
                   seriesType: SeriesType.Based,
                 },
@@ -597,118 +537,104 @@ export function createCohortPresetList<Scale extends ResourceScale>({
       ],
     },
     {
-      id: `${scale}-${id}-supply-total`,
       name: "Supply",
       tree: [
         {
-          id: `${scale}-${id}-supply`,
-          name: "Total",
+          name: "Absolute",
           tree: [
             {
-              id: `${scale}-${id}-total-supply-absolute`,
-              name: `Absolute`,
+              scale,
+              name: "All",
+              title: `${title} Profit And Loss`,
+              icon: () => IconTablerArrowsCross,
+              description: "",
+              applyPreset(params) {
+                return applyMultipleSeries({
+                  ...params,
+                  priceScaleOptions: {
+                    halved: true,
+                  },
+                  list: [
+                    {
+                      title: "In Profit",
+                      color: colors.profit,
+                      dataset:
+                        params.datasets[scale][
+                          `${datasetPrefix}supply_in_profit`
+                        ],
+                    },
+                    {
+                      title: "In Loss",
+                      color: colors.loss,
+                      dataset:
+                        params.datasets[scale][
+                          `${datasetPrefix}supply_in_loss`
+                        ],
+                    },
+                    {
+                      title: "Total",
+                      color: colors.white,
+                      dataset: params.datasets[scale][`${datasetPrefix}supply`],
+                      options: {
+                        lastValueVisible: false,
+                      },
+                    },
+                    {
+                      title: "Halved Total",
+                      color: colors.gray,
+                      dataset:
+                        params.datasets[scale][`${datasetPrefix}halved_supply`],
+                      options: {
+                        lineStyle: LineStyle.SparseDotted,
+                        lastValueVisible: false,
+                      },
+                    },
+                  ],
+                });
+              },
+            },
+            {
+              scale,
+              name: `Total`,
               title: `${title} Total supply`,
               icon: () => IconTablerSum,
+              description: "",
               applyPreset(params) {
                 return applyMultipleSeries({
-                  scale,
                   ...params,
                   priceScaleOptions: {
                     halved: true,
                   },
                   list: [
                     {
-                      id: "supply-total",
-                      title: "Total supply",
+                      title: "Supply",
                       color,
                       seriesType: SeriesType.Area,
-                      dataset:
-                        params.datasets[scale][`${datasetKey}SupplyTotal`],
+                      dataset: params.datasets[scale][`${datasetPrefix}supply`],
                     },
                   ],
                 });
               },
-              description: "",
             },
             {
-              id: `${scale}-${id}-total-supply-percentage-all`,
-              name: `% All`,
-              title: `${title} Total supply (% All)`,
-              icon: () => IconTablerPercentage,
-              applyPreset(params) {
-                return applyMultipleSeries({
-                  scale,
-                  ...params,
-                  priceScaleOptions: {
-                    halved: true,
-                  },
-                  list: [
-                    {
-                      id: "supply-total",
-                      title: "Total supply",
-                      color,
-                      seriesType: SeriesType.Area,
-                      dataset:
-                        params.datasets[scale][`${datasetKey}SupplyTotal%All`],
-                    },
-                  ],
-                });
-              },
-              description: "",
-            },
-          ],
-        },
-        {
-          id: `${scale}-${id}-supply-in-profit`,
-          name: "In Profit",
-          tree: [
-            {
-              id: `${scale}-${id}-in-profit-absolute`,
-              name: "Absolute",
-              title: `${title} Supply in profit`,
+              scale,
+              name: "In Profit",
+              title: `${title} Supply In Profit`,
               icon: () => IconTablerTrendingUp,
               applyPreset(params) {
                 return applyMultipleSeries({
-                  scale,
                   ...params,
                   priceScaleOptions: {
                     halved: true,
                   },
                   list: [
                     {
-                      id: "supply-in-profit",
-                      title: "Supply in profit",
-                      color: colors.profit,
-                      seriesType: SeriesType.Area,
-                      dataset:
-                        params.datasets[scale][`${datasetKey}SupplyInProfit`],
-                    },
-                  ],
-                });
-              },
-              description: "",
-            },
-            {
-              id: `${scale}-${id}-in-profit-percentage-self`,
-              name: "% Self",
-              title: `${title} Supply in profit (% Self)`,
-              icon: () => IconTablerPercentage,
-              applyPreset(params) {
-                return applyMultipleSeries({
-                  scale,
-                  ...params,
-                  priceScaleOptions: {
-                    halved: true,
-                  },
-                  list: [
-                    {
-                      id: "supply-in-profit",
-                      title: "Supply in profit",
+                      title: "Supply",
                       color: colors.profit,
                       seriesType: SeriesType.Area,
                       dataset:
                         params.datasets[scale][
-                          `${datasetKey}SupplyInProfit%Self`
+                          `${datasetPrefix}supply_in_profit`
                         ],
                     },
                   ],
@@ -717,86 +643,111 @@ export function createCohortPresetList<Scale extends ResourceScale>({
               description: "",
             },
             {
-              id: `${scale}-${id}-in-profit-percentage-all`,
-              name: "% All",
-              title: `${title} Supply in profit (% All)`,
-              icon: () => IconTablerPercentage,
-              applyPreset(params) {
-                return applyMultipleSeries({
-                  scale,
-                  ...params,
-                  priceScaleOptions: {
-                    halved: true,
-                  },
-                  list: [
-                    {
-                      id: "supply-in-profit",
-                      title: "Supply in profit",
-                      color: colors.profit,
-                      seriesType: SeriesType.Area,
-                      dataset:
-                        params.datasets[scale][
-                          `${datasetKey}SupplyInProfit%All`
-                        ],
-                    },
-                  ],
-                });
-              },
-              description: "",
-            },
-          ],
-        },
-        {
-          id: `${scale}-${id}-supply-in-loss`,
-          name: "In Loss",
-          tree: [
-            {
-              id: `${scale}-${id}-in-loss`,
-              name: "Absolute",
-              title: `${title} Supply in loss`,
+              scale,
+              name: "In Loss",
+              title: `${title} Supply In Loss`,
               icon: () => IconTablerTrendingDown,
               applyPreset(params) {
                 return applyMultipleSeries({
-                  scale,
                   ...params,
                   priceScaleOptions: {
                     halved: true,
                   },
                   list: [
                     {
-                      id: "supply-in-loss",
-                      title: "Supply in loss",
+                      title: "Supply",
                       color: colors.loss,
                       seriesType: SeriesType.Area,
                       dataset:
-                        params.datasets[scale][`${datasetKey}SupplyInLoss`],
+                        params.datasets[scale][
+                          `${datasetPrefix}supply_in_loss`
+                        ],
                     },
                   ],
                 });
               },
               description: "",
             },
+          ],
+        },
+        {
+          name: "Relative To Circulating",
+          tree: [
             {
-              id: `${scale}-${id}-in-loss-percentage-self`,
-              name: "% Self",
-              title: `${title} Supply in loss (% Self)`,
-              icon: () => IconTablerPercentage,
+              scale,
+              name: "All",
+              title: `${title} Profit And Loss Relative To Circulating Supply`,
+              icon: () => IconTablerArrowsCross,
+              description: "",
               applyPreset(params) {
                 return applyMultipleSeries({
-                  scale,
                   ...params,
                   priceScaleOptions: {
                     halved: true,
                   },
                   list: [
                     {
-                      id: "supply-in-loss",
-                      title: "Supply in loss",
-                      seriesType: SeriesType.Area,
+                      title: "In Profit",
+                      color: colors.profit,
+                      dataset:
+                        params.datasets[scale][
+                          `${datasetPrefix}supply_in_profit_to_circulating_supply_ratio`
+                        ],
+                    },
+                    {
+                      title: "In Loss",
                       color: colors.loss,
                       dataset:
                         params.datasets[scale][
-                          `${datasetKey}SupplyInLoss%Self`
+                          `${datasetPrefix}supply_in_loss_to_circulating_supply_ratio`
+                        ],
+                    },
+                    {
+                      title: "100%",
+                      color: colors.white,
+                      dataset:
+                        params.datasets[scale][
+                          `${datasetPrefix}supply_to_circulating_supply_ratio`
+                        ],
+                      options: {
+                        lastValueVisible: false,
+                      },
+                    },
+                    {
+                      title: "50%",
+                      color: colors.gray,
+                      dataset:
+                        params.datasets[scale][
+                          `${datasetPrefix}halved_supply_to_circulating_supply_ratio`
+                        ],
+                      options: {
+                        lineStyle: LineStyle.SparseDotted,
+                        lastValueVisible: false,
+                      },
+                    },
+                  ],
+                });
+              },
+            },
+            {
+              scale,
+              name: `Total`,
+              title: `${title} Total supply Relative To Circulating Supply`,
+              icon: () => IconTablerSum,
+              applyPreset(params) {
+                return applyMultipleSeries({
+                  ...params,
+                  priceScaleOptions: {
+                    halved: true,
+                  },
+                  list: [
+                    {
+                      title: "Supply",
+                      color,
+                      seriesType: SeriesType.Area,
+                      dataset:
+                        params.datasets[scale][
+                          `${datasetPrefix}supply_to_circulating_supply_ratio`
                         ],
                     },
                   ],
@@ -805,25 +756,51 @@ export function createCohortPresetList<Scale extends ResourceScale>({
               description: "",
             },
             {
-              id: `${scale}-${id}-in-loss-percentage-all`,
-              name: "% All",
-              title: `${title} Supply in loss (% All)`,
-              icon: () => IconTablerPercentage,
+              scale,
+              name: "In Profit",
+              title: `${title} Supply In Profit Relative To Circulating Supply`,
+              icon: () => IconTablerTrendingUp,
               applyPreset(params) {
                 return applyMultipleSeries({
-                  scale,
                   ...params,
                   priceScaleOptions: {
                     halved: true,
                   },
                   list: [
                     {
-                      id: "supply-in-loss",
-                      title: "Supply in loss",
+                      title: "Supply",
+                      color: colors.profit,
+                      seriesType: SeriesType.Area,
+                      dataset:
+                        params.datasets[scale][
+                          `${datasetPrefix}supply_in_profit_to_circulating_supply_ratio`
+                        ],
+                    },
+                  ],
+                });
+              },
+              description: "",
+            },
+            {
+              scale,
+              name: "In Loss",
+              title: `${title} Supply In Loss Relative To Circulating Supply`,
+              icon: () => IconTablerTrendingDown,
+              applyPreset(params) {
+                return applyMultipleSeries({
+                  ...params,
+                  priceScaleOptions: {
+                    halved: true,
+                  },
+                  list: [
+                    {
+                      title: "Supply",
                       seriesType: SeriesType.Area,
                       color: colors.loss,
                       dataset:
-                        params.datasets[scale][`${datasetKey}SupplyInLoss%All`],
+                        params.datasets[scale][
+                          `${datasetPrefix}supply_in_loss_to_circulating_supply_ratio`
+                        ],
                     },
                   ],
                 });
@@ -833,339 +810,138 @@ export function createCohortPresetList<Scale extends ResourceScale>({
           ],
         },
         {
-          id: `${scale}-${id}-supply-in-profit-and-loss`,
-          name: "In PNL - Profit And Loss",
+          name: "Relative To Own",
           tree: [
             {
-              id: `${scale}-${id}-profit-and-loss-absolute`,
-              name: "Absolute",
-              tree: [
-                {
-                  id: `${scale}-${id}-profit-and-loss-absolute-crossed`,
-                  name: "Crossed",
-                  title: `${title} Profit And Loss (Crossed, Absolute)`,
-                  icon: () => IconTablerArrowsCross,
-                  applyPreset(params) {
-                    return applyMultipleSeries({
-                      scale,
-                      ...params,
-                      priceScaleOptions: {
-                        halved: true,
-                      },
-                      list: [
-                        {
-                          id: "supply-total",
-                          title: "Total supply",
-                          color: colors.white,
-                          dataset:
-                            params.datasets[scale][`${datasetKey}SupplyTotal`],
-                          options: {
-                            lastValueVisible: false,
-                          },
-                        },
-                        {
-                          id: "supply-total-halved",
-                          title: "Halved Total Supply",
-                          color: colors.gray,
-                          dataset:
-                            params.datasets[scale][
-                              `${datasetKey}SupplyTotal50Percent`
-                            ],
-                          options: {
-                            lineStyle: LineStyle.SparseDotted,
-                            lastValueVisible: false,
-                          },
-                        },
-                        {
-                          id: "supply-in-profit",
-                          title: "Supply in profit",
-                          color: colors.profit,
-                          dataset:
-                            params.datasets[scale][
-                              `${datasetKey}SupplyInProfit`
-                            ],
-                        },
-                        {
-                          id: "supply-in-loss",
-                          title: "Supply in loss",
-                          color: colors.loss,
-                          dataset:
-                            params.datasets[scale][`${datasetKey}SupplyInLoss`],
-                        },
-                      ],
-                    });
+              scale,
+              name: "All",
+              title: `${title} Supply In Profit And Loss Relative To Own Supply`,
+              icon: () => IconTablerArrowsCross,
+              applyPreset(params) {
+                return applyMultipleSeries({
+                  ...params,
+                  priceScaleOptions: {
+                    halved: true,
                   },
-                  description: "",
-                },
-                {
-                  id: `${scale}-${id}-stacked-profit-and-loss-absolute-stacked`,
-                  name: "Stacked",
-                  title: `${title} Profit And Loss (Stacked, Absolute)`,
-                  icon: () => IconTablerStack,
-                  applyPreset(params) {
-                    return applyMultipleSeries({
-                      scale,
-                      ...params,
-                      priceScaleOptions: {
-                        halved: true,
+                  list: [
+                    {
+                      title: "In profit",
+                      dataset:
+                        params.datasets[scale][
+                          `${datasetPrefix}supply_in_profit_to_own_supply_ratio`
+                        ],
+                      color: colors.profit,
+                    },
+                    {
+                      title: "In loss",
+                      color: colors.loss,
+                      dataset:
+                        params.datasets[scale][
+                          `${datasetPrefix}supply_in_loss_to_own_supply_ratio`
+                        ],
+                    },
+                    {
+                      title: "100%",
+                      color: colors.white,
+                      dataset: params.datasets[scale][100],
+                      options: {
+                        lastValueVisible: false,
                       },
-                      list: [
-                        {
-                          id: "supply-total-halved",
-                          title: "Halved Total Supply",
-                          color: colors.gray,
-                          dataset:
-                            params.datasets[scale][
-                              `${datasetKey}SupplyTotal50Percent`
-                            ],
-                          options: {
-                            lineStyle: LineStyle.SparseDotted,
-                          },
-                        },
-                        {
-                          id: "supply-in-loss",
-                          title: "Supply in loss",
-                          color: colors.loss,
-                          seriesType: SeriesType.Stacked,
-                          dataset:
-                            params.datasets[scale][`${datasetKey}SupplyInLoss`],
-                        },
-                        {
-                          id: "supply-in-profit",
-                          title: "Supply in profit",
-                          seriesType: SeriesType.Stacked,
-                          color: colors.profit,
-                          dataset:
-                            params.datasets[scale][
-                              `${datasetKey}SupplyInProfit`
-                            ],
-                        },
-                      ],
-                    });
-                  },
-                  description: "",
-                },
-              ],
+                    },
+                    {
+                      title: "50%",
+                      color: colors.gray,
+                      dataset: params.datasets[scale][50],
+                      options: {
+                        lineStyle: LineStyle.SparseDotted,
+                        lastValueVisible: false,
+                      },
+                    },
+                  ],
+                });
+              },
+              description: "",
             },
             {
-              id: `${scale}-${id}-supply-in-profit-and-loss-percentage-all`,
-              name: "% All",
-              tree: [
-                {
-                  id: `${scale}-${id}-profit-and-loss-percentage-all-crossed`,
-                  name: "Crossed",
-                  title: `${title} Profit And Loss (% All) Crossed`,
-                  icon: () => IconTablerArrowsCross,
-                  applyPreset(params) {
-                    return applyMultipleSeries({
-                      scale,
-                      ...params,
-                      priceScaleOptions: {
-                        halved: true,
-                      },
-                      list: [
-                        {
-                          id: "supply-in-profit",
-                          title: "Supply in profit",
-                          color: colors.profit,
-                          dataset:
-                            params.datasets[scale][
-                              `${datasetKey}SupplyInProfit%All`
-                            ],
-                        },
-                        {
-                          id: "supply-in-loss",
-                          title: "Supply in loss",
-                          color: colors.loss,
-                          dataset:
-                            params.datasets[scale][
-                              `${datasetKey}SupplyInLoss%All`
-                            ],
-                        },
-                      ],
-                    });
+              scale,
+              name: "In Profit",
+              title: `${title} Supply In Profit Relative To Own Supply`,
+              icon: () => IconTablerTrendingUp,
+              applyPreset(params) {
+                return applyMultipleSeries({
+                  ...params,
+                  priceScaleOptions: {
+                    halved: true,
                   },
-                  description: "",
-                },
-                {
-                  id: `${scale}-${id}-profit-and-loss-percentage-all-stacked`,
-                  name: "Stacked",
-                  title: `${title} Profit And Loss (% All) Stacked`,
-                  icon: () => IconTablerStack,
-                  applyPreset(params) {
-                    return applyMultipleSeries({
-                      scale,
-                      ...params,
-                      priceScaleOptions: {
-                        halved: true,
-                      },
-                      list: [
-                        {
-                          id: "supply-in-profit",
-                          title: "Supply in profit",
-                          color: colors.profit,
-                          seriesType: SeriesType.Stacked,
-                          dataset:
-                            params.datasets[scale][
-                              `${datasetKey}SupplyInProfit%All`
-                            ],
-                        },
-                        {
-                          id: "supply-in-loss",
-                          title: "Supply in loss",
-                          color: colors.loss,
-                          seriesType: SeriesType.Stacked,
-                          dataset:
-                            params.datasets[scale][
-                              `${datasetKey}SupplyInLoss%All`
-                            ],
-                        },
-                      ],
-                    });
-                  },
-                  description: "",
-                },
-              ],
+                  list: [
+                    {
+                      title: "Supply",
+                      color: colors.profit,
+                      seriesType: SeriesType.Area,
+                      dataset:
+                        params.datasets[scale][
+                          `${datasetPrefix}supply_in_profit_to_own_supply_ratio`
+                        ],
+                    },
+                  ],
+                });
+              },
+              description: "",
             },
             {
-              id: `${scale}-${id}-supply-in-profit-and-loss-percentage-self`,
-              name: "% Self",
-              tree: [
-                {
-                  id: `${scale}-${id}-supply-in-profit-and-loss-percentage-self-crossed`,
-                  name: "Crossed",
-                  title: `${title} Supply In Profit And Loss (% Self) Crossed`,
-                  icon: () => IconTablerArrowsCross,
-                  applyPreset(params) {
-                    return applyMultipleSeries({
-                      scale,
-                      ...params,
-                      priceScaleOptions: {
-                        halved: true,
-                      },
-                      list: [
-                        {
-                          title: "50%",
-                          id: "50p",
-                          color: colors.gray,
-                          dataset: params.datasets[scale].value50,
-                          options: {
-                            lineStyle: LineStyle.SparseDotted,
-                            lastValueVisible: false,
-                          },
-                        },
-                        {
-                          id: "100p",
-                          title: "100%",
-                          color: colors.white,
-                          dataset: params.datasets[scale].value100,
-                          options: {
-                            lastValueVisible: false,
-                          },
-                        },
-                        {
-                          id: "supply-in-profit",
-                          title: "Supply in profit",
-                          dataset:
-                            params.datasets[scale][
-                              `${datasetKey}SupplyInProfit%Self`
-                            ],
-                          color: colors.profit,
-                        },
-                        {
-                          id: "supply-in-loss",
-                          title: "Supply in loss",
-                          color: colors.loss,
-                          dataset:
-                            params.datasets[scale][
-                              `${datasetKey}SupplyInLoss%Self`
-                            ],
-                        },
-                      ],
-                    });
+              scale,
+              name: "In Loss",
+              title: `${title} Supply In Loss Relative To Own Supply`,
+              icon: () => IconTablerTrendingDown,
+              applyPreset(params) {
+                return applyMultipleSeries({
+                  ...params,
+                  priceScaleOptions: {
+                    halved: true,
                   },
-                  description: "",
-                },
-                {
-                  id: `${scale}-${id}-supply-in-profit-and-loss-percentage-self-stacked`,
-                  name: "Stacked",
-                  title: `${title} Supply In Profit And Loss (% Self) Stacked`,
-                  icon: () => IconTablerStack,
-                  applyPreset(params) {
-                    return applyMultipleSeries({
-                      scale,
-                      ...params,
-                      priceScaleOptions: {
-                        halved: true,
-                      },
-                      list: [
-                        {
-                          id: "50p",
-                          title: "50%",
-                          color: colors.gray,
-                          dataset: params.datasets[scale].value50,
-                          options: {
-                            lineStyle: LineStyle.SparseDotted,
-                            lastValueVisible: false,
-                          },
-                        },
-                        {
-                          id: "supply-in-profit",
-                          title: "Supply in profit",
-                          color: colors.profit,
-                          seriesType: SeriesType.Stacked,
-                          dataset:
-                            params.datasets[scale][
-                              `${datasetKey}SupplyInProfit%Self`
-                            ],
-                        },
-                        {
-                          id: "supply-in-loss",
-                          title: "Supply in loss",
-                          color: colors.loss,
-                          seriesType: SeriesType.Stacked,
-                          dataset:
-                            params.datasets[scale][
-                              `${datasetKey}SupplyInLoss%Self`
-                            ],
-                        },
-                      ],
-                    });
-                  },
-                  description: "",
-                },
-                createMomentumPresetFolder({
-                  datasets: datasets[scale],
-                  scale,
-                  id: `${scale}-${id}-supply-in-profit-and-loss-percentage-self`,
-                  title: `${title} Supply In Profit And Loss (% Self)`,
-                  datasetKey: `${datasetKey}SupplyPNL%Self`,
-                }),
-              ],
+                  list: [
+                    {
+                      title: "Supply",
+                      seriesType: SeriesType.Area,
+                      color: colors.loss,
+                      dataset:
+                        params.datasets[scale][
+                          `${datasetPrefix}supply_in_loss_to_own_supply_ratio`
+                        ],
+                    },
+                  ],
+                });
+              },
+              description: "",
             },
           ],
         },
+        // createMomentumPresetFolder({
+        //   datasets: datasets[scale],
+        //   scale,
+        //   id: `${scale}-${id}-supply-in-profit-and-loss-percentage-self`,
+        //   title: `${title} Supply In Profit And Loss (% Self)`,
+        //   datasetKey: `${datasetKey}SupplyPNL%Self`,
+        // }),
       ],
     },
     {
-      id: `${scale}-${id}-price-paid`,
       name: "Prices Paid",
       tree: [
         {
-          id: `${scale}-${id}-mean-price-paid`,
-          name: `Mean`,
-          title: `${title} Mean Price Paid`,
+          scale,
+          name: `Average`,
+          title: `${title} Average Price Paid - Realized Price`,
           icon: () => IconTablerMathAvg,
           applyPreset(params) {
             return applyMultipleSeries({
-              scale,
               ...params,
               list: [
                 {
-                  id: "mean",
-                  title: "Mean",
+                  title: "Average",
                   color,
-                  dataset: params.datasets[scale][`${datasetKey}PricePaidMean`],
+                  dataset:
+                    params.datasets[scale][`${datasetPrefix}realized_price`],
                 },
               ],
             });
@@ -1173,19 +949,17 @@ export function createCohortPresetList<Scale extends ResourceScale>({
           description: "",
         },
         {
-          id: `${scale}-${id}-price-paid-deciles`,
+          scale,
           name: `Deciles`,
           title: `${title} deciles`,
           icon: () => IconTablerSquareHalf,
           applyPreset(params) {
             return applyMultipleSeries({
-              scale,
               ...params,
               list: percentiles
                 .filter(({ value }) => Number(value) % 10 === 0)
-                .map(({ name, route, key }) => ({
-                  id: route.replaceAll("_", "-"),
-                  dataset: params.datasets[scale][`${datasetKey}${key}`],
+                .map(({ name, key }) => ({
+                  dataset: params.datasets[scale][`${datasetPrefix}${key}`],
                   color,
                   title: name,
                 })),
@@ -1194,21 +968,22 @@ export function createCohortPresetList<Scale extends ResourceScale>({
           description: "",
         },
         ...percentiles.map(
-          ({ name, route, key, title }): PartialPreset => ({
-            id: `${scale}-${id}-${route.replaceAll("_", "-")}`,
-            name,
-            title: `${title} ${title}`,
+          (percentile): PartialPreset => ({
+            scale,
+            name: percentile.name,
+            title: `${title} ${percentile.title}`,
             icon: () => IconTablerSquareHalf,
             applyPreset(params) {
               return applyMultipleSeries({
-                scale,
                 ...params,
                 list: [
                   {
-                    id: route.replaceAll("_", "-"),
-                    title: name,
+                    title: percentile.name,
                     color,
-                    dataset: params.datasets[scale][`${datasetKey}${key}`],
+                    dataset:
+                      params.datasets[scale][
+                        `${datasetPrefix}${percentile.key}`
+                      ],
                   },
                 ],
               });

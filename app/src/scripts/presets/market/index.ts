@@ -1,9 +1,8 @@
 import { PriceScaleMode } from "lightweight-charts";
 
-import { applyMultipleSeries, colors } from "/src/scripts";
-
+import { colors } from "../../utils/colors";
+import { applyMultipleSeries } from "../templates/multiple";
 import { createPresets as createAveragesPresets } from "./averages";
-import description from "./description.md?raw";
 import { createPresets as createIndicatorsPresets } from "./indicators";
 import { createPresets as createReturnsPresets } from "./returns";
 
@@ -25,7 +24,7 @@ export function createPresets({
         applyPreset(params) {
           return applyMultipleSeries({ ...params });
         },
-        description,
+        description: "",
       },
       {
         scale,
@@ -44,7 +43,7 @@ export function createPresets({
             },
           });
         },
-        description,
+        description: "",
       },
       {
         scale,
@@ -66,11 +65,15 @@ export function createPresets({
             ],
           });
         },
-        description,
+        description: "",
       },
-      createAveragesPresets(datasets),
-      createReturnsPresets(datasets),
-      createIndicatorsPresets(datasets),
+      ...(scale === "date"
+        ? ([
+            createAveragesPresets(datasets),
+            createReturnsPresets(datasets),
+            createIndicatorsPresets(datasets),
+          ] satisfies PartialPresetTree)
+        : []),
     ],
   } satisfies PartialPresetFolder;
 }

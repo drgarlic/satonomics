@@ -1,5 +1,5 @@
 use crate::{
-    structs::{AnyBiMap, BiMap, DateMap, HeightMap},
+    structs::{AnyBiMap, BiMap, DateMap},
     utils::{ONE_DAY_IN_DAYS, ONE_YEAR_IN_DAYS, THREE_MONTHS_IN_DAYS, TWO_WEEK_IN_DAYS},
 };
 
@@ -157,8 +157,7 @@ impl CointimeDataset {
         &ComputeData { heights, dates }: &ComputeData,
         first_height: &mut DateMap<usize>,
         last_height: &mut DateMap<usize>,
-        date_closes: &mut DateMap<f32>,
-        height_closes: &mut HeightMap<f32>,
+        closes: &mut BiMap<f32>,
         circulating_supply: &mut BiMap<f64>,
         realized_cap: &mut BiMap<f32>,
         realized_price: &mut BiMap<f32>,
@@ -349,12 +348,12 @@ impl CointimeDataset {
         self.active_cap.height.multi_insert_multiply(
             heights,
             &mut self.active_supply.height,
-            height_closes,
+            &mut closes.height,
         );
         self.active_cap.date.multi_insert_multiply(
             dates,
             &mut self.active_supply.date,
-            date_closes,
+            &mut closes.date,
         );
 
         self.vaulted_price.multi_insert_divide(
@@ -367,13 +366,13 @@ impl CointimeDataset {
         self.vaulted_cap.height.multi_insert_multiply(
             heights,
             &mut self.vaulted_supply.height,
-            height_closes,
+            &mut closes.height,
         );
 
         self.vaulted_cap.date.multi_insert_multiply(
             dates,
             &mut self.vaulted_supply.date,
-            date_closes,
+            &mut closes.date,
         );
 
         self.true_market_mean.multi_insert_divide(
@@ -421,34 +420,34 @@ impl CointimeDataset {
         self.cointime_value_destroyed.height.multi_insert_multiply(
             heights,
             &mut self.coinblocks_destroyed.height,
-            height_closes,
+            &mut closes.height,
         );
         self.cointime_value_destroyed.date.multi_insert_multiply(
             dates,
             &mut self.coinblocks_destroyed.date,
-            date_closes,
+            &mut closes.date,
         );
 
         self.cointime_value_created.height.multi_insert_multiply(
             heights,
             &mut self.coinblocks_created.height,
-            height_closes,
+            &mut closes.height,
         );
         self.cointime_value_created.date.multi_insert_multiply(
             dates,
             &mut self.coinblocks_created.date,
-            date_closes,
+            &mut closes.date,
         );
 
         self.cointime_value_stored.height.multi_insert_multiply(
             heights,
             &mut self.coinblocks_stored.height,
-            height_closes,
+            &mut closes.height,
         );
         self.cointime_value_stored.date.multi_insert_multiply(
             dates,
             &mut self.coinblocks_stored.date,
-            date_closes,
+            &mut closes.date,
         );
 
         self.total_cointime_value_created.multi_insert_cumulative(

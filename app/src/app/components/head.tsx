@@ -1,7 +1,8 @@
 import { Meta, Title } from "@solidjs/meta";
 
 import packageJSON from "/src/../package.json";
-import { priceToUSLocale, run } from "/src/scripts";
+import { priceToUSLocale } from "/src/scripts/utils/locale";
+import { run } from "/src/scripts/utils/run";
 
 export function Head({
   last,

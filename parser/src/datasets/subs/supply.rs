@@ -1,7 +1,7 @@
 use crate::{
     datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
     states::SupplyState,
-    structs::{AnyBiMap, BiMap, DateMap, HeightMap},
+    structs::{AnyBiMap, BiMap},
 };
 
 #[derive(Default)]
@@ -9,7 +9,12 @@ pub struct SupplySubDataset {
     min_initial_states: MinInitialStates,
 
     // Inserted
-    pub total: BiMap<f64>,
+    pub supply: BiMap<f64>,
+
+    // Computed
+    pub supply_to_circulating_supply_ratio: BiMap<f64>,
+    pub halved_supply: BiMap<f64>,
+    pub halved_supply_to_circulating_supply_ratio: BiMap<f64>,
 }
 
 impl SupplySubDataset {
@@ -19,8 +24,16 @@ impl SupplySubDataset {
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
-            total: BiMap::_new_bin(1, &f("supply"), usize::MAX),
-            // market_cap: BiMap::_new_bin(1, &f("market_cap"), usize::MAX),
+            supply: BiMap::new_bin(1, &f("supply")),
+            supply_to_circulating_supply_ratio: BiMap::new_bin(
+                1,
+                &f("supply_to_circulating_supply_ratio"),
+            ),
+            halved_supply: BiMap::new_bin(1, &f("halved_supply")),
+            halved_supply_to_circulating_supply_ratio: BiMap::new_bin(
+                1,
+                &f("halved_supply_to_circulating_supply_ratio"),
+            ),
         };
 
         s.min_initial_states
@@ -39,10 +52,10 @@ impl SupplySubDataset {
         }: &InsertData,
         state: &SupplyState,
     ) {
-        let total_supply = self.total.height.insert(height, state.supply.to_btc());
+        let total_supply = self.supply.height.insert(height, state.supply.to_btc());
 
         if is_date_last_block {
-            self.total.date.insert(date, total_supply);
+            self.supply.date.insert(date, total_supply);
         }
     }
 
@@ -50,17 +63,21 @@ impl SupplySubDataset {
     pub fn compute(
         &mut self,
         &ComputeData { heights, dates }: &ComputeData,
-        date_closes: &mut DateMap<f32>,
-        height_closes: &mut HeightMap<f32>,
+        circulating_supply: &mut BiMap<f64>,
     ) {
-        // self.market_cap.height.multi_insert_multiply(
-        //     heights,
-        //     &mut self.total.height,
-        //     height_closes,
-        // );
-        // self.market_cap
-        //     .date
-        //     .multi_insert_multiply(dates, &mut self.total.date, date_closes);
+        self.supply_to_circulating_supply_ratio
+            .multi_insert_percentage(heights, dates, &mut self.supply, circulating_supply);
+
+        self.halved_supply
+            .multi_insert_simple_transform(heights, dates, &mut self.supply, &|v| v / 2.0);
+
+        self.halved_supply_to_circulating_supply_ratio
+            .multi_insert_simple_transform(
+                heights,
+                dates,
+                &mut self.supply_to_circulating_supply_ratio,
+                &|v| v / 2.0,
+            );
     }
 }
 
@@ -70,22 +87,26 @@ impl AnyDataset for SupplySubDataset {
     }
 
     fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![&self.total]
+        vec![&self.supply]
     }
 
     fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![&mut self.total]
+        vec![&mut self.supply]
     }
 
     fn to_computed_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
         vec![
-            // &self.market_cap
+            &self.supply_to_circulating_supply_ratio,
+            &self.halved_supply,
+            &self.halved_supply_to_circulating_supply_ratio,
         ]
     }
 
     fn to_computed_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
         vec![
-            // &mut self.market_cap
+            &mut self.supply_to_circulating_supply_ratio,
+            &mut self.halved_supply,
+            &mut self.halved_supply_to_circulating_supply_ratio,
         ]
     }
 }

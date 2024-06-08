@@ -1,16 +1,15 @@
 import { LineStyle } from "lightweight-charts";
 
+import { applyPriceSeries } from "../../lightweightCharts/chart/price";
+import { createAreaSeries } from "../../lightweightCharts/series/creators/area";
 import {
-  applyPriceSeries,
-  createAreaSeries,
   createBaseLineSeries,
-  createHistogramSeries,
-  createLineSeries,
-  createSeriesLegend,
   DEFAULT_BASELINE_COLORS,
-  resetRightPriceScale,
-} from "/src/scripts";
-
+} from "../../lightweightCharts/series/creators/baseLine";
+import { createHistogramSeries } from "../../lightweightCharts/series/creators/histogram";
+import { createSeriesLegend } from "../../lightweightCharts/series/creators/legend";
+import { createLineSeries } from "../../lightweightCharts/series/creators/line";
+import { resetRightPriceScale } from "../../lightweightCharts/series/options/priceScale";
 import { stringToId } from "../../utils/id";
 
 export enum SeriesType {
@@ -115,7 +114,7 @@ export function applyMultipleSeries<Scale extends ResourceScale>({
     },
   });
 
-  const legend: PresetLegend = [];
+  const legendList: PresetLegend = [priceLegend];
 
   // const isAnyBased = list.find(
   //   (config) => config.seriesType === SeriesType.Based,
@@ -229,7 +228,7 @@ export function applyMultipleSeries<Scale extends ResourceScale>({
           });
         }
 
-        legend.splice(
+        legendList.splice(
           0,
           0,
           createSeriesLegend({
@@ -261,5 +260,5 @@ export function applyMultipleSeries<Scale extends ResourceScale>({
     chart.priceScale("right").applyOptions(options);
   });
 
-  return [priceLegend, ...legend];
+  return legendList;
 }

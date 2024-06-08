@@ -1,6 +1,7 @@
 import { LineStyle } from "lightweight-charts";
 
-import { applyMultipleSeries, colors, SeriesType } from "/src/scripts";
+import { colors } from "../../utils/colors";
+import { applyMultipleSeries, SeriesType } from "../templates/multiple";
 
 export function createPresets() {
   const scale: ResourceScale = "date";
@@ -50,7 +51,7 @@ export function createPresets() {
                   {
                     title: "Target",
                     color: colors.white,
-                    dataset: params.datasets.date.blocks_mined_target,
+                    dataset: params.datasets.date.blocks_mined_1d_target,
                     options: {
                       lineStyle: LineStyle.LargeDashed,
                     },
@@ -77,7 +78,7 @@ export function createPresets() {
           },
           {
             scale,
-            icon: IconTablerCubeUnfolded,
+            icon: IconTablerLetterW,
             name: "Weekly Sum",
             title: "Weekly Sum Of Blocks Mined",
             description: "",
@@ -107,7 +108,7 @@ export function createPresets() {
           },
           {
             scale,
-            icon: IconTablerCubeUnfolded,
+            icon: IconTablerLetterM,
             name: "Monthly Sum",
             title: "Monthly Sum Of Blocks Mined",
             description: "",
@@ -137,7 +138,7 @@ export function createPresets() {
           },
           {
             scale,
-            icon: IconTablerCubeUnfolded,
+            icon: IconTablerLetterY,
             name: "Yearly Sum",
             title: "Yearly Sum Of Blocks Mined",
             description: "",

@@ -5,7 +5,7 @@ use crate::{
         AnyDataset, AnyDatasetGroup, ComputeData, InsertData, MinInitialStates, SubDataset,
     },
     states::{AddressCohortDurableStates, AddressCohortId},
-    structs::{AddressSplit, AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, DateMap, HeightMap},
+    structs::{AddressSplit, AnyBiMap, AnyDateMap, AnyHeightMap, BiMap},
 };
 
 use super::cohort_metadata::MetadataDataset;
@@ -414,42 +414,54 @@ impl CohortDataset {
     fn compute_supply_data(
         &mut self,
         compute_data: &ComputeData,
-        date_closes: &mut DateMap<f32>,
-        height_closes: &mut HeightMap<f32>,
+        circulating_supply: &mut BiMap<f64>,
     ) {
-        self.all
-            .supply
-            .compute(compute_data, date_closes, height_closes);
+        self.all.supply.compute(compute_data, circulating_supply);
 
         self.illiquid
             .supply
-            .compute(compute_data, date_closes, height_closes);
+            .compute(compute_data, circulating_supply);
 
-        self.liquid
-            .supply
-            .compute(compute_data, date_closes, height_closes);
+        self.liquid.supply.compute(compute_data, circulating_supply);
 
         self.highly_liquid
             .supply
-            .compute(compute_data, date_closes, height_closes);
+            .compute(compute_data, circulating_supply);
     }
 
-    fn compute_unrealized_data(&mut self, compute_data: &ComputeData) {
-        self.all
-            .unrealized
-            .compute(compute_data, &mut self.all.supply.total);
+    fn compute_unrealized_data(
+        &mut self,
+        compute_data: &ComputeData,
+        circulating_supply: &mut BiMap<f64>,
+        market_cap: &mut BiMap<f32>,
+    ) {
+        self.all.unrealized.compute(
+            compute_data,
+            &mut self.all.supply.supply,
+            circulating_supply,
+            market_cap,
+        );
 
-        self.illiquid
-            .unrealized
-            .compute(compute_data, &mut self.illiquid.supply.total);
+        self.illiquid.unrealized.compute(
+            compute_data,
+            &mut self.illiquid.supply.supply,
+            circulating_supply,
+            market_cap,
+        );
 
-        self.liquid
-            .unrealized
-            .compute(compute_data, &mut self.liquid.supply.total);
+        self.liquid.unrealized.compute(
+            compute_data,
+            &mut self.liquid.supply.supply,
+            circulating_supply,
+            market_cap,
+        );
 
-        self.highly_liquid
-            .unrealized
-            .compute(compute_data, &mut self.highly_liquid.supply.total);
+        self.highly_liquid.unrealized.compute(
+            compute_data,
+            &mut self.highly_liquid.supply.supply,
+            circulating_supply,
+            market_cap,
+        );
     }
 
     fn compute_realized_data(&mut self, compute_data: &ComputeData, market_cap: &mut BiMap<f32>) {
@@ -464,38 +476,23 @@ impl CohortDataset {
             .compute(compute_data, market_cap);
     }
 
-    fn compute_price_paid_data(
-        &mut self,
-        compute_data: &ComputeData,
-        date_closes: &mut DateMap<f32>,
-        height_closes: &mut HeightMap<f32>,
-    ) {
-        self.all.price_paid.compute(
-            compute_data,
-            date_closes,
-            height_closes,
-            &mut self.all.supply.total,
-        );
+    fn compute_price_paid_data(&mut self, compute_data: &ComputeData, closes: &mut BiMap<f32>) {
+        self.all
+            .price_paid
+            .compute(compute_data, closes, &mut self.all.supply.supply);
 
-        self.illiquid.price_paid.compute(
-            compute_data,
-            date_closes,
-            height_closes,
-            &mut self.illiquid.supply.total,
-        );
+        self.illiquid
+            .price_paid
+            .compute(compute_data, closes, &mut self.illiquid.supply.supply);
 
-        self.liquid.price_paid.compute(
-            compute_data,
-            date_closes,
-            height_closes,
-            &mut self.liquid.supply.total,
-        );
+        self.liquid
+            .price_paid
+            .compute(compute_data, closes, &mut self.liquid.supply.supply);
 
         self.highly_liquid.price_paid.compute(
             compute_data,
-            date_closes,
-            height_closes,
-            &mut self.highly_liquid.supply.total,
+            closes,
+            &mut self.highly_liquid.supply.supply,
         );
     }
 
@@ -520,16 +517,16 @@ impl CohortDataset {
     pub fn compute(
         &mut self,
         compute_data: &ComputeData,
-        date_closes: &mut DateMap<f32>,
-        height_closes: &mut HeightMap<f32>,
+        closes: &mut BiMap<f32>,
+        circulating_supply: &mut BiMap<f64>,
         market_cap: &mut BiMap<f32>,
     ) {
         if self.should_compute_supply(compute_data) {
-            self.compute_supply_data(compute_data, date_closes, height_closes);
+            self.compute_supply_data(compute_data, circulating_supply);
         }
 
         if self.should_compute_unrealized(compute_data) {
-            self.compute_unrealized_data(compute_data);
+            self.compute_unrealized_data(compute_data, circulating_supply, market_cap);
         }
 
         if self.should_compute_realized(compute_data) {
@@ -538,7 +535,7 @@ impl CohortDataset {
 
         // MUST BE after compute_supply
         if self.should_compute_price_paid(compute_data) {
-            self.compute_price_paid_data(compute_data, date_closes, height_closes);
+            self.compute_price_paid_data(compute_data, closes);
         }
 
         // if self.should_compute_output(compute_data) {

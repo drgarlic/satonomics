@@ -92,15 +92,13 @@ pub fn parse(
 
     let block_price = datasets
         .price
-        .height
-        .get(height, timestamp, previous_timestamp)
+        .get_height_ohlc(height, timestamp, previous_timestamp)
         .unwrap_or_else(|_| panic!("Expect {height} to have a price"))
         .close;
 
     let date_price = datasets
         .price
-        .date
-        .get(date)
+        .get_date_ohlc(date)
         .unwrap_or_else(|_| panic!("Expect {date} to have a price"))
         .close;
 

@@ -417,7 +417,7 @@ where
         });
     }
 
-    pub fn multi_last_insert(
+    pub fn multi_insert_last(
         &mut self,
         dates: &[NaiveDate],
         source: &mut HeightMap<T>,
@@ -433,11 +433,11 @@ where
         });
     }
 
-    pub fn multi_static_insert(&mut self, dates: &[NaiveDate], static_value: T) {
+    pub fn multi_insert_const(&mut self, dates: &[NaiveDate], constant: T) {
         dates.iter().for_each(|date| {
             let date = *date;
 
-            self.insert(date, static_value);
+            self.insert(date, constant);
         });
     }
 

@@ -1,11 +1,7 @@
 import { PriceScaleMode } from "lightweight-charts";
 
-import {
-  applyMultipleSeries,
-  colors,
-  createRatioPresetFolder,
-  SeriesType,
-} from "/src/scripts";
+import { colors } from "../../utils/colors";
+import { applyMultipleSeries, SeriesType } from "../templates/multiple";
 
 export function createPresets<Scale extends ResourceScale>({
   scale,
@@ -83,14 +79,6 @@ export function createPresets<Scale extends ResourceScale>({
                   });
                 },
               },
-              // createRatioPresetFolder({
-              //   datasets,
-              //   scale,
-              //   color: colors.liveliness,
-              //   id: "active-price",
-              //   datasetKey: "activePrice",
-              //   title: "Active Price",
-              // }),
             ],
           },
           {
@@ -115,14 +103,6 @@ export function createPresets<Scale extends ResourceScale>({
                   });
                 },
               },
-              // createRatioPresetFolder({
-              //   datasets,
-              //   scale,
-              //   color: colors.vaultedness,
-              //   id: "vaulted-price",
-              //   datasetKey: "vaultedPrice",
-              //   title: "Vaulted Price",
-              // }),
             ],
           },
           {
@@ -147,14 +127,6 @@ export function createPresets<Scale extends ResourceScale>({
                   });
                 },
               },
-              // createRatioPresetFolder({
-              //   datasets,
-              //   scale,
-              //   color: colors.trueMarketMeanPrice,
-              //   id: "true-market-mean",
-              //   datasetKey: "trueMarketMean",
-              //   title: "True Market Mean",
-              // }),
             ],
           },
           {
@@ -179,14 +151,6 @@ export function createPresets<Scale extends ResourceScale>({
                   });
                 },
               },
-              // createRatioPresetFolder({
-              //   datasets,
-              //   scale,
-              //   color: colors.trueMarketMeanPrice,
-              //   id: "true-market-mean",
-              //   datasetKey: "trueMarketMean",
-              //   title: "True Market Mean",
-              // }),
             ],
           },
         ],
@@ -559,7 +523,7 @@ export function createPresets<Scale extends ResourceScale>({
           {
             scale,
             icon: IconTablerArrowsCross,
-            name: "Crossed",
+            name: "Versus",
             title: "Liveliness V. Vaultedness",
             description: "",
             applyPreset(params) {

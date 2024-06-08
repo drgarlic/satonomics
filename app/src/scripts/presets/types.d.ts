@@ -37,6 +37,7 @@ interface PartialPresetFolder {
 
 interface PresetFolder extends PartialPresetFolder {
   id: string;
+  tree: PresetTree;
 }
 
 type PartialPresetTree = (PartialPreset | PartialPresetFolder)[];

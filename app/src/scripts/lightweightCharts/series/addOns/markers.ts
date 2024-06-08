@@ -1,10 +1,9 @@
-import {
-  chartState,
-  colors,
-  GENESIS_DAY,
-  ONE_DAY_IN_MS,
-  priceToUSLocale,
-} from "/src/scripts";
+import { colors } from "/src/scripts/utils/colors";
+import { priceToUSLocale } from "/src/scripts/utils/locale";
+import { ONE_DAY_IN_MS } from "/src/scripts/utils/time";
+
+import { chartState } from "../../chart/state";
+import { GENESIS_DAY } from "../../chart/whitespace";
 
 export const setMinMaxMarkers = ({
   scale,

@@ -7,6 +7,10 @@ if [ "$(uname)" == "Darwin" ]; then
     echo "Increasing limit of opened files..."
     ulimit -n 10000000
 
+    # Needed because the datasets tree is too big lol
+    echo "Increasing stack size..."
+    ulimit -s 52800
+
     if mdutil -s / | grep "enabled"; then
         echo "Disabling spotlight indexing..."
         sudo mdutil -a -i off &> /dev/null

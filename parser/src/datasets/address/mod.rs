@@ -5,10 +5,7 @@ mod cohort_metadata;
 use itertools::Itertools;
 use rayon::prelude::*;
 
-use crate::{
-    states::SplitByAddressCohort,
-    structs::{BiMap, DateMap, HeightMap},
-};
+use crate::{states::SplitByAddressCohort, structs::BiMap};
 
 use self::{all_metadata::AllAddressesMetadataDataset, cohort::CohortDataset};
 
@@ -63,8 +60,8 @@ impl AddressDatasets {
     pub fn compute(
         &mut self,
         compute_data: &ComputeData,
-        date_closes: &mut DateMap<f32>,
-        height_closes: &mut HeightMap<f32>,
+        closes: &mut BiMap<f32>,
+        circulating_supply: &mut BiMap<f64>,
         market_cap: &mut BiMap<f32>,
     ) {
         self.metadata.compute(compute_data);
@@ -73,7 +70,7 @@ impl AddressDatasets {
             .as_mut_vec()
             .into_iter()
             .for_each(|(cohort, _)| {
-                cohort.compute(compute_data, date_closes, height_closes, market_cap)
+                cohort.compute(compute_data, closes, circulating_supply, market_cap)
             })
     }
 }

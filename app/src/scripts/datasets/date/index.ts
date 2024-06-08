@@ -1,6 +1,6 @@
 import groupedKeysToPath from "/src/../../datasets/grouped_keys_to_url_path.json";
 
-import { createResourceDataset } from "../base";
+import { createResourceDataset } from "../base/resource";
 
 export { averages } from "./averages";
 

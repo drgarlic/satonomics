@@ -11,6 +11,7 @@ mod address;
 mod block_metadata;
 mod coindays;
 mod cointime;
+mod constant;
 mod date_metadata;
 mod mining;
 mod price;
@@ -23,6 +24,7 @@ pub use address::*;
 pub use block_metadata::*;
 pub use coindays::*;
 pub use cointime::*;
+pub use constant::*;
 pub use date_metadata::*;
 pub use mining::*;
 pub use price::*;
@@ -88,6 +90,7 @@ pub struct ComputeData<'a> {
 pub struct AllDatasets {
     min_initial_states: MinInitialStates,
 
+    pub constant: ConstantDataset,
     pub address: AddressDatasets,
     pub block_metadata: BlockMetadataDataset,
     pub coindays: CoindaysDataset,
@@ -102,6 +105,10 @@ pub struct AllDatasets {
 impl AllDatasets {
     pub fn import() -> color_eyre::Result<Self> {
         let path = "../datasets";
+
+        let price = PriceDatasets::import(path)?;
+
+        let constant = ConstantDataset::import(path)?;
 
         let date_metadata = DateMetadataDataset::import(path)?;
 
@@ -119,8 +126,6 @@ impl AllDatasets {
 
         let utxo = UTXODatasets::import(path)?;
 
-        let price = PriceDatasets::import(path)?;
-
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
@@ -128,6 +133,7 @@ impl AllDatasets {
             block_metadata,
             cointime,
             coindays,
+            constant,
             date_metadata,
             price,
             mining,
@@ -174,6 +180,10 @@ impl AllDatasets {
     }
 
     pub fn compute(&mut self, compute_data: ComputeData) {
+        if self.constant.should_compute(&compute_data) {
+            self.constant.compute(&compute_data);
+        }
+
         if self.mining.should_compute(&compute_data) {
             self.mining
                 .compute(&compute_data, &mut self.date_metadata.last_height);
@@ -185,15 +195,16 @@ impl AllDatasets {
 
         self.address.compute(
             &compute_data,
-            &mut self.price.date.closes,
-            &mut self.price.height.closes,
+            &mut self.price.closes,
+            &mut self.mining.cumulative_subsidy,
             &mut self.price.market_cap,
         );
 
         self.utxo.compute(
             &compute_data,
-            &mut self.price.date.closes,
-            &mut self.price.height.closes,
+            &mut self.price.closes,
+            &mut self.mining.cumulative_subsidy,
+            &mut self.price.market_cap,
         );
 
         // No compute needed for now
@@ -224,8 +235,7 @@ impl AllDatasets {
                 &compute_data,
                 &mut self.date_metadata.first_height,
                 &mut self.date_metadata.last_height,
-                &mut self.price.date.closes,
-                &mut self.price.height.closes,
+                &mut self.price.closes,
                 &mut self.mining.cumulative_subsidy,
                 &mut self.address.cohorts.all.all.price_paid.realized_cap,
                 &mut self.address.cohorts.all.all.price_paid.realized_price,
@@ -275,8 +285,11 @@ impl AnyDatasets for AllDatasets {
 
     fn to_any_dataset_vec(&self) -> Vec<&(dyn AnyDataset + Send + Sync)> {
         vec![
+            vec![
+                &self.price as &(dyn AnyDataset + Send + Sync),
+                &self.constant,
+            ],
             self.address.to_any_dataset_vec(),
-            self.price.to_any_dataset_vec(),
             self.utxo.to_any_dataset_vec(),
             vec![
                 &self.mining,
@@ -294,8 +307,8 @@ impl AnyDatasets for AllDatasets {
 
     fn to_mut_any_dataset_vec(&mut self) -> Vec<&mut dyn AnyDataset> {
         vec![
+            vec![&mut self.price as &mut dyn AnyDataset, &mut self.constant],
             self.address.to_mut_any_dataset_vec(),
-            self.price.to_mut_any_dataset_vec(),
             self.utxo.to_mut_any_dataset_vec(),
             vec![
                 &mut self.mining,

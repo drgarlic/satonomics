@@ -1,4 +1,5 @@
-import { defaultSeriesOptions, PRICE_SCALE_MOMENTUM_ID } from "/src/scripts";
+import { PRICE_SCALE_MOMENTUM_ID } from "../../chart/price";
+import { defaultSeriesOptions } from "./options";
 
 type HistogramOptions = DeepPartial<
   HistogramStyleOptions & SeriesOptionsCommon

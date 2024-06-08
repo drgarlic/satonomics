@@ -11,14 +11,14 @@ export function Tree({
   path = [],
   favorites,
 }: {
-  tree: PartialPresetTree;
+  tree: PresetTree;
   selected: Accessor<Preset>;
   selectPreset(preset: Preset): void;
   openedFolders: RWS<Set<string>>;
   depth?: number;
   visible?: Accessor<boolean>;
   path?: FilePath;
-  favorites: FavoritePresets;
+  favorites: Accessor<Preset[]>;
 }) {
   return (
     <div style={{ display: visible?.() === false ? "none" : undefined }}>

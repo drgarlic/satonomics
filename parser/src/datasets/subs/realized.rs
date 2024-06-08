@@ -2,6 +2,7 @@ use crate::{
     datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
     states::RealizedState,
     structs::{AnyBiMap, BiMap},
+    utils::ONE_MONTH_IN_DAYS,
 };
 
 /// TODO: Fix fees not taken into account ?
@@ -16,7 +17,11 @@ pub struct RealizedSubDataset {
     // Computed
     negative_realized_loss: BiMap<f32>,
     net_realized_profit_and_loss: BiMap<f32>,
-    net_realized_profit_and_loss_relative_to_market_cap: BiMap<f32>,
+    net_realized_profit_and_loss_to_market_cap_ratio: BiMap<f32>,
+    cumulative_realized_profit: BiMap<f32>,
+    cumulative_realized_loss: BiMap<f32>,
+    cumulative_net_realized_profit_and_loss: BiMap<f32>,
+    cumulative_net_realized_profit_and_loss_1m_net_change: BiMap<f32>,
 }
 
 impl RealizedSubDataset {
@@ -28,11 +33,21 @@ impl RealizedSubDataset {
 
             realized_profit: BiMap::new_bin(1, &f("realized_profit")),
             realized_loss: BiMap::new_bin(1, &f("realized_loss")),
-            negative_realized_loss: BiMap::new_bin(1, &f("negative_realized_loss")),
+            negative_realized_loss: BiMap::new_bin(2, &f("negative_realized_loss")),
             net_realized_profit_and_loss: BiMap::new_bin(1, &f("net_realized_profit_and_loss")),
-            net_realized_profit_and_loss_relative_to_market_cap: BiMap::new_bin(
+            net_realized_profit_and_loss_to_market_cap_ratio: BiMap::new_bin(
                 1,
-                &f("net_realized_profit_and_loss_relative_to_market_cap"),
+                &f("net_realized_profit_and_loss_to_market_cap_ratio"),
+            ),
+            cumulative_realized_profit: BiMap::new_bin(1, &f("cumulative_realized_profit")),
+            cumulative_realized_loss: BiMap::new_bin(1, &f("cumulative_realized_loss")),
+            cumulative_net_realized_profit_and_loss: BiMap::new_bin(
+                1,
+                &f("cumulative_net_realized_profit_and_loss"),
+            ),
+            cumulative_net_realized_profit_and_loss_1m_net_change: BiMap::new_bin(
+                1,
+                &f("cumulative_net_realized_profit_and_loss_1m_net_change"),
             ),
         };
 
@@ -79,7 +94,7 @@ impl RealizedSubDataset {
             heights,
             dates,
             &mut self.realized_loss,
-            &|v| v * 1.0,
+            &|v| v * -1.0,
         );
 
         self.net_realized_profit_and_loss.multi_insert_subtract(
@@ -89,12 +104,35 @@ impl RealizedSubDataset {
             &mut self.realized_loss,
         );
 
-        self.net_realized_profit_and_loss_relative_to_market_cap
+        self.net_realized_profit_and_loss_to_market_cap_ratio
             .multi_insert_divide(
                 heights,
                 dates,
                 &mut self.net_realized_profit_and_loss,
                 market_cap,
+            );
+
+        self.cumulative_realized_profit.multi_insert_cumulative(
+            heights,
+            dates,
+            &mut self.realized_profit,
+        );
+
+        self.cumulative_realized_loss.multi_insert_cumulative(
+            heights,
+            dates,
+            &mut self.realized_loss,
+        );
+
+        self.cumulative_net_realized_profit_and_loss
+            .multi_insert_cumulative(heights, dates, &mut self.net_realized_profit_and_loss);
+
+        self.cumulative_net_realized_profit_and_loss_1m_net_change
+            .multi_insert_net_change(
+                heights,
+                dates,
+                &mut self.cumulative_net_realized_profit_and_loss,
+                ONE_MONTH_IN_DAYS,
             );
     }
 }
@@ -116,7 +154,11 @@ impl AnyDataset for RealizedSubDataset {
         vec![
             &self.negative_realized_loss,
             &self.net_realized_profit_and_loss,
-            &self.net_realized_profit_and_loss_relative_to_market_cap,
+            &self.net_realized_profit_and_loss_to_market_cap_ratio,
+            &self.cumulative_realized_profit,
+            &self.cumulative_realized_loss,
+            &self.cumulative_net_realized_profit_and_loss,
+            &self.cumulative_net_realized_profit_and_loss_1m_net_change,
         ]
     }
 
@@ -124,7 +166,11 @@ impl AnyDataset for RealizedSubDataset {
         vec![
             &mut self.negative_realized_loss,
             &mut self.net_realized_profit_and_loss,
-            &mut self.net_realized_profit_and_loss_relative_to_market_cap,
+            &mut self.net_realized_profit_and_loss_to_market_cap_ratio,
+            &mut self.cumulative_realized_profit,
+            &mut self.cumulative_realized_loss,
+            &mut self.cumulative_net_realized_profit_and_loss,
+            &mut self.cumulative_net_realized_profit_and_loss_1m_net_change,
         ]
     }
 }

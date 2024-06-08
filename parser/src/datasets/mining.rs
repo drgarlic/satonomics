@@ -55,6 +55,7 @@ pub struct MiningDataset {
 
     // Computed
     pub annualized_issuance: BiMap<f64>, // Same as subsidy_1y_sum
+    pub blocks_mined_1d_target: DateMap<usize>,
     pub blocks_mined_1m_sma: DateMap<f32>,
     pub blocks_mined_1m_sum: DateMap<usize>,
     pub blocks_mined_1m_target: DateMap<usize>,
@@ -63,7 +64,6 @@ pub struct MiningDataset {
     pub blocks_mined_1w_target: DateMap<usize>,
     pub blocks_mined_1y_sum: DateMap<usize>,
     pub blocks_mined_1y_target: DateMap<usize>,
-    pub blocks_mined_target: DateMap<usize>,
     pub cumulative_block_size: BiMap<f32>,
     pub subsidy_1y_sum: DateMap<f64>,
     pub subsidy_in_dollars_1y_sum: DateMap<f64>,
@@ -152,7 +152,7 @@ impl MiningDataset {
             last_fees: DateMap::new_bin(1, &f("last_fees")),
             last_fees_in_dollars: DateMap::new_bin(1, &f("last_fees_in_dollars")),
 
-            blocks_mined_target: DateMap::new_bin(1, &f("blocks_mined_target")),
+            blocks_mined_1d_target: DateMap::new_bin(1, &f("blocks_mined_1d_target")),
             blocks_mined_1w_sma: DateMap::new_bin(1, &f("blocks_mined_1w_sma")),
             blocks_mined_1m_sma: DateMap::new_bin(1, &f("blocks_mined_1m_sma")),
 
@@ -395,17 +395,17 @@ impl MiningDataset {
             &mut self.cumulative_subsidy,
         );
 
-        self.blocks_mined_target
-            .multi_static_insert(dates, TARGET_BLOCKS_PER_DAY);
+        self.blocks_mined_1d_target
+            .multi_insert_const(dates, TARGET_BLOCKS_PER_DAY);
 
         self.blocks_mined_1w_target
-            .multi_static_insert(dates, ONE_WEEK_IN_DAYS * TARGET_BLOCKS_PER_DAY);
+            .multi_insert_const(dates, ONE_WEEK_IN_DAYS * TARGET_BLOCKS_PER_DAY);
 
         self.blocks_mined_1m_target
-            .multi_static_insert(dates, ONE_MONTH_IN_DAYS * TARGET_BLOCKS_PER_DAY);
+            .multi_insert_const(dates, ONE_MONTH_IN_DAYS * TARGET_BLOCKS_PER_DAY);
 
         self.blocks_mined_1y_target
-            .multi_static_insert(dates, ONE_YEAR_IN_DAYS * TARGET_BLOCKS_PER_DAY);
+            .multi_insert_const(dates, ONE_YEAR_IN_DAYS * TARGET_BLOCKS_PER_DAY);
 
         self.blocks_mined_1w_sma.multi_insert_simple_average(
             dates,
@@ -423,7 +423,7 @@ impl MiningDataset {
             .height
             .multi_insert_cumulative(heights, &mut self.block_size);
 
-        self.cumulative_block_size.date.multi_last_insert(
+        self.cumulative_block_size.date.multi_insert_last(
             dates,
             &mut self.cumulative_block_size.height,
             last_height,
@@ -588,7 +588,7 @@ impl AnyDataset for MiningDataset {
 
     fn to_computed_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
         vec![
-            &self.blocks_mined_target,
+            &self.blocks_mined_1d_target,
             &self.blocks_mined_1w_sma,
             &self.blocks_mined_1m_sma,
             &self.blocks_mined_1w_sum,
@@ -616,7 +616,7 @@ impl AnyDataset for MiningDataset {
 
     fn to_computed_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
         vec![
-            &mut self.blocks_mined_target,
+            &mut self.blocks_mined_1d_target,
             &mut self.blocks_mined_1w_sma,
             &mut self.blocks_mined_1m_sma,
             &mut self.blocks_mined_1w_sum,

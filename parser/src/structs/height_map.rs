@@ -426,6 +426,14 @@ where
             .sum::<T>()
     }
 
+    pub fn multi_insert_const(&mut self, heights: &[usize], constant: T) {
+        heights.iter().for_each(|height| {
+            let height = *height;
+
+            self.insert(height, constant);
+        });
+    }
+
     pub fn multi_insert_simple_transform<K, F>(
         &mut self,
         heights: &[usize],

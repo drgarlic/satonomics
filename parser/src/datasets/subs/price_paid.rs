@@ -4,7 +4,7 @@ use itertools::Itertools;
 use crate::{
     datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
     states::PricePaidState,
-    structs::{AnyBiMap, BiMap, DateMap, HeightMap},
+    structs::{AnyBiMap, BiMap},
     utils::ONE_MONTH_IN_DAYS,
 };
 
@@ -176,8 +176,7 @@ impl PricePaidSubDataset {
     pub fn compute(
         &mut self,
         &ComputeData { heights, dates }: &ComputeData,
-        date_closes: &mut DateMap<f32>,
-        height_closes: &mut HeightMap<f32>,
+        closes: &mut BiMap<f32>,
         cohort_supply: &mut BiMap<f64>,
     ) {
         self.realized_price.multi_insert_divide(
@@ -189,12 +188,12 @@ impl PricePaidSubDataset {
 
         self.mvrv.height.multi_insert_divide(
             heights,
-            height_closes,
+            &mut closes.height,
             &mut self.realized_price.height,
         );
         self.mvrv
             .date
-            .multi_insert_divide(dates, date_closes, &mut self.realized_price.date);
+            .multi_insert_divide(dates, &mut closes.date, &mut self.realized_price.date);
 
         self.realized_cap_1m_net_change.multi_insert_net_change(
             heights,

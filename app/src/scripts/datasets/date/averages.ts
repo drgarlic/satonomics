@@ -1,32 +1,30 @@
-import { appendRatioLazyDatasets, createLazyAverageDataset } from "../base";
+// export function createPriceAveragesDatasets(
+//   price: Dataset<"date", DatasetCandlestickData>,
+// ) {
+//   type Datasets = Record<
+//     `price${AverageName}MA${"" | RatioKey}`,
+//     Dataset<"date">
+//   >;
 
-export function createPriceAveragesDatasets(
-  price: Dataset<"date", DatasetCandlestickData>,
-) {
-  type Datasets = Record<
-    `price${AverageName}MA${"" | RatioKey}`,
-    Dataset<"date">
-  >;
+//   const partial: Partial<Datasets> = {};
 
-  const partial: Partial<Datasets> = {};
+//   averages.forEach(({ key: averageName, days }) => {
+//     const averageDataset = createLazyAverageDataset(price, days);
 
-  averages.forEach(({ key: averageName, days }) => {
-    const averageDataset = createLazyAverageDataset(price, days);
+//     const key = `price${averageName}MA` as const;
 
-    const key = `price${averageName}MA` as const;
+//     partial[key] = averageDataset;
 
-    partial[key] = averageDataset;
+//     appendRatioLazyDatasets<"date", typeof key>({
+//       datasets: partial,
+//       sourceDataset: averageDataset,
+//       key,
+//       price,
+//     });
+//   });
 
-    appendRatioLazyDatasets<"date", typeof key>({
-      datasets: partial,
-      sourceDataset: averageDataset,
-      key,
-      price,
-    });
-  });
-
-  return partial as Datasets;
-}
+//   return partial as Datasets;
+// }
 
 export const averages = [
   { name: "1 Week", key: "1w", days: 7 },

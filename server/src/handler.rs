@@ -127,6 +127,8 @@ fn _file_handler(
     let type_name = route.values_type.split("::").last().unwrap();
 
     let value = match type_name {
+        "u8" => typed_value_to_response::<u8>(kind, &route.file_path, chunk)?,
+        "u16" => typed_value_to_response::<u16>(kind, &route.file_path, chunk)?,
         "u32" => typed_value_to_response::<u32>(kind, &route.file_path, chunk)?,
         "u64" => typed_value_to_response::<u64>(kind, &route.file_path, chunk)?,
         "usize" => typed_value_to_response::<usize>(kind, &route.file_path, chunk)?,

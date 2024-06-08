@@ -1,4 +1,6 @@
-import { chartState, GENESIS_DAY, ONE_DAY_IN_MS } from "/src/scripts";
+import { chartState } from "/src/scripts/lightweightCharts/chart/state";
+import { GENESIS_DAY } from "/src/scripts/lightweightCharts/chart/whitespace";
+import { ONE_DAY_IN_MS } from "/src/scripts/utils/time";
 
 import { Box } from "../../box";
 

@@ -1,13 +1,10 @@
 import { makeTimer } from "@solid-primitives/timer";
 
-import {
-  chartState,
-  debounce,
-  HEIGHT_CHUNK_SIZE,
-  run,
-  setMinMaxMarkers,
-  writeURLParam,
-} from "/src/scripts";
+import { HEIGHT_CHUNK_SIZE } from "../../datasets";
+import { debounce } from "../../utils/debounce";
+import { writeURLParam } from "../../utils/urlParams";
+import { setMinMaxMarkers } from "../series/addOns/markers";
+import { chartState } from "./state";
 
 export const LOCAL_STORAGE_RANGE_KEY = "chart-range";
 export const URL_PARAMS_RANGE_FROM_KEY = "from";

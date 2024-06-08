@@ -10,4 +10,4 @@ interface BaselineSeriesOptions {
   title?: string;
 }
 
-type SeriesLegend = ReturnType<typeof import("./index").createSeriesLegend>;
+type SeriesLegend = ReturnType<typeof import("./legend").createSeriesLegend>;

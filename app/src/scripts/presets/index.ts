@@ -1,17 +1,17 @@
-import { colors, replaceHistory, resetURLParams } from "/src/scripts";
 import { createRWS } from "/src/solid/rws";
 
+import { colors } from "../utils/colors";
+import { replaceHistory } from "../utils/history";
 import { stringToId } from "../utils/id";
+import { resetURLParams } from "../utils/urlParams";
 import { createPresets as createAddressesPresets } from "./addresses";
 import { createPresets as createBlocksPresets } from "./blocks";
 import { createPresets as createCoinblocksPresets } from "./coinblocks";
 import { createPresets as createHodlersPresets } from "./hodlers";
 import { createPresets as createMarketPresets } from "./market";
 import { createPresets as createMinersPresets } from "./miners";
-import { createCohortPresetList } from "./templates";
+import { createCohortPresetList } from "./templates/cohort";
 import { createPresets as createTransactionsPresets } from "./transactions";
-
-export * from "./templates";
 
 export const LOCAL_STORAGE_FAVORITES_KEY = "favorites";
 export const LOCAL_STORAGE_FOLDERS_KEY = "folders";
@@ -31,37 +31,35 @@ export function createPresets(datasets: Datasets): Presets {
         ...createCohortPresetList({
           datasets,
           scale: "date",
-          id: "all",
           color: colors.bitcoin,
           datasetKey: "",
+          name: "",
           title: "",
         }),
-        // createHodlersPresets({ scale: "date", datasets }),
-        // createAddressesPresets({ scale: "date", datasets }),
+        createHodlersPresets({ scale: "date", datasets }),
+        createAddressesPresets({ scale: "date", datasets }),
         createCoinblocksPresets({ scale: "date", datasets }),
       ],
     } satisfies PartialPresetFolder,
-    // {
-    //   scale: "height",
-    //   id: "height",
-    //   name: "Height (unusable)",
-    //   tree: [
-    //     createMarketPresets("height"),
-    //     createMinersPresets("height"),
-    //     createTransactionsPresets("height"),
-    //     ...createCohortPresetList({
-    //       datasets,
-    //       scale: "height",
-    //       id: "all",
-    //       color: colors.bitcoin,
-    //       datasetKey: "",
-    //       title: "",
-    //     }),
-    //     createHodlersPresets({ scale: "height", datasets }),
-    //     createAddressesPresets({ scale: "height", datasets }),
-    //     createCoinblocksPresets({ scale: "height", datasets }),
-    //   ],
-    // } satisfies PartialPresetFolder,
+    {
+      name: "Height (unusable)",
+      tree: [
+        createMarketPresets({ scale: "height", datasets }),
+        createMinersPresets("height"),
+        createTransactionsPresets("height"),
+        ...createCohortPresetList({
+          datasets,
+          scale: "height",
+          color: colors.bitcoin,
+          name: "",
+          datasetKey: "",
+          title: "",
+        }),
+        createHodlersPresets({ scale: "height", datasets }),
+        createAddressesPresets({ scale: "height", datasets }),
+        createCoinblocksPresets({ scale: "height", datasets }),
+      ],
+    } satisfies PartialPresetFolder,
   ];
 
   const { list, ids, tree } = flatten(partialTree);
@@ -191,6 +189,7 @@ function flatten(partialTree: PartialPresetTree) {
 
         const presetFolder: PresetFolder = {
           ...anyPreset,
+          tree: anyPreset.tree as PresetTree,
           id,
         };
 

@@ -1,4 +1,7 @@
-import { applyMultipleSeries, averages, colors } from "/src/scripts";
+import { averages } from "/src/scripts/datasets/date";
+import { colors } from "/src/scripts/utils/colors";
+
+import { applyMultipleSeries } from "../../templates/multiple";
 
 export function createPresets(datasets: Datasets): PartialPresetFolder {
   const scale: ResourceScale = "date";
@@ -72,15 +75,4 @@ function createPresetFolder({
       });
     },
   } satisfies PartialPreset;
-  // },
-  // createRatioPresetFolder({
-  //   datasets: datasets.date,
-  //   scale,
-  //   id,
-  //   color,
-  //   title: `${name} Moving Average`,
-  //   datasetKey: `price${key}MA`,
-  // }),
-  // ],
-  // } satisfies PartialPresetFolder;
 }

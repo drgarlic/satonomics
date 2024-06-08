@@ -1,4 +1,4 @@
-import { defaultSeriesOptions } from "/src/scripts";
+import { defaultSeriesOptions } from "./options";
 
 export const createLineSeries = (
   chart: IChartApi,

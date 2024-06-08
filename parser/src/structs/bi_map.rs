@@ -37,12 +37,12 @@ where
         }
     }
 
-    // pub fn new_json(path: &str) -> Self {
-    //     Self {
-    //         height: HeightMap::_new_json(path, true),
-    //         date: DateMap::_new_json(path, false),
-    //     }
-    // }
+    pub fn _new_json(version: u32, path: &str, height_chunks_in_memory: usize) -> Self {
+        Self {
+            height: HeightMap::_new_json(version, path, height_chunks_in_memory, true),
+            date: DateMap::_new_json(version, path, height_chunks_in_memory, false),
+        }
+    }
 
     pub fn date_insert_sum_range(
         &mut self,
@@ -74,15 +74,22 @@ where
         })
     }
 
-    pub fn multi_insert_simple_transform<F>(
+    pub fn multi_insert_const(&mut self, heights: &[usize], dates: &[NaiveDate], constant: T) {
+        self.height.multi_insert_const(heights, constant);
+
+        self.date.multi_insert_const(dates, constant);
+    }
+
+    pub fn multi_insert_simple_transform<F, K>(
         &mut self,
         heights: &[usize],
         dates: &[NaiveDate],
-        source: &mut BiMap<T>,
+        source: &mut BiMap<K>,
         transform: &F,
     ) where
         T: Div<Output = T>,
-        F: Fn(T) -> T,
+        F: Fn(K) -> T,
+        K: MapValue,
     {
         self.height
             .multi_insert_simple_transform(heights, &mut source.height, transform);

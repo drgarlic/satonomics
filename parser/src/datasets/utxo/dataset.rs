@@ -5,7 +5,7 @@ use crate::{
         AnyDataset, AnyDatasetGroup, ComputeData, InsertData, MinInitialStates, SubDataset,
     },
     states::UTXOCohortId,
-    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, DateMap, HeightMap},
+    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap},
 };
 
 #[derive(Default)]
@@ -104,20 +104,21 @@ impl UTXODataset {
     pub fn compute(
         &mut self,
         compute_data: &ComputeData,
-        date_closes: &mut DateMap<f32>,
-        height_closes: &mut HeightMap<f32>,
+        closes: &mut BiMap<f32>,
+        circulating_supply: &mut BiMap<f64>,
         market_cap: &mut BiMap<f32>,
     ) {
         if self.subs.supply.should_compute(compute_data) {
-            self.subs
-                .supply
-                .compute(compute_data, date_closes, height_closes);
+            self.subs.supply.compute(compute_data, circulating_supply);
         }
 
         if self.subs.unrealized.should_compute(compute_data) {
-            self.subs
-                .unrealized
-                .compute(compute_data, &mut self.subs.supply.total);
+            self.subs.unrealized.compute(
+                compute_data,
+                &mut self.subs.supply.supply,
+                circulating_supply,
+                market_cap,
+            );
         }
 
         if self.subs.realized.should_compute(compute_data) {
@@ -125,12 +126,9 @@ impl UTXODataset {
         }
 
         if self.subs.price_paid.should_compute(compute_data) {
-            self.subs.price_paid.compute(
-                compute_data,
-                date_closes,
-                height_closes,
-                &mut self.subs.supply.total,
-            );
+            self.subs
+                .price_paid
+                .compute(compute_data, closes, &mut self.subs.supply.supply);
         }
 
         // if self.subs.output.should_compute(compute_data) {

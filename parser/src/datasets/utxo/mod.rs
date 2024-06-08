@@ -8,7 +8,7 @@ use itertools::Itertools;
 use crate::{
     datasets::AnyDatasets,
     states::{SplitByUTXOCohort, UTXOCohortId},
-    structs::{DateMap, HeightMap},
+    structs::BiMap,
 };
 
 use super::{AnyDataset, ComputeData, InsertData, MinInitialStates};
@@ -56,13 +56,16 @@ impl UTXODatasets {
     pub fn compute(
         &mut self,
         compute_data: &ComputeData,
-        date_closes: &mut DateMap<f32>,
-        height_closes: &mut HeightMap<f32>,
+        closes: &mut BiMap<f32>,
+        circulating_supply: &mut BiMap<f64>,
+        market_cap: &mut BiMap<f32>,
     ) {
         self.cohorts
             .as_mut_vec()
             .into_iter()
-            .for_each(|(cohort, _)| cohort.compute(compute_data, date_closes, height_closes))
+            .for_each(|(cohort, _)| {
+                cohort.compute(compute_data, closes, circulating_supply, market_cap)
+            })
     }
 
     fn as_vec(&self) -> Vec<(&UTXODataset, UTXOCohortId)> {

@@ -19,9 +19,9 @@ pub struct DateDataset {
 
     // Inserted
     pub ohlcs: DateMap<OHLC>,
-    pub closes: DateMap<f32>,
 
     // Computed
+    pub closes: DateMap<f32>,
     pub market_cap: DateMap<f32>,
     pub price_1w_sma: DateMap<f32>,
     pub price_1m_sma: DateMap<f32>,

@@ -1,8 +1,9 @@
-import { applyMultipleSeries, SeriesType } from "/src/scripts";
 import {
   compoundReturns,
   totalReturns,
 } from "/src/scripts/datasets/date/averages";
+
+import { applyMultipleSeries, SeriesType } from "../../templates/multiple";
 
 export function createPresets(datasets: Datasets) {
   return {

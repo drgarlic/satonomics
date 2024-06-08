@@ -1,6 +1,7 @@
 import { PriceScaleMode } from "lightweight-charts";
 
-import { applyMultipleSeries, colors, SeriesType } from "/src/scripts";
+import { colors } from "../../utils/colors";
+import { applyMultipleSeries, SeriesType } from "../templates/multiple";
 
 export function createPresets(scale: ResourceScale) {
   return {

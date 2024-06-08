@@ -1,13 +1,9 @@
 import { createLazyMemo } from "@solid-primitives/memo";
 
-import {
-  colors,
-  computeMovingAverage,
-  ONE_DAY_IN_MS,
-  sortedInsert,
-} from "/src/scripts";
-
-export * from "./ratio";
+import { sortedInsert } from "/src/scripts/utils/array";
+import { colors } from "/src/scripts/utils/colors";
+import { computeMovingAverage } from "/src/scripts/utils/math/averages";
+import { ONE_DAY_IN_MS } from "/src/scripts/utils/time";
 
 const MEDIAN = 0.5;
 

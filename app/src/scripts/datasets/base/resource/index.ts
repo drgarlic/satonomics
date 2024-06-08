@@ -1,11 +1,9 @@
 import { createLazyMemo } from "@solid-primitives/memo";
 
-import {
-  HEIGHT_CHUNK_SIZE,
-  ONE_DAY_IN_MS,
-  ONE_MINUTE_IN_MS,
-} from "/src/scripts";
+import { ONE_DAY_IN_MS, ONE_MINUTE_IN_MS } from "/src/scripts/utils/time";
 import { createRWS } from "/src/solid/rws";
+
+import { HEIGHT_CHUNK_SIZE } from "../..";
 
 export function createResourceDataset<
   Scale extends ResourceScale,

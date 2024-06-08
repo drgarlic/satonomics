@@ -1,4 +1,5 @@
-import { dateToString, ONE_DAY_IN_MS } from "/src/scripts";
+import { dateToString } from "../../utils/date";
+import { ONE_DAY_IN_MS } from "../../utils/time";
 
 export const krakenAPI = {
   createLiveCandleWebsocket(

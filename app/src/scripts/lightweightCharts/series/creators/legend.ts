@@ -1,9 +1,11 @@
 import {
   readBooleanFromStorage,
-  readBooleanURLParam,
   saveToStorage,
+} from "/src/scripts/utils/storage";
+import {
+  readBooleanURLParam,
   writeURLParam,
-} from "/src/scripts/utils";
+} from "/src/scripts/utils/urlParams";
 import { createRWS } from "/src/solid/rws";
 
 export function createSeriesLegend({

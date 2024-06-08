@@ -1,16 +1,14 @@
 import { DocumentEventListener } from "@solid-primitives/event-listener";
 import { useWindowSize } from "@solid-primitives/resize-observer";
 
-import {
-  cleanChart,
-  createDatasets,
-  createPresets,
-  createResources,
-  renderChart,
-  sleep,
-} from "/src/scripts";
 import { createRWS } from "/src/solid/rws";
 
+import { createDatasets } from "../scripts/datasets";
+import { cleanChart } from "../scripts/lightweightCharts/chart/clean";
+import { renderChart } from "../scripts/lightweightCharts/chart/render";
+import { createPresets } from "../scripts/presets";
+import { createResources } from "../scripts/resources";
+import { sleep } from "../scripts/utils/sleep";
 import { Background, LOCAL_STORAGE_MARQUEE_KEY } from "./components/background";
 import { ChartFrame } from "./components/frames/chart";
 import { FavoritesFrame } from "./components/frames/favorites";
@@ -24,7 +22,7 @@ import { TreeFrame } from "./components/frames/tree";
 import { Head } from "./components/head";
 import { Qrcode } from "./components/qrcode";
 import { StripDesktop, StripMobile } from "./components/strip";
-import { registerServiceWorker } from "./scripts";
+import { registerServiceWorker } from "./scripts/register";
 
 const LOCAL_STORAGE_BAR_KEY = "bar-width";
 

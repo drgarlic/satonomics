@@ -1,10 +1,6 @@
 import { createDateDatasets } from "./date";
 import { createHeightDatasets } from "./height";
 
-export * from "./common";
-export * from "./date";
-export * from "./height";
-
 export const scales = ["date" as const, "height" as const];
 
 export const HEIGHT_CHUNK_SIZE = 10_000;

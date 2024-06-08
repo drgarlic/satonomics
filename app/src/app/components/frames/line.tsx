@@ -1,6 +1,6 @@
-import { scrollIntoView } from "/src/scripts";
+import { scrollIntoView } from "/src/scripts/utils/scroll";
 import { classPropToString } from "/src/solid/classes";
-import {  createRWS } from "/src/solid/rws";
+import { createRWS } from "/src/solid/rws";
 
 export function Line({
   id,

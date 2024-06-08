@@ -1,17 +1,15 @@
 import { PriceScaleMode } from "lightweight-charts";
 
-import {
-  chartState,
-  colors,
-  convertCandleToCandleColor,
-  createCandlesticksSeries,
-  createLineSeries,
-  createPriceLine,
-  createSeriesLegend,
-  setMinMaxMarkers,
-  setTimeScale,
-} from "/src/scripts";
 import { createRWS } from "/src/solid/rws";
+
+import { colors, convertCandleToCandleColor } from "../../utils/colors";
+import { setMinMaxMarkers } from "../series/addOns/markers";
+import { createPriceLine } from "../series/addOns/priceLine";
+import { createCandlesticksSeries } from "../series/creators/candlesticks";
+import { createSeriesLegend } from "../series/creators/legend";
+import { createLineSeries } from "../series/creators/line";
+import { chartState } from "./state";
+import { setTimeScale } from "./time";
 
 export const PRICE_SCALE_MOMENTUM_ID = "momentum";
 

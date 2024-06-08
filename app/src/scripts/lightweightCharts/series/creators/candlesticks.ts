@@ -1,4 +1,4 @@
-import { colors } from "/src/scripts";
+import { colors } from "/src/scripts/utils/colors";
 
 export const createCandlesticksSeries = (
   chart: IChartApi,

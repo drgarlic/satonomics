@@ -1,8 +1,7 @@
-import {
-  colors,
-  defaultSeriesOptions,
-  showedLastValueConfig,
-} from "/src/scripts";
+import { colors } from "/src/scripts/utils/colors";
+
+import { showedLastValueConfig } from "./lastValue";
+import { defaultSeriesOptions } from "./options";
 
 const DEFAULT_BASELINE_TOP_COLOR = colors.profit;
 const DEFAULT_BASELINE_BOTTOM_COLOR = colors.loss;

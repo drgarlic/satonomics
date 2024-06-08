@@ -1,4 +1,6 @@
-import { chartState, createChart, setWhitespace } from "/src/scripts";
+import { createChart } from "./create";
+import { chartState } from "./state";
+import { setWhitespace } from "./whitespace";
 
 let dispose: VoidFunction | undefined = undefined;
 

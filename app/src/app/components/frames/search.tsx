@@ -1,7 +1,7 @@
 import uFuzzy from "@leeoniya/ufuzzy";
 import { createVisibilityObserver } from "@solid-primitives/intersection-observer";
 
-import { scrollIntoView } from "/src/scripts";
+import { scrollIntoView } from "/src/scripts/utils/scroll";
 import { createRWS } from "/src/solid/rws";
 
 import { Box } from "./box";

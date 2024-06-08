@@ -1,4 +1,5 @@
-import { chartState, cleanChart } from "/src/scripts";
+import { cleanChart } from "/src/scripts/lightweightCharts/chart/clean";
+import { chartState } from "/src/scripts/lightweightCharts/chart/state";
 
 export function Chart() {
   onMount(() => chartState.reset?.());
