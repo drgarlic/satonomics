@@ -115,25 +115,23 @@ export function createCohortPresetList<Scale extends ResourceScale>({
                 halved: true,
               },
               list: [
+                {
+                  title: `${name} Realized Cap.`,
+                  color,
+                  seriesType: SeriesType.Area,
+                  dataset:
+                    params.datasets[scale][`${datasetPrefix}realized_cap`],
+                },
                 ...(datasetKey
                   ? [
                       {
-                        title: `${name} Realized Capitalization`,
-                        color,
-                        seriesType: SeriesType.Area,
-                        dataset:
-                          params.datasets[scale][
-                            `${datasetPrefix}realized_cap`
-                          ],
+                        title: "Realized Cap.",
+                        color: colors.bitcoin,
+                        dataset: params.datasets[scale].realized_cap,
+                        defaultVisible: false,
                       },
                     ]
                   : []),
-                {
-                  title: "Realized Capitalization",
-                  color: colors.bitcoin,
-                  dataset: params.datasets[scale].realized_cap,
-                  defaultVisible: false,
-                },
               ],
             });
           },
@@ -415,7 +413,7 @@ export function createCohortPresetList<Scale extends ResourceScale>({
               },
               list: [
                 {
-                  title: "Unrealized Profit",
+                  title: "Profit",
                   dataset:
                     params.datasets[scale][`${datasetPrefix}unrealized_profit`],
                   color: colors.profit,

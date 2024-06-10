@@ -83,11 +83,16 @@ export function createResourceDataset<
     const index =
       scale === "date" ? id - 2009 : Math.floor(id / HEIGHT_CHUNK_SIZE);
 
-    const fetched = fetchedJSONs[index];
+    if (index < 0) {
+      return;
+    }
+
+    const fetched = fetchedJSONs.at(index);
 
     if (
-      fetched.at &&
-      new Date().valueOf() - fetched.at.valueOf() < ONE_MINUTE_IN_MS
+      !fetched ||
+      (fetched.at &&
+        new Date().valueOf() - fetched.at.valueOf() < ONE_MINUTE_IN_MS)
     )
       return;
 

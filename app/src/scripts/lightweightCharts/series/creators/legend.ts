@@ -25,8 +25,6 @@ export function createSeriesLegend({
 }) {
   const storageID = `${presetId}-${id}`;
 
-  console.log(readBooleanURLParam(id), readBooleanFromStorage(storageID));
-
   const visible = createRWS(
     readBooleanURLParam(id) ??
       readBooleanFromStorage(storageID) ??

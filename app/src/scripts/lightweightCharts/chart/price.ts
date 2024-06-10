@@ -9,7 +9,7 @@ import { createCandlesticksSeries } from "../series/creators/candlesticks";
 import { createSeriesLegend } from "../series/creators/legend";
 import { createLineSeries } from "../series/creators/line";
 import { chartState } from "./state";
-import { setTimeScale } from "./time";
+import { checkIfUpClose, setTimeScale } from "./time";
 
 export const PRICE_SCALE_MOMENTUM_ID = "momentum";
 
@@ -37,7 +37,9 @@ export const applyPriceSeries = <
   const title = options?.title || "Price";
 
   const seriesType =
-    chartState.seriesType || checkIfUpClose(chart, chartState.range);
+    chartState.seriesType ||
+    checkIfUpClose(chart, chartState.range) ||
+    "Candlestick";
 
   chartState.seriesType = seriesType;
 
@@ -120,13 +122,13 @@ export const applyPriceSeries = <
     ...options?.priceScaleOptions,
   });
 
-  setMinMaxMarkers({
-    scale: preset.scale,
-    candlesticks:
-      dataset?.values() || datasets[preset.scale].price.values() || ([] as any),
-    range: chartState.range,
-    lowerOpacity,
-  });
+  // setMinMaxMarkers({
+  //   scale: preset.scale,
+  //   candlesticks:
+  //     dataset?.values() || datasets[preset.scale].price.values() || ([] as any),
+  //   range: chartState.range,
+  //   lowerOpacity,
+  // });
 
   setTimeScale({
     scale: preset.scale,
@@ -147,16 +149,6 @@ export const applyPriceSeries = <
     }),
   };
 };
-
-function checkIfUpClose(chart: IChartApi, range?: LogicalRange | null) {
-  const from = range?.from || 0;
-  const to = range?.to || 0;
-  const width = chart.timeScale().width();
-
-  const difference = to - from;
-
-  return width / difference >= 2 ? "Candlestick" : "Line";
-}
 
 export function updateLastPriceValue(
   data: DatasetValue<CandlestickData | SingleValueData> | null,

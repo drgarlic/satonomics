@@ -66,7 +66,7 @@ export function App() {
 
   const presets = createPresets(datasets);
 
-  const marquee = createRWS(!!localStorage.getItem(LOCAL_STORAGE_MARQUEE_KEY));
+  const marquee = createRWS(!localStorage.getItem(LOCAL_STORAGE_MARQUEE_KEY));
 
   const resizingBarStart = createRWS<number | undefined>(undefined);
 

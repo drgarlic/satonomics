@@ -40,9 +40,9 @@ export function Background({
 }) {
   createEffect(() => {
     if (on()) {
-      localStorage.setItem(LOCAL_STORAGE_MARQUEE_KEY, "true");
-    } else {
       localStorage.removeItem(LOCAL_STORAGE_MARQUEE_KEY);
+    } else {
+      localStorage.setItem(LOCAL_STORAGE_MARQUEE_KEY, "false");
     }
   });
 

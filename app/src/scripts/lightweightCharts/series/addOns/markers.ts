@@ -13,7 +13,7 @@ export const setMinMaxMarkers = ({
 }: {
   scale: ResourceScale;
   candlesticks: DatasetValue<CandlestickData | SingleValueData>[];
-  range: LogicalRange | null;
+  range: TimeRange | null;
   lowerOpacity: boolean;
 }) => {
   const first = candlesticks.at(0);
