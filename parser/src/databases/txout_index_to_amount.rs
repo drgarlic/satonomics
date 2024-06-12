@@ -8,20 +8,21 @@ use chrono::NaiveDate;
 
 use rayon::prelude::*;
 
-use crate::structs::{SizedDatabase, TxoutIndex};
+use crate::structs::{TxoutIndex, WAmount};
 
-use super::{AnyDatabaseGroup, Metadata};
+use super::{AnyDatabaseGroup, Metadata, SizedDatabase};
 
 type Key = TxoutIndex;
-type Value = u64;
+type Value = WAmount;
 type Database = SizedDatabase<Key, Value>;
 
-pub struct TxoutIndexToSats {
-    map: BTreeMap<usize, Database>,
+pub struct TxoutIndexToAmount {
     pub metadata: Metadata,
+
+    pub map: BTreeMap<usize, Database>,
 }
 
-impl Deref for TxoutIndexToSats {
+impl Deref for TxoutIndexToAmount {
     type Target = BTreeMap<usize, Database>;
 
     fn deref(&self) -> &Self::Target {
@@ -29,28 +30,30 @@ impl Deref for TxoutIndexToSats {
     }
 }
 
-impl DerefMut for TxoutIndexToSats {
+impl DerefMut for TxoutIndexToAmount {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.map
     }
 }
 
-const DB_MAX_SIZE: usize = 100_000_000;
+const DB_MAX_SIZE: usize = 10_000_000_000;
 
-impl TxoutIndexToSats {
-    pub fn insert(&mut self, key: Key, value: Value) -> Option<Value> {
+impl TxoutIndexToAmount {
+    pub fn unsafe_insert(&mut self, key: Key, value: Value) -> Option<Value> {
         self.metadata.called_insert();
 
-        self.open_db(&key).insert(key, value)
+        self.open_db(&key).unsafe_insert(key, value)
     }
 
-    pub fn undo_insert(&mut self, key: &Key) -> Option<Value> {
-        self.metadata.called_remove();
+    // pub fn undo_insert(&mut self, key: &Key) -> Option<Value> {
+    //     self.open_db(key).remove_from_puts(key).map(|v| {
+    //         self.metadata.called_remove();
 
-        self.open_db(key).remove_from_puts(key)
-    }
+    //         v
+    //     })
+    // }
 
-    pub fn remove(&mut self, key: &Key) {
+    pub fn remove(&mut self, key: &Key) -> Option<Value> {
         self.metadata.called_remove();
 
         self.open_db(key).remove(key)
@@ -83,7 +86,7 @@ impl TxoutIndexToSats {
     }
 }
 
-impl AnyDatabaseGroup for TxoutIndexToSats {
+impl AnyDatabaseGroup for TxoutIndexToAmount {
     fn import() -> Self {
         Self {
             map: BTreeMap::default(),
@@ -106,6 +109,6 @@ impl AnyDatabaseGroup for TxoutIndexToSats {
     }
 
     fn folder<'a>() -> &'a str {
-        "txout_index_to_sats"
+        "txout_index_to_amount"
     }
 }

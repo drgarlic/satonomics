@@ -1,17 +1,16 @@
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    ops::ControlFlow,
-    thread,
-};
+use std::{collections::BTreeMap, ops::ControlFlow, thread};
 
-use bitcoin::{Amount, Block};
+use bitcoin::{Amount, Block, Txid};
 use chrono::NaiveDate;
 use itertools::Itertools;
 use rayon::prelude::*;
 
 use crate::{
     bitcoin::BitcoinDB,
-    databases::{AddressIndexToEmptyAddressData, AddressToAddressIndex, Databases, TxidToTxIndex},
+    databases::{
+        AddressIndexToAddressData, AddressIndexToEmptyAddressData, AddressToAddressIndex,
+        Databases, TxidToTxData, TxoutIndexToAddressIndex, TxoutIndexToAmount,
+    },
     datasets::{AllDatasets, InsertData},
     states::{
         AddressCohortsInputStates, AddressCohortsOutputStates, AddressCohortsRealizedStates,
@@ -120,9 +119,6 @@ pub fn parse(
     // let mut received_data: ReceivedData = ReceivedData::default();
     let mut address_index_to_address_realized_data: BTreeMap<u32, AddressRealizedData> =
         BTreeMap::default();
-    let mut address_index_to_removed_address_data: BTreeMap<u32, AddressData> = BTreeMap::default();
-
-    let mut address_index_removed_at_least_once: BTreeSet<u32> = BTreeSet::default();
 
     let mut coinbase = Amount::ZERO;
     let mut satblocks_destroyed = Amount::ZERO;
@@ -133,18 +129,15 @@ pub fn parse(
     let mut fees_total = Amount::ZERO;
 
     let (
-        (
-            TxoutsParsingResults {
-                op_returns: _op_returns,
-                mut partial_txout_data_vec,
-                provably_unspendable: _provably_unspendable,
-            },
-            mut empty_address_index_to_empty_address_data,
-        ),
-        mut txin_ordered_tx_indexes,
+        TxoutsParsingResults {
+            op_returns: _op_returns,
+            mut partial_txout_data_vec,
+            provably_unspendable: _provably_unspendable,
+        },
+        (mut txid_to_tx_data, mut txout_index_to_amount_and_address_index),
     ) = thread::scope(|scope| {
         let output_handle = scope.spawn(|| {
-            let mut txouts_parsing_results = parse_txouts(
+            let mut txouts_parsing_results = pre_process_outputs(
                 &block,
                 compute_addresses,
                 &mut states.address_counters.op_return_addresses,
@@ -154,44 +147,50 @@ pub fn parse(
                 &mut databases.address_to_address_index,
             );
 
-            let empty_address_index_to_empty_address_data = compute_addresses.then(|| {
-                take_empty_address_index_to_empty_address_data(
-                    states,
-                    &mut databases.address_index_to_empty_address_data,
-                    &txouts_parsing_results.partial_txout_data_vec,
-                    compute_addresses,
-                )
-            });
-
             // Reverse to get in order via pop later
             txouts_parsing_results.partial_txout_data_vec.reverse();
 
-            (
-                txouts_parsing_results,
-                empty_address_index_to_empty_address_data,
-            )
+            txouts_parsing_results
         });
 
         let input_handle = scope.spawn(|| {
-            let mut txin_ordered_tx_indexes =
-                query_txin_ordered_tx_indexes(&block, &mut databases.txid_to_tx_index);
-
-            // Reverse to get in order via pop later
-            txin_ordered_tx_indexes.reverse();
-
-            txin_ordered_tx_indexes
+            pre_process_inputs(
+                &block,
+                &mut databases.txid_to_tx_data,
+                &mut databases.txout_index_to_amount,
+                &mut databases.txout_index_to_address_index,
+                compute_addresses,
+            )
         });
 
         (output_handle.join().unwrap(), input_handle.join().unwrap())
     });
 
+    let mut address_index_to_address_data = compute_addresses.then(|| {
+        compute_address_index_to_address_data(
+            &mut databases.address_index_to_address_data,
+            &mut databases.address_index_to_empty_address_data,
+            &partial_txout_data_vec,
+            &txout_index_to_amount_and_address_index,
+            compute_addresses,
+        )
+    });
+
+    // if height == 2616 {
+    //     dbg!(&txout_index_to_amount_and_address_index,);
+
+    //     databases.txout_index_to_amount.map.values().for_each(|db| {
+    //         dbg!(&db.cached_puts);
+    //     });
+    // }
+
     block
         .txdata
-        .into_iter()
+        .iter()
         .enumerate()
         .try_for_each(|(block_tx_index, tx)| {
             let txid = tx.txid();
-            let tx_index = databases.txid_to_tx_index.metadata.serial as u32;
+            let tx_index = databases.txid_to_tx_data.metadata.serial as u32;
 
             transaction_count += 1;
 
@@ -213,7 +212,7 @@ pub fn parse(
 
             // Before `input` to cover outputs being used in the same block as inputs
             tx.output
-                .into_iter()
+                .iter()
                 .enumerate()
                 .filter_map(|(vout, tx_out)| {
                     if vout > (u16::MAX as usize) {
@@ -249,12 +248,15 @@ pub fn parse(
 
                     utxos.insert(vout, amount);
 
-                    states
+                    databases
                         .txout_index_to_amount
-                        .insert(txout_index, WAmount::wrap(amount));
+                        .unsafe_insert(txout_index, WAmount::wrap(amount));
 
                     if compute_addresses {
                         let address = address.unwrap();
+
+                        let address_index_to_address_data =
+                            address_index_to_address_data.as_mut().unwrap();
 
                         let (address_data, address_index) = {
                             if let Some(address_index) = address_index_opt.or_else(|| {
@@ -263,50 +265,11 @@ pub fn parse(
                                     .unsafe_get_from_puts(&address)
                                     .cloned()
                             }) {
-                                if let Some(address_data) =
-                                    states.address_index_to_address_data.get_mut(&address_index)
-                                {
-                                    // TODO: Remove after a while
-                                    if address_data.is_empty() {
-                                        panic!("address_data shouldn't be empty");
-                                    }
+                                let address_data = address_index_to_address_data
+                                    .get_mut(&address_index)
+                                    .unwrap();
 
-                                    (address_data, address_index)
-                                } else {
-                                    let empty_address_data =
-                                        empty_address_index_to_empty_address_data
-                                            .as_mut()
-                                            .unwrap()
-                                            .remove(&address_index)
-                                            .or_else(|| {
-                                                address_index_to_removed_address_data
-                                                    .remove(&address_index);
-
-                                                databases
-                                                    .address_index_to_empty_address_data
-                                                    .undo_insert(&address_index)
-                                            })
-                                            .unwrap_or_else(|| {
-                                                dbg!(address_index);
-                                                panic!("Should've been there");
-                                            });
-
-                                    let contains_key = states
-                                        .address_index_to_address_data
-                                        .contains_key(&address_index);
-
-                                    if contains_key {
-                                        panic!("Shouldn't be anything there");
-                                    }
-
-                                    let address_data = states
-                                        .address_index_to_address_data
-                                        .entry(address_index)
-                                        // Will always insert, it's to avoid insert + get
-                                        .or_insert(AddressData::from_empty(&empty_address_data));
-
-                                    (address_data, address_index)
-                                }
+                                (address_data, address_index)
                             } else {
                                 let address_index =
                                     databases.address_to_address_index.metadata.serial as u32;
@@ -323,9 +286,12 @@ pub fn parse(
                                     );
                                 }
 
-                                let address_data = states
-                                    .address_index_to_address_data
+                                // Checked new
+                                let address_data = address_index_to_address_data
                                     .entry(address_index)
+                                    .and_modify(|_| {
+                                        panic!("Shouldn't exist");
+                                    })
                                     // Will always insert, it's to avoid insert + get
                                     .or_insert(AddressData::new(address_type));
 
@@ -342,9 +308,9 @@ pub fn parse(
 
                         address_realized_data.receive(amount);
 
-                        states
+                        databases
                             .txout_index_to_address_index
-                            .insert(txout_index, address_index);
+                            .unsafe_insert(txout_index, address_index);
                     }
                 });
 
@@ -355,11 +321,10 @@ pub fn parse(
             if !utxos.is_empty() {
                 last_block.spendable_outputs += utxos.len() as u32;
 
-                databases.txid_to_tx_index.insert(&txid, tx_index);
-
-                states.tx_index_to_tx_data.insert(
-                    tx_index,
+                databases.txid_to_tx_data.insert(
+                    &txid,
                     TxData::new(
+                        tx_index,
                         BlockPath::new(date_index as u16, block_index as u16),
                         utxos.len() as u16,
                     ),
@@ -371,20 +336,29 @@ pub fn parse(
             // ---
 
             if !is_coinbase {
-                tx.input.into_iter().try_for_each(|txin| {
+                tx.input.iter().try_for_each(|txin| {
                     let outpoint = txin.previous_output;
                     let input_txid = outpoint.txid;
                     let input_vout = outpoint.vout;
 
-                    let input_tx_index = {
-                        let input_tx_index = txin_ordered_tx_indexes.pop().unwrap().or_else(|| {
-                            databases
-                                .txid_to_tx_index
-                                .unsafe_get_from_puts(&input_txid)
-                                .cloned()
-                        });
+                    let remove_tx_data_from_cached_puts = {
+                        let mut is_tx_data_from_cached_puts = false;
 
-                        if input_tx_index.is_none() {
+                        let input_tx_data = txid_to_tx_data
+                            .get_mut(&input_txid)
+                            .unwrap()
+                            .as_mut()
+                            .or_else(|| {
+                                is_tx_data_from_cached_puts = true;
+
+                                databases
+                                    .txid_to_tx_data
+                                    .unsafe_get_mut_from_puts(&input_txid)
+                            });
+
+                        // Can be none because 0 sats inputs happen
+                        // https://mempool.space/tx/f329e55c2de9b821356e6f2c4bba923ea7030cad61120f5ced5d4429f5c86fda#vin=27
+                        if input_tx_data.is_none() {
                             if !enable_check_if_txout_value_is_zero_in_db
                                 || bitcoin_db
                                     .check_if_txout_value_is_zero(&input_txid, input_vout as usize)
@@ -396,15 +370,40 @@ pub fn parse(
                             panic!("Txid to be in txid_to_tx_data");
                         }
 
-                        let input_tx_index = input_tx_index.unwrap();
-
+                        let input_tx_data = input_tx_data.unwrap();
+                        let input_tx_index = input_tx_data.index;
                         let input_vout = input_vout as u16;
-
                         let input_txout_index = TxoutIndex::new(input_tx_index, input_vout);
 
-                        let input_tx_data = states.tx_index_to_tx_data.get_mut(&input_tx_index);
+                        // if input_tx_index == 2516 || input_tx_index == 2490 {
+                        //     dbg!(input_tx_index, &input_tx_data.utxos);
+                        // }
 
-                        if input_tx_data.is_none() {
+                        // let input_amount = input_tx_data.utxos.remove(&input_vout);
+
+                        let input_amount_and_address_index = databases
+                            .txout_index_to_amount
+                            .remove(&input_txout_index)
+                            .map(|amount| {
+                                // dbg!(amount);
+
+                                (
+                                    amount,
+                                    databases
+                                        .txout_index_to_address_index
+                                        .remove(&input_txout_index),
+                                )
+                            }) // Remove from cached puts
+                            .or_else(|| {
+                                // dbg!("KOPEKFPWOEFKOP");
+                                txout_index_to_amount_and_address_index.remove(&input_txout_index)
+                            });
+
+                        // if input_txout_index.tx_index == 2516 {
+                        //     dbg!(height, &input_txout_index, &input_amount_and_address_index);
+                        // }
+
+                        if input_amount_and_address_index.is_none() {
                             if !enable_check_if_txout_value_is_zero_in_db
                                 || bitcoin_db
                                     .check_if_txout_value_is_zero(&input_txid, input_vout as usize)
@@ -418,40 +417,19 @@ pub fn parse(
                                 input_tx_index,
                                 input_vout,
                                 input_tx_data,
+                                txid,
                             ));
                             panic!("Txout index to be in txout_index_to_txout_value");
                         }
-
-                        let input_tx_data = input_tx_data.unwrap();
-
-                        let input_amount = states.txout_index_to_amount.remove(&input_txout_index);
-
-                        if input_amount.is_none() {
-                            if !enable_check_if_txout_value_is_zero_in_db
-                                || bitcoin_db
-                                    .check_if_txout_value_is_zero(&input_txid, input_vout as usize)
-                            {
-                                return ControlFlow::Continue::<()>(());
-                            }
-
-                            dbg!((
-                                input_txid,
-                                tx_index,
-                                input_tx_index,
-                                input_vout,
-                                input_tx_data,
-                            ));
-                            panic!("Txout index to be in txout_index_to_txout_value");
-                        }
-
-                        let input_amount = *input_amount.unwrap();
-
-                        let input_block_path = input_tx_data.block_path;
-
-                        let input_tx_data =
-                            states.tx_index_to_tx_data.get_mut(&input_tx_index).unwrap();
 
                         input_tx_data.utxos -= 1;
+
+                        let (input_amount, input_address_index) =
+                            input_amount_and_address_index.unwrap();
+
+                        let input_amount = *input_amount;
+
+                        let input_block_path = input_tx_data.block_path;
 
                         let BlockPath {
                             date_index: input_date_index,
@@ -482,6 +460,10 @@ pub fn parse(
 
                         input_block_data.spendable_outputs -= 1;
 
+                        if *input_block_data.amount < input_amount {
+                            unreachable!();
+                        }
+
                         *input_block_data.amount -= input_amount;
 
                         inputs_sum += input_amount;
@@ -498,65 +480,70 @@ pub fn parse(
                             * date.signed_duration_since(*input_date_data.date).num_days() as u64;
 
                         if compute_addresses {
-                            let input_address_index = states
-                                .txout_index_to_address_index
-                                .remove(&input_txout_index)
-                                .unwrap();
+                            let input_address_index = input_address_index.unwrap_or_else(|| {
+                                dbg!(
+                                    height,
+                                    input_amount,
+                                    &input_tx_data,
+                                    input_address_index,
+                                    input_txout_index,
+                                    txid,
+                                    input_txid,
+                                    input_vout
+                                );
+                                panic!()
+                            });
 
-                            let input_address_is_empty = {
-                                let input_address_data = states
-                                    .address_index_to_address_data
-                                    .get_mut(&input_address_index)
-                                    .unwrap_or_else(|| {
-                                        dbg!(input_address_index);
-                                        panic!();
+                            let address_index_to_address_data =
+                                address_index_to_address_data.as_mut().unwrap();
+
+                            let input_address_data = address_index_to_address_data
+                                .get_mut(&input_address_index)
+                                .unwrap_or_else(|| {
+                                    dbg!(
+                                        input_address_index,
+                                        input_txout_index,
+                                        input_txid,
+                                        input_vout
+                                    );
+                                    panic!();
+                                });
+
+                            let input_address_realized_data =
+                                address_index_to_address_realized_data
+                                    .entry(input_address_index)
+                                    .or_insert_with(|| {
+                                        AddressRealizedData::default(input_address_data)
                                     });
 
-                                let input_address_realized_data =
-                                    address_index_to_address_realized_data
-                                        .entry(input_address_index)
-                                        .or_insert_with(|| {
-                                            AddressRealizedData::default(input_address_data)
-                                        });
+                            // MUST be after `or_insert_with`
+                            let address_realized_profit_or_loss = input_address_data
+                                .send(input_amount, input_block_data.price)
+                                .unwrap_or_else(|_| {
+                                    dbg!(
+                                        input_address_index,
+                                        txid,
+                                        input_txid,
+                                        input_amount,
+                                        tx_index,
+                                        input_tx_index,
+                                        input_vout,
+                                        input_address_data
+                                    );
 
-                                // MUST be after `or_insert_with`
-                                let address_realized_profit_or_loss =
-                                    input_address_data.send(input_amount, input_block_data.price);
+                                    panic!()
+                                });
 
-                                input_address_realized_data
-                                    .send(input_amount, address_realized_profit_or_loss);
+                            input_address_realized_data
+                                .send(input_amount, address_realized_profit_or_loss);
+                        };
 
-                                input_address_data.is_empty()
-                            };
-
-                            if input_address_is_empty {
-                                let input_address_data = states
-                                    .address_index_to_address_data
-                                    .remove(&input_address_index)
-                                    .unwrap();
-
-                                address_index_removed_at_least_once.insert(input_address_index);
-
-                                databases.address_index_to_empty_address_data.insert(
-                                    input_address_index,
-                                    EmptyAddressData::from_non_empty(&input_address_data),
-                                );
-
-                                address_index_to_removed_address_data
-                                    .insert(input_address_index, input_address_data);
-                            }
-                        }
-
-                        if input_tx_data.is_empty() {
-                            Some(input_tx_index)
-                        } else {
-                            None
-                        }
+                        is_tx_data_from_cached_puts && input_tx_data.is_empty()
                     };
 
-                    if let Some(input_tx_index) = input_tx_index {
-                        states.tx_index_to_tx_data.remove(&input_tx_index);
-                        databases.txid_to_tx_index.remove(&input_txid);
+                    if remove_tx_data_from_cached_puts {
+                        // Pre remove tx_datas that are empty and weren't yet added to the database to avoid having it was in there or not (and thus avoid useless operations)
+                        databases.txid_to_tx_data.remove_from_puts(&input_txid)
                     }
 
                     ControlFlow::Continue(())
@@ -577,9 +564,19 @@ pub fn parse(
         panic!("partial_txout_data_vec should've been fully consumed");
     }
 
-    if !txin_ordered_tx_indexes.is_empty() {
-        panic!("txin_ordered_tx_indexes should've been fully consumed");
-    }
+    txid_to_tx_data.into_iter().for_each(|(txid, tx_data)| {
+        if let Some(tx_data) = tx_data {
+            if tx_data.is_empty() {
+                databases.txid_to_tx_data.remove_from_db(txid);
+            } else {
+                databases.txid_to_tx_data.update(txid, tx_data);
+            }
+        }
+    });
+
+    // if !txin_ordered_tx_datas.is_empty() {
+    //     panic!("txin_ordered_tx_indexes should've been fully consumed");
+    // }
 
     let mut utxo_cohorts_sent_states = UTXOCohortsSentStates::default();
     let mut utxo_cohorts_one_shot_states = UTXOCohortsOneShotStates::default();
@@ -652,6 +649,8 @@ pub fn parse(
 
         if compute_addresses {
             scope.spawn(|| {
+                let address_index_to_address_data = address_index_to_address_data.as_ref().unwrap();
+
                 address_cohorts_realized_states.replace(AddressCohortsRealizedStates::default());
                 address_cohorts_input_states.replace(AddressCohortsInputStates::default());
                 address_cohorts_output_states.replace(AddressCohortsOutputStates::default());
@@ -660,20 +659,18 @@ pub fn parse(
                     |(address_index, address_realized_data)| {
                         // dbg!(address_realized_data);
 
-                        let current_address_data = states
-                            .address_index_to_address_data
-                            .get(address_index)
-                            .unwrap_or_else(|| {
-                                address_index_to_removed_address_data
-                                    .get(address_index)
-                                    .unwrap()
-                            });
+                        let current_address_data =
+                            address_index_to_address_data.get(address_index).unwrap();
 
                         states
                             .address_cohorts_durable_states
-                            .iterate(address_realized_data, current_address_data);
+                            .iterate(address_realized_data, current_address_data)
+                            .unwrap_or_else(|report| {
+                                dbg!(report, address_index);
+                                panic!();
+                            });
 
-                        if !address_realized_data.initial_address_data.is_new() {
+                        if !address_realized_data.initial_address_data.is_empty() {
                             // Realized == previous amount
                             // If a whale sent all its sats to another address at a loss, it's the whale that realized the loss not the now empty adress
                             let liquidity_classification = address_realized_data
@@ -683,12 +680,14 @@ pub fn parse(
                             address_cohorts_realized_states
                                 .as_mut()
                                 .unwrap()
-                                .iterate_realized(address_realized_data, &liquidity_classification);
+                                .iterate_realized(address_realized_data, &liquidity_classification)
+                                .unwrap();
 
                             address_cohorts_input_states
                                 .as_mut()
                                 .unwrap()
-                                .iterate_input(address_realized_data, &liquidity_classification);
+                                .iterate_input(address_realized_data, &liquidity_classification)
+                                .unwrap();
                         }
 
                         address_cohorts_output_states
@@ -697,7 +696,8 @@ pub fn parse(
                             .iterate_output(
                                 address_realized_data,
                                 &current_address_data.compute_liquidity_classification(),
-                            );
+                            )
+                            .unwrap();
                     },
                 );
 
@@ -717,7 +717,25 @@ pub fn parse(
         }
     });
 
-    // log("Finished heavy work !");
+    if compute_addresses {
+        // Insert to update, they were pre-removed in the pre-process functions
+        if let Some(address_index_to_address_data) = address_index_to_address_data {
+            address_index_to_address_data
+                .into_iter()
+                .for_each(|(address_index, address_data)| {
+                    if address_data.is_empty() {
+                        databases.address_index_to_empty_address_data.unsafe_insert(
+                            address_index,
+                            EmptyAddressData::from_non_empty(&address_data),
+                        );
+                    } else {
+                        databases
+                            .address_index_to_address_data
+                            .unsafe_insert(address_index, address_data);
+                    }
+                })
+        }
+    }
 
     datasets.insert(InsertData {
         address_cohorts_input_states: &address_cohorts_input_states,
@@ -728,7 +746,6 @@ pub fn parse(
         address_cohorts_output_states: &address_cohorts_output_states,
         address_cohorts_realized_states: &address_cohorts_realized_states,
         address_index_to_address_realized_data: &address_index_to_address_realized_data,
-        address_index_to_removed_address_data: &address_index_to_removed_address_data,
         block_interval,
         block_price,
         coinbase,
@@ -759,7 +776,7 @@ pub struct TxoutsParsingResults {
     op_returns: usize,
 }
 
-fn parse_txouts(
+fn pre_process_outputs(
     block: &Block,
     compute_addresses: bool,
     op_return_addresses: &mut Counter,
@@ -847,75 +864,155 @@ fn parse_txouts(
     }
 }
 
-fn take_empty_address_index_to_empty_address_data(
-    states: &mut States,
-    address_index_to_empty_address_data: &mut AddressIndexToEmptyAddressData,
-    partial_txout_data_vec: &[Option<PartialTxoutData>],
+#[allow(clippy::type_complexity)]
+fn pre_process_inputs<'a>(
+    block: &'a Block,
+    txid_to_tx_data_db: &mut TxidToTxData,
+    txout_index_to_amount_db: &mut TxoutIndexToAmount,
+    txout_index_to_address_index_db: &mut TxoutIndexToAddressIndex,
     compute_addresses: bool,
-) -> BTreeMap<u32, EmptyAddressData> {
+) -> (
+    BTreeMap<&'a Txid, Option<TxData>>,
+    BTreeMap<TxoutIndex, (WAmount, Option<u32>)>,
+) {
+    let mut txid_to_tx_data: BTreeMap<&Txid, Option<TxData>> = block
+        .txdata
+        .iter()
+        .skip(1) // Skip coinbase transaction
+        .flat_map(|transaction| &transaction.input)
+        .fold(BTreeMap::default(), |mut tree, tx_in| {
+            let txid = &tx_in.previous_output.txid;
+
+            txid_to_tx_data_db.open_db(txid);
+
+            tree.entry(txid).or_default();
+
+            tree
+        });
+
+    let mut tx_datas = txid_to_tx_data
+        .par_iter()
+        .map(|(txid, _)| txid_to_tx_data_db.unsafe_get(txid))
+        .collect::<Vec<_>>();
+
+    txid_to_tx_data.values_mut().rev().for_each(|tx_data_opt| {
+        *tx_data_opt = tx_datas.pop().unwrap().cloned();
+    });
+
+    let txout_index_to_amount_and_address_index = block
+        .txdata
+        .iter()
+        .skip(1) // Skip coinbase transaction
+        .flat_map(|transaction| &transaction.input)
+        .flat_map(|tx_in| {
+            let txid = &tx_in.previous_output.txid;
+
+            if let Some(Some(tx_data)) = txid_to_tx_data.get(txid) {
+                let txout_index = TxoutIndex::new(tx_data.index, tx_in.previous_output.vout as u16);
+
+                txout_index_to_amount_db.open_db(&txout_index);
+
+                if compute_addresses {
+                    txout_index_to_address_index_db.open_db(&txout_index);
+                }
+
+                Some(txout_index)
+            } else {
+                None
+            }
+        })
+        .collect_vec()
+        .into_par_iter()
+        .flat_map(|txout_index| {
+            txout_index_to_amount_db
+                .unsafe_get(&txout_index)
+                // Will be None if value of utxo is 0
+                // https://mempool.space/tx/9d8a0d851c9fb2cdf1c6d9406ce97e19e6911ae3503ab2dd5f38640bacdac996
+                // which is used later as input
+                .map(|amount| {
+                    let address_index = compute_addresses.then(|| {
+                        *txout_index_to_address_index_db
+                            .unsafe_get(&txout_index)
+                            .unwrap()
+                    });
+
+                    (txout_index, (*amount, address_index))
+                })
+        })
+        .collect::<BTreeMap<_, _>>();
+
+    // No need to call remove, it's being called later in the parse function
+    // To more easily support removing cached puts
+
+    (txid_to_tx_data, txout_index_to_amount_and_address_index)
+}
+
+fn compute_address_index_to_address_data(
+    address_index_to_address_data_db: &mut AddressIndexToAddressData,
+    address_index_to_empty_address_data_db: &mut AddressIndexToEmptyAddressData,
+    partial_txout_data_vec: &[Option<PartialTxoutData>],
+    txout_index_to_amount_and_address_index: &BTreeMap<TxoutIndex, (WAmount, Option<u32>)>,
+    compute_addresses: bool,
+) -> BTreeMap<u32, AddressData> {
     if !compute_addresses {
         return BTreeMap::default();
     }
 
-    let address_index_to_address_data = &mut states.address_index_to_address_data;
-
-    let mut empty_address_index_to_empty_address_data = partial_txout_data_vec
+    let mut address_index_to_address_data = partial_txout_data_vec
         .iter()
         .flatten()
         .flat_map(|partial_txout_data| partial_txout_data.address_index_opt)
-        .flat_map(|address_index| {
-            if address_index_to_address_data.contains_key(&address_index) {
-                None
-            } else {
-                address_index_to_empty_address_data.open_db(&address_index);
+        .map(|address_index| (address_index, true))
+        .chain(
+            txout_index_to_amount_and_address_index
+                .values()
+                .map(|(_, address_index)| (*address_index.as_ref().unwrap(), false)), // False because we assume non zero inputs values
+        )
+        .map(|(address_index, open_empty)| {
+            address_index_to_address_data_db.open_db(&address_index);
 
-                Some((address_index, EmptyAddressData::default()))
+            if open_empty {
+                address_index_to_empty_address_data_db.open_db(&address_index);
             }
+
+            (address_index, AddressData::default())
         })
         .collect::<BTreeMap<_, _>>();
 
-    empty_address_index_to_empty_address_data
+    address_index_to_address_data
         .par_iter_mut()
-        .for_each(|(address_index, empty_address_data)| {
-            empty_address_data.copy(
-                address_index_to_empty_address_data
-                    .unsafe_get(address_index)
-                    .unwrap(),
-            );
+        .for_each(|(address_index, address_data)| {
+            if let Some(_address_data) =
+                address_index_to_address_data_db.unsafe_get_from_cache(address_index)
+            {
+                _address_data.clone_into(address_data);
+            } else if let Some(empty_address_data) =
+                address_index_to_empty_address_data_db.unsafe_get_from_cache(address_index)
+            {
+                *address_data = AddressData::from_empty(empty_address_data);
+            } else if let Some(_address_data) =
+                address_index_to_address_data_db.unsafe_get_from_db(address_index)
+            {
+                _address_data.clone_into(address_data);
+            } else {
+                let empty_address_data = address_index_to_empty_address_data_db
+                    .unsafe_get_from_db(address_index)
+                    .unwrap();
+
+                *address_data = AddressData::from_empty(empty_address_data);
+            }
         });
 
     // Parallel unsafe_get + Linear remove = Parallel-ish take
-    empty_address_index_to_empty_address_data
-        .keys()
-        .for_each(|address_index| {
-            address_index_to_empty_address_data.remove(address_index);
-        });
-
-    empty_address_index_to_empty_address_data
-}
-
-fn query_txin_ordered_tx_indexes(
-    block: &Block,
-    txid_to_tx_index: &mut TxidToTxIndex,
-) -> Vec<Option<u32>> {
-    block
-        .txdata
+    address_index_to_address_data
         .iter()
-        .skip(1) // Skip coinbase transaction
-        .flat_map(|tx| &tx.input)
-        .for_each(|txin| {
-            txid_to_tx_index.open_db(&txin.previous_output.txid);
+        .for_each(|(address_index, address_data)| {
+            if address_data.is_empty() {
+                address_index_to_empty_address_data_db.remove(address_index);
+            } else {
+                address_index_to_address_data_db.remove(address_index);
+            }
         });
 
-    block
-        .txdata
-        .par_iter()
-        .skip(1) // Skip coinbase transaction
-        .flat_map(|tx| &tx.input)
-        .map(|txin| {
-            txid_to_tx_index
-                .unsafe_get(&txin.previous_output.txid)
-                .cloned()
-        })
-        .collect::<Vec<_>>()
+    address_index_to_address_data
 }

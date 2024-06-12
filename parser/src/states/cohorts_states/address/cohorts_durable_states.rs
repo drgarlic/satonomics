@@ -1,8 +1,9 @@
+use color_eyre::eyre::eyre;
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
 
 use crate::{
-    states::AddressIndexToAddressData,
+    databases::AddressIndexToAddressData,
     structs::{AddressData, AddressRealizedData},
     utils::convert_cents_to_significant_cents,
 };
@@ -13,12 +14,11 @@ use super::{AddressCohortDurableStates, AddressCohortsOneShotStates, SplitByAddr
 pub struct AddressCohortsDurableStates(SplitByAddressCohort<AddressCohortDurableStates>);
 
 impl AddressCohortsDurableStates {
-    pub fn init(address_index_to_address_data: &AddressIndexToAddressData) -> Self {
+    pub fn init(address_index_to_address_data: &mut AddressIndexToAddressData) -> Self {
         let mut s = Self::default();
 
         address_index_to_address_data
-            .iter()
-            .for_each(|(_, address_data)| s.increment(address_data));
+            .iter(&mut |(_, address_data)| s.increment(address_data).unwrap());
 
         s
     }
@@ -27,28 +27,40 @@ impl AddressCohortsDurableStates {
         &mut self,
         address_realized_data: &AddressRealizedData,
         current_address_data: &AddressData,
-    ) {
-        self.decrement(&address_realized_data.initial_address_data);
-        self.increment(current_address_data);
+    ) -> color_eyre::Result<()> {
+        self.decrement(&address_realized_data.initial_address_data)
+            .inspect_err(|report| {
+                dbg!(report);
+                dbg!(address_realized_data, current_address_data);
+                dbg!("decrement initial address_data");
+            })?;
+
+        self.increment(current_address_data).inspect_err(|report| {
+            dbg!(report);
+            dbg!(address_realized_data, current_address_data);
+            dbg!("increment address_data");
+        })?;
+
+        Ok(())
     }
 
     /// Should always increment using current address data state
-    fn increment(&mut self, address_data: &AddressData) {
+    fn increment(&mut self, address_data: &AddressData) -> color_eyre::Result<()> {
         self._crement(address_data, true)
     }
 
     /// Should always decrement using initial address data state
-    fn decrement(&mut self, address_data: &AddressData) {
+    fn decrement(&mut self, address_data: &AddressData) -> color_eyre::Result<()> {
         self._crement(address_data, false)
     }
 
-    fn _crement(&mut self, address_data: &AddressData, increment: bool) {
+    fn _crement(&mut self, address_data: &AddressData, increment: bool) -> color_eyre::Result<()> {
         // No need to either insert or remove if empty
         if address_data.is_empty() {
-            return;
+            return Ok(());
         }
 
-        let amount = *address_data.amount;
+        let amount = address_data.amount;
         let utxo_count = address_data.outputs_len as usize;
 
         let mean_cents_paid = convert_cents_to_significant_cents(address_data.mean_cents_paid);
@@ -61,23 +73,31 @@ impl AddressCohortsDurableStates {
         self.0
             .iterate(address_data, |state: &mut AddressCohortDurableStates| {
                 if increment {
-                    state.increment(
+                    if let Err(report) = state.increment(
                         amount,
                         utxo_count,
                         mean_cents_paid,
                         &split_sat_amount,
                         &split_utxo_count,
-                    );
-                } else {
-                    state.decrement(
-                        amount,
-                        utxo_count,
-                        mean_cents_paid,
-                        &split_sat_amount,
-                        &split_utxo_count,
-                    )
+                    ) {
+                        dbg!(report, &state, &address_data, &liquidity_classification);
+                        return Err(eyre!("increment error"));
+                    }
+                } else if let Err(report) = state.decrement(
+                    amount,
+                    utxo_count,
+                    mean_cents_paid,
+                    &split_sat_amount,
+                    &split_utxo_count,
+                ) {
+                    dbg!(report, &state, &address_data, &liquidity_classification);
+                    return Err(eyre!("decrement error"));
                 }
-            });
+
+                Ok(())
+            })?;
+
+        Ok(())
     }
 
     pub fn compute_one_shot_states(

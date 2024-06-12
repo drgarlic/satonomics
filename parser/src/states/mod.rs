@@ -1,74 +1,44 @@
 use std::thread;
 
 mod _trait;
-mod address_index_to_address_data;
 mod cohorts_states;
 mod counters;
 mod date_data_vec;
-mod tx_index_to_tx_data;
-mod txout_index_to_address_index;
-mod txout_index_to_sats;
 
 pub use _trait::*;
-use address_index_to_address_data::*;
 pub use cohorts_states::*;
 use counters::*;
 use date_data_vec::*;
-use tx_index_to_tx_data::*;
-use txout_index_to_address_index::*;
-use txout_index_to_sats::*;
 
-use crate::utils::log;
+use crate::{databases::AddressIndexToAddressData, utils::log};
 
 #[derive(Default)]
 pub struct States {
-    pub address_index_to_address_data: AddressIndexToAddressData,
     pub address_counters: Counters,
     pub date_data_vec: DateDataVec,
     pub address_cohorts_durable_states: AddressCohortsDurableStates,
     pub utxo_cohorts_durable_states: UTXOCohortsDurableStates,
-    pub tx_index_to_tx_data: TxIndexToTxData,
-    pub txout_index_to_address_index: TxoutIndexToAddressIndex,
-    pub txout_index_to_amount: TxoutIndexToAmount,
 }
 
 impl States {
-    pub fn import() -> color_eyre::Result<Self> {
-        let address_index_to_address_data_handle = thread::spawn(AddressIndexToAddressData::import);
-
-        let tx_index_to_tx_data_handle = thread::spawn(TxIndexToTxData::import);
-
-        let txout_index_to_address_index_handle = thread::spawn(TxoutIndexToAddressIndex::import);
-
-        let txout_index_to_amount_handle = thread::spawn(TxoutIndexToAmount::import);
-
+    pub fn import(
+        address_index_to_address_data: &mut AddressIndexToAddressData,
+    ) -> color_eyre::Result<Self> {
         let date_data_vec_handle = thread::spawn(DateDataVec::import);
 
         let address_counters = Counters::import()?;
 
         let date_data_vec = date_data_vec_handle.join().unwrap()?;
 
-        let txout_index_to_address_index = txout_index_to_address_index_handle.join().unwrap()?;
-
-        let txout_index_to_amount = txout_index_to_amount_handle.join().unwrap()?;
-
-        let tx_index_to_tx_data = tx_index_to_tx_data_handle.join().unwrap()?;
-
-        let address_index_to_address_data = address_index_to_address_data_handle.join().unwrap()?;
-
         let address_cohorts_durable_states =
-            AddressCohortsDurableStates::init(&address_index_to_address_data);
+            AddressCohortsDurableStates::init(address_index_to_address_data);
 
         let utxo_cohorts_durable_states = UTXOCohortsDurableStates::init(&date_data_vec);
 
         Ok(Self {
             address_cohorts_durable_states,
             address_counters,
-            address_index_to_address_data,
             date_data_vec,
-            tx_index_to_tx_data,
-            txout_index_to_address_index,
-            txout_index_to_amount,
             utxo_cohorts_durable_states,
         })
     }
@@ -77,15 +47,11 @@ impl States {
         log("Reseting all states...");
 
         let _ = self.date_data_vec.reset();
-        let _ = self.tx_index_to_tx_data.reset();
-        let _ = self.txout_index_to_amount.reset();
 
         self.utxo_cohorts_durable_states = UTXOCohortsDurableStates::default();
 
         // TODO: Check that they are ONLY computed in an `if include_addresses`
         if include_addresses {
-            let _ = self.txout_index_to_address_index.reset();
-            let _ = self.address_index_to_address_data.reset();
             let _ = self.address_counters.reset();
 
             self.address_cohorts_durable_states = AddressCohortsDurableStates::default();
@@ -94,12 +60,8 @@ impl States {
 
     pub fn export(&self) -> color_eyre::Result<()> {
         thread::scope(|s| {
-            s.spawn(|| self.address_index_to_address_data.export().unwrap());
             s.spawn(|| self.address_counters.export().unwrap());
             s.spawn(|| self.date_data_vec.export().unwrap());
-            s.spawn(|| self.tx_index_to_tx_data.export().unwrap());
-            s.spawn(|| self.txout_index_to_address_index.export().unwrap());
-            s.spawn(|| self.txout_index_to_amount.export().unwrap());
         });
 
         Ok(())

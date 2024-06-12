@@ -8,8 +8,11 @@ use derive_deref::{Deref, DerefMut};
 
 // https://docs.rs/sanakirja/latest/sanakirja/index.html
 // https://pijul.org/posts/2021-02-06-rethinking-sanakirja/
+//
 // Seems indeed much faster than ReDB and LMDB (heed)
 // But a lot has changed code wise between them so a retest wouldn't hurt
+//
+// Possible compression: https://pijul.org/posts/sanakirja-zstd/
 use sanakirja::{
     btree::{self, page, page_unsized, BTreeMutPage, Db_},
     direct_repr, Commit, Env, Error, MutTxn, RootDb, Storable, UnsizedStorable,
@@ -27,11 +30,12 @@ pub struct Database<KeyTree, KeyDB, Value, Page>
 where
     KeyTree: Ord + Clone + Debug,
     KeyDB: Ord + ?Sized + Storable,
-    Value: Copy + Storable + PartialEq,
+    Value: Storable + PartialEq,
     Page: BTreeMutPage<KeyDB, Value>,
 {
-    cached_puts: BTreeMap<KeyTree, Value>,
-    cached_dels: BTreeSet<KeyTree>,
+    // cached_updates: BTreeMap<KeyTree, Value>,
+    pub cached_puts: BTreeMap<KeyTree, Value>,
+    pub cached_dels: BTreeSet<KeyTree>,
     db: Db_<KeyDB, Value, Page>,
     txn: MutTxn<Env, ()>,
     key_tree_to_key_db: fn(&KeyTree) -> &KeyDB,
@@ -45,7 +49,7 @@ impl<KeyDB, KeyTree, Value, Page> Database<KeyTree, KeyDB, Value, Page>
 where
     KeyTree: Ord + Clone + Debug,
     KeyDB: Ord + ?Sized + Storable,
-    Value: Copy + Storable + PartialEq,
+    Value: Storable + PartialEq,
     Page: BTreeMutPage<KeyDB, Value>,
 {
     pub fn open(
@@ -62,10 +66,23 @@ where
         Ok(Self {
             cached_puts: BTreeMap::default(),
             cached_dels: BTreeSet::default(),
+            // cached_updates: BTreeMap::default(),
             db,
             txn,
             key_tree_to_key_db,
         })
+    }
+
+    pub fn iter<F>(&self, callback: &mut F)
+    where
+        F: FnMut((&KeyDB, &Value)),
+    {
+        btree::iter(&self.txn, &self.db, None)
+            .unwrap()
+            .for_each(|entry| {
+                let (k, v) = entry.unwrap();
+                callback((k, v))
+            });
     }
 
     pub fn get(&self, key: &KeyTree) -> Option<&Value> {
@@ -76,10 +93,34 @@ where
         self.db_get(key)
     }
 
+    pub fn db_get(&self, key: &KeyTree) -> Option<&Value> {
+        let k = (self.key_tree_to_key_db)(key);
+
+        let option = btree::get(&self.txn, &self.db, k, None).unwrap();
+
+        if let Some((k_found, v)) = option {
+            if k == k_found {
+                return Some(v);
+            }
+        }
+
+        None
+    }
+
     #[inline(always)]
     pub fn get_from_puts(&self, key: &KeyTree) -> Option<&Value> {
         self.cached_puts.get(key)
     }
+
+    #[inline(always)]
+    pub fn get_mut_from_puts(&mut self, key: &KeyTree) -> Option<&mut Value> {
+        self.cached_puts.get_mut(key)
+    }
+
+    // pub fn db_take(&mut self, key: &KeyTree) -> Option<&Value> {
+    //     self.cached_dels.insert(key.clone());
+    //     self.db_get(key)
+    // }
 
     // pub fn take(&mut self, key: &KeyTree) -> Option<Value> {
     //     if !self.cached_dels.contains(key) {
@@ -95,10 +136,23 @@ where
     // }
 
     #[inline(always)]
-    pub fn remove(&mut self, key: &KeyTree) {
-        if self.remove_from_puts(key).is_none() {
-            self.cached_dels.insert(key.clone());
-        }
+    pub fn remove(&mut self, key: &KeyTree) -> Option<Value> {
+        self.remove_from_puts(key).or_else(|| {
+            self.db_remove(key);
+
+            None
+        })
+    }
+
+    #[inline(always)]
+    pub fn db_remove(&mut self, key: &KeyTree) {
+        self.cached_dels.insert(key.clone());
+    }
+
+    pub fn update(&mut self, key: KeyTree, value: Value) -> Option<Value> {
+        self.cached_dels.insert(key.clone());
+
+        self.cached_puts.insert(key, value)
     }
 
     #[inline(always)]
@@ -106,24 +160,21 @@ where
         self.cached_puts.remove(key)
     }
 
+    // #[inline(always)]
+    // pub fn remove_from_updates(&mut self, key: &KeyTree) -> Option<Value> {
+    //     self.cached_updates.remove(key)
+    // }
+
     #[inline(always)]
     pub fn insert(&mut self, key: KeyTree, value: Value) -> Option<Value> {
         self.cached_dels.remove(&key);
-        self.cached_puts.insert(key, value)
+
+        self.unsafe_insert(key, value)
     }
 
-    fn db_get(&self, key: &KeyTree) -> Option<&Value> {
-        let k = (self.key_tree_to_key_db)(key);
-
-        let option = btree::get(&self.txn, &self.db, k, None).unwrap();
-
-        if let Some((k_found, v)) = option {
-            if k == k_found {
-                return Some(v);
-            }
-        }
-
-        None
+    #[inline(always)]
+    pub fn unsafe_insert(&mut self, key: KeyTree, value: Value) -> Option<Value> {
+        self.cached_puts.insert(key, value)
     }
 
     fn init_txn(folder: &str, file: &str) -> color_eyre::Result<MutTxn<Env, ()>> {

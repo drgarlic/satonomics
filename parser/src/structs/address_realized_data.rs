@@ -4,13 +4,13 @@ use super::AddressData;
 
 #[derive(Debug)]
 pub struct AddressRealizedData {
+    pub initial_address_data: AddressData,
     pub received: Amount,
     pub sent: Amount,
     pub profit: f32,
     pub loss: f32,
     pub utxos_created: u32,
     pub utxos_destroyed: u32,
-    pub initial_address_data: AddressData,
 }
 
 impl AddressRealizedData {

@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{env, sync::Arc};
 
 use axum::{extract::State, http::HeaderMap, response::Response, routing::get, serve, Router};
 use reqwest::header::HOST;
@@ -55,7 +55,18 @@ async fn main() -> color_eyre::Result<()> {
         .with_state(state)
         .layer(compression_layer);
 
-    let listener = TcpListener::bind("0.0.0.0:3111").await?;
+    let port = if env::current_dir()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .contains("satonomics_main")
+    {
+        "3112"
+    } else {
+        "3111"
+    };
+
+    let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await?;
 
     serve(listener, router).await?;
 

@@ -32,7 +32,8 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
 
     log("Imported databases");
 
-    let mut states = States::import().unwrap_or_default();
+    let mut states =
+        States::import(&mut databases.address_index_to_address_data).unwrap_or_default();
     // ROM: 8GB of bin files
     // RAM: 17.62GB with everything
     // ---

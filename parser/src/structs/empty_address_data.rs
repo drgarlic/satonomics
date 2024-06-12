@@ -19,12 +19,7 @@ impl EmptyAddressData {
 
         Self {
             address_type: non_empty.address_type,
-            transfered: *non_empty.sent,
+            transfered: non_empty.sent,
         }
-    }
-
-    pub fn copy(&mut self, empty_address_data: &EmptyAddressData) {
-        self.address_type = empty_address_data.address_type;
-        self.transfered = empty_address_data.transfered;
     }
 }

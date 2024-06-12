@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 use bitcoin::Amount;
+use color_eyre::eyre::eyre;
 use derive_deref::{Deref, DerefMut};
 
 use super::{OneShotStates, UnrealizedState};
@@ -13,25 +14,32 @@ impl PriceInCentsToAmount {
         *self.entry(cents).or_default() += amount;
     }
 
-    pub fn decrement(&mut self, cents: u32, amount: Amount) {
+    pub fn decrement(&mut self, cents: u32, amount: Amount) -> color_eyre::Result<()> {
         let delete = {
-            let _amount = self.get_mut(&cents);
+            let self_amount = self.get_mut(&cents);
 
-            if _amount.is_none() {
+            if self_amount.is_none() {
                 dbg!(&self.0, cents, amount);
-                panic!();
+                return Err(eyre!("self_amount is none"));
             }
 
-            let _amount = _amount.unwrap();
+            let self_amount = self_amount.unwrap();
 
-            *_amount -= amount;
+            if *self_amount < amount {
+                dbg!(*self_amount, &self.0, cents, amount);
+                return Err(eyre!("self amount < amount"));
+            }
 
-            amount == Amount::ZERO
+            *self_amount -= amount;
+
+            *self_amount == Amount::ZERO
         };
 
         if delete {
             self.remove(&cents).unwrap();
         }
+
+        Ok(())
     }
 
     pub fn compute_one_shot_states(

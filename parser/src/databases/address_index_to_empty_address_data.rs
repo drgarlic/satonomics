@@ -38,19 +38,19 @@ impl DerefMut for AddressIndexToEmptyAddressData {
 const DB_MAX_SIZE: usize = 1_000_000;
 
 impl AddressIndexToEmptyAddressData {
-    pub fn insert(&mut self, key: Key, value: Value) -> Option<Value> {
+    pub fn unsafe_insert(&mut self, key: Key, value: Value) -> Option<Value> {
         self.metadata.called_insert();
 
-        self.open_db(&key).insert(key, value)
+        self.open_db(&key).unsafe_insert(key, value)
     }
 
-    pub fn undo_insert(&mut self, key: &Key) -> Option<Value> {
-        self.metadata.called_remove();
+    // pub fn undo_insert(&mut self, key: &Key) -> Option<Value> {
+    //     self.metadata.called_remove();
 
-        self.open_db(key).remove_from_puts(key)
-    }
+    //     self.open_db(key).remove_from_puts(key)
+    // }
 
-    pub fn remove(&mut self, key: &Key) {
+    pub fn remove(&mut self, key: &Key) -> Option<Value> {
         self.metadata.called_remove();
 
         self.open_db(key).remove(key)
@@ -58,10 +58,16 @@ impl AddressIndexToEmptyAddressData {
 
     /// Doesn't check if the database is open contrary to `safe_get` which does and opens if needed
     /// Though it makes it easy to use with rayon.
-    pub fn unsafe_get(&self, key: &Key) -> Option<&Value> {
+    pub fn unsafe_get_from_cache(&self, key: &Key) -> Option<&Value> {
         let db_index = Self::db_index(key);
 
-        self.get(&db_index).unwrap().get(key)
+        self.get(&db_index).and_then(|db| db.get_from_puts(key))
+    }
+
+    pub fn unsafe_get_from_db(&self, key: &Key) -> Option<&Value> {
+        let db_index = Self::db_index(key);
+
+        self.get(&db_index).unwrap().db_get(key)
     }
 
     pub fn open_db(&mut self, key: &Key) -> &mut Database {

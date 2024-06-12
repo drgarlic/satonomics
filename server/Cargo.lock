@@ -96,26 +96,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "auto-delegate"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4fc2baf5c0fb9ceed34d215035d6f803f663dc82692095a4f3dc5e2191f75eba"
-dependencies = [
- "auto-delegate-impl",
-]
-
-[[package]]
-name = "auto-delegate-impl"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2875dc002b18de95e401398de6b21b3ae040bea451fbeef14cec3a59dfedd478"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.60",
-]
-
-[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1271,7 +1251,6 @@ dependencies = [
 name = "parser"
 version = "0.1.0"
 dependencies = [
- "auto-delegate",
  "bitcoin",
  "bitcoin_hashes 0.14.0",
  "byteorder",

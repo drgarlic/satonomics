@@ -56,21 +56,27 @@ impl<T> SplitByAddressCohort<T> {
         }
     }
 
-    pub fn iterate(&mut self, address_data: &AddressData, iterate: impl Fn(&mut T)) {
+    pub fn iterate(
+        &mut self,
+        address_data: &AddressData,
+        iterate: impl Fn(&mut T) -> color_eyre::Result<()>,
+    ) -> color_eyre::Result<()> {
         if let Some(state) = self.get_mut_from_split(&AddressSplit::All) {
-            iterate(state);
+            iterate(state)?;
         }
 
         if let Some(state) = self.get_mut_from_split(&AddressSplit::Type(address_data.address_type))
         {
-            iterate(state);
+            iterate(state)?;
         }
 
         if let Some(state) = self.get_mut_from_split(&AddressSplit::Size(AddressSize::from_amount(
-            *address_data.amount,
+            address_data.amount,
         ))) {
-            iterate(state);
+            iterate(state)?;
         }
+
+        Ok(())
     }
 
     fn get_mut_from_split(&mut self, split: &AddressSplit) -> Option<&mut T> {

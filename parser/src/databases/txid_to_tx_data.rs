@@ -8,18 +8,20 @@ use bitcoin::Txid;
 use chrono::NaiveDate;
 use rayon::prelude::*;
 
+use crate::structs::TxData;
+
 use super::{AnyDatabaseGroup, Metadata, SizedDatabase, U8x31};
 
 type Key = U8x31;
-type Value = u32;
+type Value = TxData;
 type Database = SizedDatabase<Key, Value>;
 
-pub struct TxidToTxIndex {
+pub struct TxidToTxData {
     map: BTreeMap<u8, Database>,
     pub metadata: Metadata,
 }
 
-impl Deref for TxidToTxIndex {
+impl Deref for TxidToTxData {
     type Target = BTreeMap<u8, Database>;
 
     fn deref(&self) -> &Self::Target {
@@ -27,17 +29,18 @@ impl Deref for TxidToTxIndex {
     }
 }
 
-impl DerefMut for TxidToTxIndex {
+impl DerefMut for TxidToTxData {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.map
     }
 }
 
-impl TxidToTxIndex {
+impl TxidToTxData {
     pub fn insert(&mut self, txid: &Txid, tx_index: Value) -> Option<Value> {
         self.metadata.called_insert();
 
         let txid_key = Self::txid_to_key(txid);
+
         self.open_db(txid).insert(txid_key, tx_index)
     }
 
@@ -50,23 +53,53 @@ impl TxidToTxIndex {
     /// Though it makes it easy to use with rayon
     pub fn unsafe_get(&self, txid: &Txid) -> Option<&Value> {
         let txid_key = Self::txid_to_key(txid);
+
         let db_index = Self::db_index(txid);
+
         self.get(&db_index).unwrap().get(&txid_key)
     }
 
-    pub fn unsafe_get_from_puts(&self, txid: &Txid) -> Option<&Value> {
+    // pub fn unsafe_get_from_puts(&self, txid: &Txid) -> Option<&Value> {
+    //     let txid_key = Self::txid_to_key(txid);
+
+    //     let db_index = Self::db_index(txid);
+
+    //     self.get(&db_index).unwrap().get_from_puts(&txid_key)
+    // }
+
+    pub fn unsafe_get_mut_from_puts(&mut self, txid: &Txid) -> Option<&mut Value> {
         let txid_key = Self::txid_to_key(txid);
+
         let db_index = Self::db_index(txid);
-        self.get(&db_index).unwrap().get_from_puts(&txid_key)
+
+        self.get_mut(&db_index)
+            .unwrap()
+            .get_mut_from_puts(&txid_key)
     }
 
-    pub fn remove(&mut self, txid: &Txid) {
+    pub fn remove_from_db(&mut self, txid: &Txid) {
         self.metadata.called_remove();
 
         let txid_key = Self::txid_to_key(txid);
-        self.open_db(txid).remove(&txid_key);
+
+        self.open_db(txid).db_remove(&txid_key);
     }
 
+    pub fn remove_from_puts(&mut self, txid: &Txid) {
+        self.metadata.called_remove();
+
+        let txid_key = Self::txid_to_key(txid);
+
+        self.open_db(txid).remove_from_puts(&txid_key);
+    }
+
+    pub fn update(&mut self, txid: &Txid, tx_data: TxData) {
+        let txid_key = Self::txid_to_key(txid);
+
+        self.open_db(txid).update(txid_key, tx_data);
+    }
+
+    #[inline(always)]
     pub fn open_db(&mut self, txid: &Txid) -> &mut Database {
         let db_index = Self::db_index(txid);
 
@@ -84,7 +117,7 @@ impl TxidToTxIndex {
     }
 }
 
-impl AnyDatabaseGroup for TxidToTxIndex {
+impl AnyDatabaseGroup for TxidToTxData {
     fn import() -> Self {
         Self {
             map: BTreeMap::default(),
@@ -95,7 +128,11 @@ impl AnyDatabaseGroup for TxidToTxIndex {
     fn export(&mut self, height: usize, date: NaiveDate) -> color_eyre::Result<()> {
         mem::take(&mut self.map)
             .into_par_iter()
-            .try_for_each(|(_, db)| db.export())?;
+            .try_for_each(|(_, db)| {
+                // dbg!(&db.cached_dels, &db.cached_puts.values());
+
+                db.export()
+            })?;
 
         self.metadata.export(height, date)?;
 
@@ -107,6 +144,6 @@ impl AnyDatabaseGroup for TxidToTxIndex {
     }
 
     fn folder<'a>() -> &'a str {
-        "txid_to_tx_index"
+        "txid_to_tx_data"
     }
 }

@@ -1,11 +1,12 @@
-use std::f64::EPSILON;
+use std::f64::consts::E;
 
 use bitcoin::Amount;
 
+#[derive(Debug)]
 pub struct LiquidityClassification {
     illiquid: f64,
     liquid: f64,
-    highly_liquid: f64,
+    // highly_liquid: f64,
 }
 
 impl LiquidityClassification {
@@ -37,35 +38,48 @@ impl LiquidityClassification {
             }
         };
 
-        let illiquid = Self::compute_illiquid(liquidity);
-        let liquid = Self::compute_liquid(liquidity);
+        let illiquid_line = Self::compute_illiquid_line(liquidity);
+        let liquid_line = Self::compute_liquid_line(liquidity);
+
+        let illiquid = illiquid_line;
+        let liquid = liquid_line - illiquid_line;
+        let highly_liquid = 1.0 - liquid_line;
+
+        if illiquid < 0.0 || liquid < 0.0 || highly_liquid < 0.0 {
+            unreachable!()
+        }
 
         Self {
             illiquid,
             liquid,
-            highly_liquid: 1.0 - liquid - illiquid,
+            // highly_liquid: 1.0 - liquid - illiquid,
         }
     }
 
     #[inline(always)]
     pub fn split(&self, value: f64) -> LiquiditySplitResult {
+        let all = value;
+        let illiquid = value * self.illiquid;
+        let liquid = value * self.liquid;
+        let highly_liquid = all - illiquid - liquid;
+
         LiquiditySplitResult {
-            all: value,
-            illiquid: value * self.illiquid,
-            liquid: value * self.liquid,
-            highly_liquid: value * self.highly_liquid,
+            all,
+            illiquid,
+            liquid,
+            highly_liquid,
         }
     }
 
     /// Returns value in range 0.0..1.0
     #[inline(always)]
-    fn compute_illiquid(x: f64) -> f64 {
+    fn compute_illiquid_line(x: f64) -> f64 {
         Self::compute_ratio(x, 0.25)
     }
 
     /// Returns value in range 0.0..1.0
     #[inline(always)]
-    fn compute_liquid(x: f64) -> f64 {
+    fn compute_liquid_line(x: f64) -> f64 {
         Self::compute_ratio(x, 0.75)
     }
 
@@ -74,7 +88,7 @@ impl LiquidityClassification {
         let l = 1.0;
         let k = 25.0;
 
-        l / (1.0 + EPSILON.powf(k * (x - x0)))
+        l / (1.0 + E.powf(k * (x - x0)))
     }
 }
 

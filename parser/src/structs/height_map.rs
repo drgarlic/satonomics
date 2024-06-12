@@ -17,6 +17,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     bitcoin::NUMBER_OF_UNSAFE_BLOCKS,
     io::{format_path, Serialization},
+    log,
     utils::LossyFrom,
 };
 
@@ -153,7 +154,7 @@ where
         });
 
         if s.initial_first_unsafe_height.is_none() {
-            dbg!(path);
+            log(&format!("New {path}"));
         }
 
         s

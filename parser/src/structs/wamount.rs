@@ -1,5 +1,6 @@
 use bitcoin::Amount;
 use derive_deref::{Deref, DerefMut};
+use sanakirja::{direct_repr, Storable, UnsizedStorable};
 use savefile::IsReprC;
 use serde::{Deserialize, Serialize};
 
@@ -18,23 +19,13 @@ use serde::{Deserialize, Serialize};
     Deserialize,
 )]
 pub struct WAmount(Amount);
+direct_repr!(WAmount);
 
 impl WAmount {
     pub fn wrap(amount: Amount) -> Self {
         Self(amount)
     }
 }
-// impl From<Amount> for WAmount {
-//     fn from(amount: Amount) -> Self {
-//         WAmount(amount)
-//     }
-// }
-
-// impl Into<Amount> for WAmount {
-//     fn into(self) -> Amount {
-//         self.0
-//     }
-// }
 
 impl savefile::ReprC for WAmount {
     unsafe fn repr_c_optimization_safe(_version: u32) -> savefile::prelude::IsReprC {

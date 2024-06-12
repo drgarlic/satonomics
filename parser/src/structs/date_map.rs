@@ -16,9 +16,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     io::{format_path, Serialization},
+    log,
     utils::LossyFrom,
-    HeightMap,
-    // utils::ToF32,
+    HeightMap, // utils::ToF32,
 };
 
 use super::{AnyMap, MapValue, WNaiveDate};
@@ -152,7 +152,7 @@ where
         });
 
         if s.initial_first_unsafe_date.is_none() {
-            dbg!(path);
+            log(&format!("New {path}"));
         }
 
         s

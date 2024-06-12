@@ -8,9 +8,9 @@ use chrono::NaiveDate;
 
 use rayon::prelude::*;
 
-use crate::structs::{SizedDatabase, TxoutIndex};
+use crate::structs::TxoutIndex;
 
-use super::{AnyDatabaseGroup, Metadata};
+use super::{AnyDatabaseGroup, Metadata, SizedDatabase};
 
 type Key = TxoutIndex;
 type Value = u32;
@@ -35,22 +35,24 @@ impl DerefMut for TxoutIndexToAddressIndex {
     }
 }
 
-const DB_MAX_SIZE: usize = 100_000_000;
+const DB_MAX_SIZE: usize = 10_000_000_000;
 
 impl TxoutIndexToAddressIndex {
-    pub fn insert(&mut self, key: Key, value: Value) -> Option<Value> {
+    pub fn unsafe_insert(&mut self, key: Key, value: Value) -> Option<Value> {
         self.metadata.called_insert();
 
-        self.open_db(&key).insert(key, value)
+        self.open_db(&key).unsafe_insert(key, value)
     }
 
-    pub fn undo_insert(&mut self, key: &Key) -> Option<Value> {
-        self.metadata.called_remove();
+    // pub fn undo_insert(&mut self, key: &Key) -> Option<Value> {
+    //     self.open_db(key).remove_from_puts(key).map(|v| {
+    //         self.metadata.called_remove();
 
-        self.open_db(key).remove_from_puts(key)
-    }
+    //         v
+    //     })
+    // }
 
-    pub fn remove(&mut self, key: &Key) {
+    pub fn remove(&mut self, key: &Key) -> Option<Value> {
         self.metadata.called_remove();
 
         self.open_db(key).remove(key)
@@ -94,7 +96,11 @@ impl AnyDatabaseGroup for TxoutIndexToAddressIndex {
     fn export(&mut self, height: usize, date: NaiveDate) -> color_eyre::Result<()> {
         mem::take(&mut self.map)
             .into_par_iter()
-            .try_for_each(|(_, db)| db.export())?;
+            .try_for_each(|(_, db)| {
+                // dbg!(&db.cached_puts);
+
+                db.export()
+            })?;
 
         self.metadata.export(height, date)?;
 

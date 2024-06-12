@@ -46,7 +46,7 @@ impl UTXOCohortsDurableStates {
                     let block_data_year = timestamp_to_year(block_data.timestamp);
 
                     s.initial_filtered_apply(&increment_days_old, &block_data_year, |state| {
-                        state.increment(amount, utxo_count, price_in_cents);
+                        state.increment(amount, utxo_count, price_in_cents).unwrap();
                     });
                 });
         }
@@ -77,7 +77,7 @@ impl UTXOCohortsDurableStates {
 
         if block_data.height == last_block_data.height {
             self.initial_filtered_apply(&increment_days_old, &block_data_year, |state| {
-                state.increment(amount, utxo_count, price_in_cents);
+                state.increment(amount, utxo_count, price_in_cents).unwrap();
             })
         } else {
             let previous_last_block_data = previous_last_block_data.unwrap_or_else(|| {
@@ -111,10 +111,10 @@ impl UTXOCohortsDurableStates {
                 &increment_days_old,
                 &decrement_days_old,
                 |state| {
-                    state.increment(amount, utxo_count, price_in_cents);
+                    state.increment(amount, utxo_count, price_in_cents).unwrap();
                 },
                 |state| {
-                    state.decrement(amount, utxo_count, price_in_cents);
+                    state.decrement(amount, utxo_count, price_in_cents).unwrap();
                 },
             );
             // }
@@ -145,7 +145,7 @@ impl UTXOCohortsDurableStates {
         let block_data_year = timestamp_to_year(block_data.timestamp);
 
         self.initial_filtered_apply(&days_old, &block_data_year, |state| {
-            state.decrement(amount, utxo_count, price_in_cents);
+            state.decrement(amount, utxo_count, price_in_cents).unwrap();
         })
     }
 

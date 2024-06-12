@@ -15,14 +15,14 @@ impl AddressCohortsRealizedStates {
         &mut self,
         realized_data: &AddressRealizedData,
         liquidity_classification: &LiquidityClassification,
-    ) {
+    ) -> color_eyre::Result<()> {
         let profit = realized_data.profit as f64;
         let loss = realized_data.loss as f64;
 
         let split_profit = liquidity_classification.split(profit);
         let split_loss = liquidity_classification.split(loss);
 
-        let iterate = move |state: &mut SplitByLiquidity<RealizedState>| {
+        let iterate = move |state: &mut SplitByLiquidity<RealizedState>| -> color_eyre::Result<()> {
             state.all.iterate(profit as f32, loss as f32);
 
             state
@@ -37,8 +37,10 @@ impl AddressCohortsRealizedStates {
                 split_profit.highly_liquid as f32,
                 split_loss.highly_liquid as f32,
             );
+
+            Ok(())
         };
 
-        self.iterate(&realized_data.initial_address_data, iterate);
+        self.iterate(&realized_data.initial_address_data, iterate)
     }
 }

@@ -45,7 +45,7 @@ use crate::{
         // UTXOCohortsReceivedStates,
         UTXOCohortsSentStates,
     },
-    structs::{AddressData, AddressRealizedData},
+    structs::AddressRealizedData,
 };
 
 pub struct InsertData<'a> {
@@ -54,7 +54,6 @@ pub struct InsertData<'a> {
     pub address_cohorts_output_states: &'a Option<AddressCohortsOutputStates>,
     pub address_cohorts_realized_states: &'a Option<AddressCohortsRealizedStates>,
     pub address_index_to_address_realized_data: &'a BTreeMap<u32, AddressRealizedData>,
-    pub address_index_to_removed_address_data: &'a BTreeMap<u32, AddressData>,
     pub amount_sent: Amount,
     pub block_interval: u32,
     pub block_price: f32,

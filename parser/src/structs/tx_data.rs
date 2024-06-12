@@ -1,18 +1,22 @@
 use sanakirja::{direct_repr, Storable, UnsizedStorable};
-use savefile_derive::Savefile;
 
 use super::BlockPath;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Savefile)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct TxData {
+    pub index: u32,
     pub block_path: BlockPath,
     pub utxos: u16,
 }
 direct_repr!(TxData);
 
 impl TxData {
-    pub fn new(block_path: BlockPath, utxos: u16) -> Self {
-        Self { block_path, utxos }
+    pub fn new(index: u32, block_path: BlockPath, utxos: u16) -> Self {
+        Self {
+            index,
+            block_path,
+            utxos,
+        }
     }
 
     #[inline(always)]
