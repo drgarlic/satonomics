@@ -666,7 +666,7 @@ pub fn parse(
                             .address_cohorts_durable_states
                             .iterate(address_realized_data, current_address_data)
                             .unwrap_or_else(|report| {
-                                dbg!(report, address_index);
+                                dbg!(report.to_string(), address_index);
                                 panic!();
                             });
 

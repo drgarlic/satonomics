@@ -4,7 +4,7 @@ use rayon::prelude::*;
 
 use crate::{
     actions::SentData,
-    states::{DateDataVec, DurableStates},
+    states::DateDataVec,
     structs::BlockData,
     utils::{
         convert_price_to_significant_cents, difference_in_days_between_timestamps,
@@ -12,10 +12,10 @@ use crate::{
     },
 };
 
-use super::{SplitByUTXOCohort, UTXOCohortsOneShotStates};
+use super::{SplitByUTXOCohort, UTXOCohortDurableStates, UTXOCohortsOneShotStates};
 
 #[derive(Default, Deref, DerefMut)]
-pub struct UTXOCohortsDurableStates(SplitByUTXOCohort<DurableStates>);
+pub struct UTXOCohortsDurableStates(SplitByUTXOCohort<UTXOCohortDurableStates>);
 
 impl UTXOCohortsDurableStates {
     pub fn init(date_data_vec: &DateDataVec) -> Self {
@@ -85,12 +85,6 @@ impl UTXOCohortsDurableStates {
                 panic!()
             });
 
-            // let re_org = last_block_data.has_lower_or_equal_timestamp(previous_last_block_data);
-
-            // if re_org {
-            //     return;
-            // }
-
             // if block_data.has_lower_or_equal_timestamp(previous_last_block_data) {
             let decrement_days_old = difference_in_days_between_timestamps(
                 block_data.timestamp,
@@ -100,12 +94,6 @@ impl UTXOCohortsDurableStates {
             if increment_days_old == decrement_days_old {
                 return;
             }
-
-            // dbg!(
-            //     block_data.timestamp,
-            //     last_block_data.timestamp,
-            //     previous_last_block_data.timestamp
-            // );
 
             self.duo_filtered_apply(
                 &increment_days_old,
@@ -117,7 +105,6 @@ impl UTXOCohortsDurableStates {
                     state.decrement(amount, utxo_count, price_in_cents).unwrap();
                 },
             );
-            // }
         }
     }
 

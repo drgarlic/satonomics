@@ -154,23 +154,33 @@ impl CohortDataset {
         insert_data: &InsertData,
         liquidity_split_state: &AddressCohortDurableStates,
     ) {
-        self.all
-            .supply
-            .insert(insert_data, &liquidity_split_state.split.all.supply_state);
+        self.all.supply.insert(
+            insert_data,
+            &liquidity_split_state.split_durable_states.all.supply_state,
+        );
 
         self.illiquid.supply.insert(
             insert_data,
-            &liquidity_split_state.split.illiquid.supply_state,
+            &liquidity_split_state
+                .split_durable_states
+                .illiquid
+                .supply_state,
         );
 
         self.liquid.supply.insert(
             insert_data,
-            &liquidity_split_state.split.liquid.supply_state,
+            &liquidity_split_state
+                .split_durable_states
+                .liquid
+                .supply_state,
         );
 
         self.highly_liquid.supply.insert(
             insert_data,
-            &liquidity_split_state.split.highly_liquid.supply_state,
+            &liquidity_split_state
+                .split_durable_states
+                .highly_liquid
+                .supply_state,
         );
     }
 
@@ -179,22 +189,30 @@ impl CohortDataset {
         insert_data: &InsertData,
         liquidity_split_state: &AddressCohortDurableStates,
     ) {
-        self.all
-            .utxo
-            .insert(insert_data, &liquidity_split_state.split.all.utxo_state);
+        self.all.utxo.insert(
+            insert_data,
+            &liquidity_split_state.split_durable_states.all.utxo_state,
+        );
 
         self.illiquid.utxo.insert(
             insert_data,
-            &liquidity_split_state.split.illiquid.utxo_state,
+            &liquidity_split_state
+                .split_durable_states
+                .illiquid
+                .utxo_state,
         );
 
-        self.liquid
-            .utxo
-            .insert(insert_data, &liquidity_split_state.split.liquid.utxo_state);
+        self.liquid.utxo.insert(
+            insert_data,
+            &liquidity_split_state.split_durable_states.liquid.utxo_state,
+        );
 
         self.highly_liquid.utxo.insert(
             insert_data,
-            &liquidity_split_state.split.highly_liquid.utxo_state,
+            &liquidity_split_state
+                .split_durable_states
+                .highly_liquid
+                .utxo_state,
         );
     }
 

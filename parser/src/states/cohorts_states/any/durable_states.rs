@@ -1,12 +1,11 @@
 use bitcoin::Amount;
 use color_eyre::eyre::eyre;
 
-use super::{OneShotStates, PriceInCentsToAmount, SupplyState, UTXOState};
+use super::{SupplyState, UTXOState};
 
 #[derive(Default, Debug)]
 pub struct DurableStates {
-    price_in_cents_to_amount: PriceInCentsToAmount,
-
+    // price_in_cents_to_amount: PriceInCentsToValue<Amount>,
     pub supply_state: SupplyState,
     pub utxo_state: UTXOState,
 }
@@ -16,18 +15,18 @@ impl DurableStates {
         &mut self,
         amount: Amount,
         utxo_count: usize,
-        price_in_cents: u32,
+        // price_in_cents: u32,
     ) -> color_eyre::Result<()> {
         if amount == Amount::ZERO {
             if utxo_count != 0 {
-                dbg!(amount, amount.to_sat(), price_in_cents);
+                dbg!(amount, utxo_count);
                 return Err(eyre!("Shouldn't be possible"));
             }
         } else {
             self.supply_state.increment(amount);
             self.utxo_state.increment(utxo_count);
-            self.price_in_cents_to_amount
-                .increment(price_in_cents, amount);
+            // self.price_in_cents_to_amount
+            // .increment(price_in_cents, amount);
         }
 
         Ok(())
@@ -37,31 +36,32 @@ impl DurableStates {
         &mut self,
         amount: Amount,
         utxo_count: usize,
-        price_in_cents: u32,
+        // price_in_cents: u32,
     ) -> color_eyre::Result<()> {
         if amount == Amount::ZERO {
             if utxo_count != 0 {
+                dbg!(amount, utxo_count);
                 unreachable!("Shouldn't be possible")
             }
         } else {
             self.supply_state.decrement(amount)?;
             self.utxo_state.decrement(utxo_count)?;
-            self.price_in_cents_to_amount
-                .decrement(price_in_cents, amount)?;
+            // self.price_in_cents_to_amount
+            //     .decrement(price_in_cents, amount)?;
         }
 
         Ok(())
     }
 
-    pub fn compute_one_shot_states(
-        &self,
-        block_price: f32,
-        date_price: Option<f32>,
-    ) -> OneShotStates {
-        self.price_in_cents_to_amount.compute_one_shot_states(
-            self.supply_state.supply,
-            block_price,
-            date_price,
-        )
-    }
+    // pub fn compute_one_shot_states(
+    //     &self,
+    //     block_price: f32,
+    //     date_price: Option<f32>,
+    // ) -> OneShotStates {
+    //     self.price_in_cents_to_amount.compute_one_shot_states(
+    //         self.supply_state.supply,
+    //         block_price,
+    //         date_price,
+    //     )
+    // }
 }

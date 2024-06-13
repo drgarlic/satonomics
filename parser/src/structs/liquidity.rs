@@ -1,4 +1,7 @@
-use std::f64::consts::E;
+use std::{
+    f64::consts::E,
+    ops::{AddAssign, SubAssign},
+};
 
 use bitcoin::Amount;
 
@@ -100,7 +103,7 @@ pub struct LiquiditySplitResult {
     pub highly_liquid: f64,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq, PartialOrd, Clone, Copy)]
 pub struct SplitByLiquidity<T>
 where
     T: Default,
@@ -111,42 +114,66 @@ where
     pub highly_liquid: T,
 }
 
-impl<T> SplitByLiquidity<T>
+impl<T> AddAssign for SplitByLiquidity<T>
 where
-    T: Default,
+    T: AddAssign + Default,
 {
-    // pub fn get(&self, id: &LiquidityId) -> &T {
-    //     match id {
-    //         LiquidityId::All => &self.all,
-    //         LiquidityId::Illiquid => &self.illiquid,
-    //         LiquidityId::Liquid => &self.liquid,
-    //         LiquidityId::HighlyLiquid => &self.highly_liquid,
-    //     }
-    // }
-
-    pub fn get_mut(&mut self, id: &LiquidityId) -> &mut T {
-        match id {
-            LiquidityId::All => &mut self.all,
-            LiquidityId::Illiquid => &mut self.illiquid,
-            LiquidityId::Liquid => &mut self.liquid,
-            LiquidityId::HighlyLiquid => &mut self.highly_liquid,
-        }
-    }
-
-    pub fn as_vec(&self) -> Vec<(&T, LiquidityId)> {
-        vec![
-            (&self.all, LiquidityId::All),
-            (&self.illiquid, LiquidityId::Illiquid),
-            (&self.liquid, LiquidityId::Liquid),
-            (&self.highly_liquid, LiquidityId::HighlyLiquid),
-        ]
+    fn add_assign(&mut self, rhs: Self) {
+        self.all += rhs.all;
+        self.illiquid += rhs.illiquid;
+        self.liquid += rhs.liquid;
+        self.highly_liquid += rhs.highly_liquid;
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum LiquidityId {
-    All,
-    Illiquid,
-    Liquid,
-    HighlyLiquid,
+impl<T> SubAssign for SplitByLiquidity<T>
+where
+    T: SubAssign + Default,
+{
+    fn sub_assign(&mut self, rhs: Self) {
+        self.all -= rhs.all;
+        self.illiquid -= rhs.illiquid;
+        self.liquid -= rhs.liquid;
+        self.highly_liquid -= rhs.highly_liquid;
+    }
 }
+
+// impl<T> SplitByLiquidity<T>
+// where
+//     T: Default,
+// {
+//     // pub fn get(&self, id: &LiquidityId) -> &T {
+//     //     match id {
+//     //         LiquidityId::All => &self.all,
+//     //         LiquidityId::Illiquid => &self.illiquid,
+//     //         LiquidityId::Liquid => &self.liquid,
+//     //         LiquidityId::HighlyLiquid => &self.highly_liquid,
+//     //     }
+//     // }
+
+//     pub fn get_mut(&mut self, id: &LiquidityId) -> &mut T {
+//         match id {
+//             LiquidityId::All => &mut self.all,
+//             LiquidityId::Illiquid => &mut self.illiquid,
+//             LiquidityId::Liquid => &mut self.liquid,
+//             LiquidityId::HighlyLiquid => &mut self.highly_liquid,
+//         }
+//     }
+
+//     pub fn as_vec(&self) -> Vec<(&T, LiquidityId)> {
+//         vec![
+//             (&self.all, LiquidityId::All),
+//             (&self.illiquid, LiquidityId::Illiquid),
+//             (&self.liquid, LiquidityId::Liquid),
+//             (&self.highly_liquid, LiquidityId::HighlyLiquid),
+//         ]
+//     }
+// }
+
+// #[derive(Debug, Clone, Copy)]
+// pub enum LiquidityId {
+//     All,
+//     Illiquid,
+//     Liquid,
+//     HighlyLiquid,
+// }

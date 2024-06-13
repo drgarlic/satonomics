@@ -79,10 +79,7 @@ where
     {
         btree::iter(&self.txn, &self.db, None)
             .unwrap()
-            .for_each(|entry| {
-                let (k, v) = entry.unwrap();
-                callback((k, v))
-            });
+            .for_each(|entry| callback(entry.unwrap()));
     }
 
     pub fn get(&self, key: &KeyTree) -> Option<&Value> {

@@ -80,7 +80,12 @@ impl AddressCohortsDurableStates {
                         &split_sat_amount,
                         &split_utxo_count,
                     ) {
-                        dbg!(report, &state, &address_data, &liquidity_classification);
+                        dbg!(
+                            report.to_string(),
+                            &state,
+                            &address_data,
+                            &liquidity_classification
+                        );
                         return Err(eyre!("increment error"));
                     }
                 } else if let Err(report) = state.decrement(
@@ -90,7 +95,12 @@ impl AddressCohortsDurableStates {
                     &split_sat_amount,
                     &split_utxo_count,
                 ) {
-                    dbg!(report, &state, &address_data, &liquidity_classification);
+                    dbg!(
+                        report.to_string(),
+                        &state,
+                        &address_data,
+                        &liquidity_classification
+                    );
                     return Err(eyre!("decrement error"));
                 }
 
@@ -109,28 +119,16 @@ impl AddressCohortsDurableStates {
 
         self.as_vec()
             .into_par_iter()
-            .flat_map(|(states, address_cohort_id)| {
-                states
-                    .split
-                    .as_vec()
-                    .into_par_iter()
-                    .map(move |(states, liquidity_id)| {
-                        (
-                            address_cohort_id,
-                            liquidity_id,
-                            states.compute_one_shot_states(block_price, date_price),
-                        )
-                    })
-            })
-            .map(|(address_cohort_id, liquidity_id, states)| {
-                (address_cohort_id, liquidity_id, states)
+            .map(|(states, address_cohort_id)| {
+                (
+                    address_cohort_id,
+                    states.compute_one_shot_states(block_price, date_price),
+                )
             })
             .collect::<Vec<_>>()
             .into_iter()
-            .for_each(|(address_cohort_id, liquidity_id, states)| {
-                *one_shot_states
-                    .get_mut_from_id(&address_cohort_id)
-                    .get_mut(&liquidity_id) = states;
+            .for_each(|(address_cohort_id, states)| {
+                *one_shot_states.get_mut_from_id(&address_cohort_id) = states;
             });
 
         one_shot_states

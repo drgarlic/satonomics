@@ -50,6 +50,7 @@ impl UTXODataset {
                 &states
                     .utxo_cohorts_durable_states
                     .get(&self.id)
+                    .durable_states
                     .supply_state,
             );
         }
@@ -57,7 +58,11 @@ impl UTXODataset {
         if self.subs.utxo.should_insert(insert_data) {
             self.subs.utxo.insert(
                 insert_data,
-                &states.utxo_cohorts_durable_states.get(&self.id).utxo_state,
+                &states
+                    .utxo_cohorts_durable_states
+                    .get(&self.id)
+                    .durable_states
+                    .utxo_state,
             );
         }
 
