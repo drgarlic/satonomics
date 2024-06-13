@@ -1,4 +1,6 @@
-const SIGNIFICANT_DIGITS: i32 = 4; // TODO: Need to try 4 and see how it would impact the realized cap for example
+const SIGNIFICANT_DIGITS: i32 = 3;
+// Only affects percentiles and unrealized, doesn't need to be precise
+// TODO: Move realized_cap out of them
 
 pub fn convert_price_to_significant_cents(price: f32) -> u32 {
     convert_cents_to_significant_cents((price * 100.0) as u32)
