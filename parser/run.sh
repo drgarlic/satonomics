@@ -5,11 +5,11 @@
 # For Mac OS users
 if [ "$(uname)" == "Darwin" ]; then
     echo "Increasing limit of opened files..."
-    ulimit -n 1000000
+    ulimit -n $(ulimit -Hn)
 
     # Needed because the datasets tree is too big lol
     echo "Increasing stack size..."
-    ulimit -s 65532 #52800
+    ulimit -s $(ulimit -Hs)
 
     if mdutil -s / | grep "enabled"; then
         echo "Disabling spotlight indexing..."

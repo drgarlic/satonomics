@@ -35,7 +35,7 @@ impl DerefMut for AddressIndexToEmptyAddressData {
     }
 }
 
-const DB_MAX_SIZE: usize = 1_000_000;
+const DB_MAX_SIZE: usize = 500_000;
 
 impl AddressIndexToEmptyAddressData {
     pub fn unsafe_insert(&mut self, key: Key, value: Value) -> Option<Value> {
