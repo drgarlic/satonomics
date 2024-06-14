@@ -130,11 +130,7 @@ impl AnyDatabaseGroup for TxidToTxData {
     fn export(&mut self, height: usize, date: WNaiveDate) -> color_eyre::Result<()> {
         mem::take(&mut self.map)
             .into_par_iter()
-            .try_for_each(|(_, db)| {
-                // dbg!(&db.cached_dels, &db.cached_puts.values());
-
-                db.export()
-            })?;
+            .try_for_each(|(_, db)| db.export())?;
 
         self.metadata.export(height, date)?;
 

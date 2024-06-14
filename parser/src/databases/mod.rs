@@ -8,7 +8,6 @@ mod address_index_to_address_data;
 mod address_index_to_empty_address_data;
 mod address_to_address_index;
 mod metadata;
-// mod tx_index_to_tx_data;
 mod txid_to_tx_data;
 mod txout_index_to_address_index;
 mod txout_index_to_amount;
@@ -114,8 +113,6 @@ impl Databases {
 
         let _ = self.txid_to_tx_data.reset();
         let _ = self.txout_index_to_amount.reset();
-
-        // sleep(Duration::from_secs(60))
     }
 
     pub fn check_if_needs_to_compute_addresses(&self, height: usize, date: WNaiveDate) -> bool {

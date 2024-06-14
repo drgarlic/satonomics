@@ -444,8 +444,7 @@ impl<T> SplitByUTXOCohort<T> {
             if is_sth {
                 unreachable!()
             }
-            // dbg!(current_days_old, previous_days_old);
-            // panic!();
+
             apply_if_current_only(&mut self.lth);
         } else if was_lth && !is_lth {
             if was_sth {
@@ -520,8 +519,6 @@ impl<T> SplitByUTXOCohort<T> {
 
         if UTXO_FILTERS.sth.check(days_old, year) {
             apply(&mut self.sth);
-        // } else {
-        // dbg!(days_old, year);
         } else if UTXO_FILTERS.lth.check(days_old, year) {
             apply(&mut self.lth);
         } else {

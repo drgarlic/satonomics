@@ -5,7 +5,6 @@ use std::{
 };
 
 use allocative::Allocative;
-
 use rayon::prelude::*;
 
 use crate::structs::{EmptyAddressData, WNaiveDate};

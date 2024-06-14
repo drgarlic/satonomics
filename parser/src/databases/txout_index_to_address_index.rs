@@ -97,11 +97,7 @@ impl AnyDatabaseGroup for TxoutIndexToAddressIndex {
     fn export(&mut self, height: usize, date: WNaiveDate) -> color_eyre::Result<()> {
         mem::take(&mut self.map)
             .into_par_iter()
-            .try_for_each(|(_, db)| {
-                // dbg!(&db.cached_puts);
-
-                db.export()
-            })?;
+            .try_for_each(|(_, db)| db.export())?;
 
         self.metadata.export(height, date)?;
 

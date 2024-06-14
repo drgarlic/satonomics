@@ -150,13 +150,6 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
                     if is_date_last_block {
                         processed_dates.insert(blocks_loop_date);
 
-                        // dbg!(
-                        //     current_block_date,
-                        //     height,
-                        //     current_block_height,
-                        //     is_date_last_block
-                        // );
-
                         height += blocks_loop_i;
 
                         let is_new_month = next_block_date

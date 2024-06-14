@@ -1,5 +1,4 @@
 use allocative::Allocative;
-
 use color_eyre::eyre::eyre;
 use sanakirja::{direct_repr, Storable, UnsizedStorable};
 

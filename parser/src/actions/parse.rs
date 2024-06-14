@@ -265,10 +265,6 @@ pub fn parse(
                                 let address_index =
                                     databases.address_to_address_index.metadata.serial as u32;
 
-                                // if address_index == 2483 || address_index == 2509 {
-                                //     dbg!(&address, txid, vout, address_index);
-                                // }
-
                                 let address_type = address.to_type();
 
                                 if let Some(previous) = databases
@@ -380,8 +376,6 @@ pub fn parse(
                             .txout_index_to_amount
                             .remove(&input_txout_index)
                             .map(|amount| {
-                                // dbg!(amount);
-
                                 (
                                     amount,
                                     databases
@@ -390,13 +384,8 @@ pub fn parse(
                                 )
                             }) // Remove from cached puts
                             .or_else(|| {
-                                // dbg!("KOPEKFPWOEFKOP");
                                 txout_index_to_amount_and_address_index.remove(&input_txout_index)
                             });
-
-                        // if input_txout_index.tx_index == 2516 {
-                        //     dbg!(height, &input_txout_index, &input_amount_and_address_index);
-                        // }
 
                         if input_amount_and_address_index.is_none() {
                             if !enable_check_if_txout_value_is_zero_in_db
@@ -529,10 +518,6 @@ pub fn parse(
 
                             input_address_realized_data
                                 .send(input_amount, address_realized_profit_or_loss);
-
-                            // if input_address_index == 2483 || input_address_index == 2509 {
-                            //     // dbg!(&input_address_data, input_txid, input_vout);
-                            // }
                         };
 
                         is_tx_data_from_cached_puts && input_tx_data.is_empty()
@@ -783,15 +768,8 @@ fn pre_process_outputs(
     let mut partial_txout_data_vec = block
         .txdata
         .iter()
-        .flat_map(|tx| {
-            // dbg!(tx.txid());
-
-            &tx.output
-        })
-        // .enumerate()
+        .flat_map(|tx| &tx.output)
         .map(|txout| {
-            // dbg!(txout_index);
-
             let script = &txout.script_pubkey;
             let amount = WAmount::wrap(txout.value);
 
@@ -929,8 +907,6 @@ fn pre_process_inputs<'a>(
                             .unsafe_get(&txout_index)
                             .unwrap()
                     });
-
-                    // dbg!(txout_index, (*amount, address_index));
 
                     (txout_index, (*amount, address_index))
                 })
