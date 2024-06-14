@@ -1,3 +1,5 @@
+use allocative::Allocative;
+
 use crate::{
     structs::{AnyBiMap, BiMap, DateMap},
     utils::{ONE_DAY_IN_DAYS, ONE_YEAR_IN_DAYS, THREE_MONTHS_IN_DAYS, TWO_WEEK_IN_DAYS},
@@ -5,6 +7,7 @@ use crate::{
 
 use super::{AnyDataset, ComputeData, InsertData, MinInitialStates};
 
+#[derive(Allocative)]
 pub struct CointimeDataset {
     min_initial_states: MinInitialStates,
 
@@ -64,7 +67,7 @@ impl CointimeDataset {
 
             active_cap: BiMap::new_bin(1, &f("active_cap")),
             active_price: BiMap::new_bin(1, &f("active_price")),
-            active_supply: BiMap::_new_bin(1, &f("active_supply"), 2),
+            active_supply: BiMap::new_bin(1, &f("active_supply")),
             active_supply_3m_net_change: BiMap::new_bin(1, &f("active_supply_3m_net_change")),
             active_supply_net_change: BiMap::new_bin(1, &f("active_supply_net_change")),
             activity_to_vaultedness_ratio: BiMap::new_bin(1, &f("activity_to_vaultedness_ratio")),
@@ -81,7 +84,7 @@ impl CointimeDataset {
             cointime_value_created: BiMap::new_bin(1, &f("cointime_value_created")),
             cointime_value_destroyed: BiMap::new_bin(1, &f("cointime_value_destroyed")),
             cointime_value_stored: BiMap::new_bin(1, &f("cointime_value_stored")),
-            concurrent_liveliness: BiMap::_new_bin(1, &f("concurrent_liveliness"), 2),
+            concurrent_liveliness: BiMap::new_bin(1, &f("concurrent_liveliness")),
             concurrent_liveliness_2w_median: BiMap::new_bin(
                 1,
                 &f("concurrent_liveliness_2w_median"),
@@ -94,7 +97,7 @@ impl CointimeDataset {
             cumulative_coinblocks_stored: BiMap::new_bin(1, &f("cumulative_coinblocks_stored")),
             investor_cap: BiMap::new_bin(1, &f("investor_cap")),
             investorness: BiMap::new_bin(1, &f("investorness")),
-            liveliness: BiMap::_new_bin(1, &f("liveliness"), 2),
+            liveliness: BiMap::new_bin(1, &f("liveliness")),
             liveliness_net_change: BiMap::new_bin(1, &f("liveliness_net_change")),
             liveliness_net_change_2w_median: BiMap::new_bin(
                 1,
@@ -406,7 +409,7 @@ impl CointimeDataset {
                 dates,
                 &mut self.active_cap.date,
                 |(active_cap, date, _)| {
-                    let investor_cap = self.investor_cap.date.get(date).unwrap();
+                    let investor_cap = self.investor_cap.date.get(&date).unwrap();
                     (active_cap - investor_cap) / active_cap
                 },
             );

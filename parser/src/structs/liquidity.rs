@@ -3,7 +3,9 @@ use std::{
     ops::{AddAssign, SubAssign},
 };
 
-use bitcoin::Amount;
+use allocative::Allocative;
+
+use super::WAmount;
 
 #[derive(Debug)]
 pub struct LiquidityClassification {
@@ -16,8 +18,8 @@ impl LiquidityClassification {
     /// Following this:
     /// https://insights.glassnode.com/bitcoin-liquid-supply/
     /// https://www.desmos.com/calculator/dutgni5rtj
-    pub fn new(sent: Amount, received: Amount) -> Self {
-        if received == Amount::ZERO {
+    pub fn new(sent: WAmount, received: WAmount) -> Self {
+        if received == WAmount::ZERO {
             dbg!(sent, received);
             panic!()
         }
@@ -27,7 +29,7 @@ impl LiquidityClassification {
                 panic!("Shouldn't be possible");
             }
 
-            if sent == Amount::ZERO {
+            if sent == WAmount::ZERO {
                 0.0
             } else {
                 let liquidity = sent.to_btc() / received.to_btc();
@@ -61,13 +63,11 @@ impl LiquidityClassification {
 
     #[inline(always)]
     pub fn split(&self, value: f64) -> LiquiditySplitResult {
-        let all = value;
         let illiquid = value * self.illiquid;
         let liquid = value * self.liquid;
-        let highly_liquid = all - illiquid - liquid;
+        let highly_liquid = value - illiquid - liquid;
 
         LiquiditySplitResult {
-            all,
             illiquid,
             liquid,
             highly_liquid,
@@ -97,13 +97,12 @@ impl LiquidityClassification {
 
 #[derive(Debug, Default)]
 pub struct LiquiditySplitResult {
-    pub all: f64,
     pub illiquid: f64,
     pub liquid: f64,
     pub highly_liquid: f64,
 }
 
-#[derive(Debug, Default, PartialEq, PartialOrd, Clone, Copy)]
+#[derive(Debug, Default, PartialEq, PartialOrd, Clone, Copy, Allocative)]
 pub struct SplitByLiquidity<T>
 where
     T: Default,

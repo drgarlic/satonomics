@@ -1,11 +1,13 @@
+use allocative::Allocative;
+
 use crate::{
     datasets::AnyDataset,
     structs::{AnyHeightMap, HeightMap, WNaiveDate},
-    utils::timestamp_to_naive_date,
 };
 
 use super::{InsertData, MinInitialStates};
 
+#[derive(Allocative)]
 pub struct BlockMetadataDataset {
     min_initial_states: MinInitialStates,
 
@@ -22,7 +24,7 @@ impl BlockMetadataDataset {
             min_initial_states: MinInitialStates::default(),
 
             date: HeightMap::new_bin(1, &f("date")),
-            timestamp: HeightMap::_new_bin(1, &f("timestamp"), usize::MAX, true),
+            timestamp: HeightMap::new_bin(1, &f("timestamp")),
         };
 
         s.min_initial_states
@@ -40,7 +42,7 @@ impl BlockMetadataDataset {
         self.timestamp.insert(height, timestamp);
 
         self.date
-            .insert(height, WNaiveDate::wrap(timestamp_to_naive_date(timestamp)));
+            .insert(height, WNaiveDate::from_timestamp(timestamp));
     }
 }
 

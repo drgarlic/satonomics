@@ -1,3 +1,4 @@
+use allocative::Allocative;
 use color_eyre::eyre::eyre;
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
@@ -10,13 +11,14 @@ use crate::{
 
 use super::{AddressCohortDurableStates, AddressCohortsOneShotStates, SplitByAddressCohort};
 
-#[derive(Default, Deref, DerefMut)]
+#[derive(Default, Deref, DerefMut, Allocative)]
 pub struct AddressCohortsDurableStates(SplitByAddressCohort<AddressCohortDurableStates>);
 
 impl AddressCohortsDurableStates {
     pub fn init(address_index_to_address_data: &mut AddressIndexToAddressData) -> Self {
         let mut s = Self::default();
 
+        // Paralize that, different s could be added together
         address_index_to_address_data
             .iter(&mut |(_, address_data)| s.increment(address_data).unwrap());
 

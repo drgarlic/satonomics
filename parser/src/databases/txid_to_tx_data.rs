@@ -4,11 +4,11 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
+use allocative::Allocative;
 use bitcoin::Txid;
-use chrono::NaiveDate;
 use rayon::prelude::*;
 
-use crate::structs::TxData;
+use crate::structs::{TxData, WNaiveDate};
 
 use super::{AnyDatabaseGroup, Metadata, SizedDatabase, U8x31};
 
@@ -16,9 +16,11 @@ type Key = U8x31;
 type Value = TxData;
 type Database = SizedDatabase<Key, Value>;
 
+#[derive(Allocative)]
 pub struct TxidToTxData {
-    map: BTreeMap<u8, Database>,
     pub metadata: Metadata,
+
+    map: BTreeMap<u8, Database>,
 }
 
 impl Deref for TxidToTxData {
@@ -125,7 +127,7 @@ impl AnyDatabaseGroup for TxidToTxData {
         }
     }
 
-    fn export(&mut self, height: usize, date: NaiveDate) -> color_eyre::Result<()> {
+    fn export(&mut self, height: usize, date: WNaiveDate) -> color_eyre::Result<()> {
         mem::take(&mut self.map)
             .into_par_iter()
             .try_for_each(|(_, db)| {

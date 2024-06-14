@@ -2,6 +2,7 @@ mod all_metadata;
 mod cohort;
 mod cohort_metadata;
 
+use allocative::Allocative;
 use itertools::Itertools;
 use rayon::prelude::*;
 
@@ -11,6 +12,7 @@ use self::{all_metadata::AllAddressesMetadataDataset, cohort::CohortDataset};
 
 use super::{AnyDataset, AnyDatasets, ComputeData, InsertData, MinInitialStates};
 
+#[derive(Allocative)]
 pub struct AddressDatasets {
     min_initial_states: MinInitialStates,
 

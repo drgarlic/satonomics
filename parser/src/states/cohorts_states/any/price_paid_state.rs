@@ -1,4 +1,4 @@
-use bitcoin::Amount;
+use crate::structs::WAmount;
 
 #[derive(Default, Debug)]
 pub struct PricePaidState {
@@ -24,11 +24,11 @@ pub struct PricePaidState {
     pub pp_90p: Option<f32>,
     pub pp_95p: Option<f32>,
 
-    pub processed_amount: Amount,
+    pub processed_amount: WAmount,
 }
 
 impl PricePaidState {
-    pub fn iterate(&mut self, price: f32, amount: Amount, total_supply: Amount) {
+    pub fn iterate(&mut self, price: f32, amount: WAmount, total_supply: WAmount) {
         let PricePaidState {
             processed_amount,
             realized_cap,

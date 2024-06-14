@@ -1,7 +1,10 @@
+use allocative::Allocative;
+
 use crate::structs::{AnyBiMap, BiMap};
 
 use super::{AnyDataset, ComputeData, MinInitialStates};
 
+#[derive(Allocative)]
 pub struct ConstantDataset {
     min_initial_states: MinInitialStates,
 

@@ -1,15 +1,16 @@
-use bitcoin::Amount;
+use allocative::Allocative;
 
 use crate::{
     bitcoin::TARGET_BLOCKS_PER_DAY,
     datasets::AnyDataset,
-    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, DateMap},
+    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, DateMap, WAmount},
     utils::{BYTES_IN_MB, ONE_DAY_IN_DAYS, ONE_MONTH_IN_DAYS, ONE_WEEK_IN_DAYS, ONE_YEAR_IN_DAYS},
     HeightMap,
 };
 
 use super::{ComputeData, InsertData, MinInitialStates};
 
+#[derive(Allocative)]
 pub struct MiningDataset {
     min_initial_states: MinInitialStates,
 
@@ -212,7 +213,7 @@ impl MiningDataset {
             .height
             .insert(height, coinbase.to_btc() as f32 * block_price);
 
-        let sumed_fees = Amount::from_sat(fees.iter().map(|amount| amount.to_sat()).sum());
+        let sumed_fees = WAmount::from_sat(fees.iter().map(|amount| amount.to_sat()).sum());
 
         self.fees.height.insert(height, sumed_fees.to_btc());
 

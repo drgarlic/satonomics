@@ -1,8 +1,9 @@
+use allocative::Allocative;
 use sanakirja::{direct_repr, Storable, UnsizedStorable};
 
 use super::BlockPath;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Allocative)]
 pub struct TxData {
     pub index: u32,
     pub block_path: BlockPath,

@@ -1,12 +1,10 @@
-use bitcoin::Amount;
-
-use super::AddressData;
+use super::{AddressData, WAmount};
 
 #[derive(Debug)]
 pub struct AddressRealizedData {
     pub initial_address_data: AddressData,
-    pub received: Amount,
-    pub sent: Amount,
+    pub received: WAmount,
+    pub sent: WAmount,
     pub profit: f32,
     pub loss: f32,
     pub utxos_created: u32,
@@ -16,8 +14,8 @@ pub struct AddressRealizedData {
 impl AddressRealizedData {
     pub fn default(initial_address_data: &AddressData) -> Self {
         Self {
-            received: Amount::ZERO,
-            sent: Amount::ZERO,
+            received: WAmount::ZERO,
+            sent: WAmount::ZERO,
             profit: 0.0,
             loss: 0.0,
             utxos_created: 0,
@@ -26,12 +24,12 @@ impl AddressRealizedData {
         }
     }
 
-    pub fn receive(&mut self, amount: Amount) {
+    pub fn receive(&mut self, amount: WAmount) {
         self.received += amount;
         self.utxos_created += 1;
     }
 
-    pub fn send(&mut self, amount: Amount, realized_profit_or_loss: f32) {
+    pub fn send(&mut self, amount: WAmount, realized_profit_or_loss: f32) {
         self.sent += amount;
         self.utxos_destroyed += 1;
 

@@ -14,5 +14,5 @@ pub use crate::{
     datasets::OHLC,
     io::{Binary, Json, Serialization},
     structs::{DateMap, HeightMap, SerializedDateMap, SerializedHeightMap, HEIGHT_MAP_CHUNK_SIZE},
-    utils::{log, timestamp_to_naive_date},
+    utils::log,
 };

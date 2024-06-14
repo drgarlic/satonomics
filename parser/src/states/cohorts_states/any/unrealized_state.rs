@@ -1,17 +1,17 @@
 use std::ops::Add;
 
-use bitcoin::Amount;
+use crate::structs::WAmount;
 
 #[derive(Debug, Default)]
 pub struct UnrealizedState {
-    pub supply_in_profit: Amount,
+    pub supply_in_profit: WAmount,
     pub unrealized_profit: f32,
     pub unrealized_loss: f32,
 }
 
 impl UnrealizedState {
     #[inline]
-    pub fn iterate(&mut self, price_then: f32, price_now: f32, amount: Amount) {
+    pub fn iterate(&mut self, price_then: f32, price_now: f32, amount: WAmount) {
         let amount_in_btc = amount.to_btc() as f32;
 
         if price_then < price_now {

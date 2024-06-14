@@ -1,5 +1,6 @@
 mod dataset;
 
+use allocative::Allocative;
 use dataset::*;
 use rayon::prelude::*;
 
@@ -13,6 +14,7 @@ use crate::{
 
 use super::{AnyDataset, ComputeData, InsertData, MinInitialStates};
 
+#[derive(Allocative)]
 pub struct UTXODatasets {
     min_initial_states: MinInitialStates,
 

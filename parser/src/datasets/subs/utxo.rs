@@ -1,10 +1,12 @@
+use allocative::Allocative;
+
 use crate::{
     datasets::{AnyDataset, InsertData, MinInitialStates},
     states::UTXOState,
     structs::{AnyBiMap, BiMap},
 };
 
-#[derive(Default)]
+#[derive(Default, Allocative)]
 pub struct UTXOSubDataset {
     min_initial_states: MinInitialStates,
 

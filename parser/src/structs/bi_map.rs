@@ -3,14 +3,14 @@ use std::{
     ops::{Add, Div, Mul, RangeInclusive, Sub},
 };
 
-use chrono::NaiveDate;
+use allocative::Allocative;
 use ordered_float::FloatCore;
 
 use crate::{bitcoin::TARGET_BLOCKS_PER_DAY, utils::LossyFrom};
 
-use super::{AnyDateMap, AnyHeightMap, AnyMap, DateMap, HeightMap, MapValue};
+use super::{AnyDateMap, AnyHeightMap, AnyMap, DateMap, HeightMap, MapValue, WNaiveDate};
 
-#[derive(Default)]
+#[derive(Default, Allocative)]
 pub struct BiMap<T>
 where
     T: MapValue,
@@ -25,28 +25,21 @@ where
 {
     pub fn new_bin(version: u32, path: &str) -> Self {
         Self {
-            height: HeightMap::_new_bin(version, path, 1, true),
-            date: DateMap::_new_bin(version, path, 1, false),
+            height: HeightMap::_new_bin(version, path, true),
+            date: DateMap::_new_bin(version, path, false),
         }
     }
 
-    pub fn _new_bin(version: u32, path: &str, height_chunks_in_memory: usize) -> Self {
+    pub fn new_json(version: u32, path: &str) -> Self {
         Self {
-            height: HeightMap::_new_bin(version, path, height_chunks_in_memory, true),
-            date: DateMap::_new_bin(version, path, height_chunks_in_memory, false),
-        }
-    }
-
-    pub fn _new_json(version: u32, path: &str, height_chunks_in_memory: usize) -> Self {
-        Self {
-            height: HeightMap::_new_json(version, path, height_chunks_in_memory, true),
-            date: DateMap::_new_json(version, path, height_chunks_in_memory, false),
+            height: HeightMap::new_json(version, path, true),
+            date: DateMap::new_json(version, path, false),
         }
     }
 
     pub fn date_insert_sum_range(
         &mut self,
-        date: NaiveDate,
+        date: WNaiveDate,
         date_blocks_range: &RangeInclusive<usize>,
     ) where
         T: Sum,
@@ -57,24 +50,22 @@ where
 
     pub fn multi_date_insert_sum_range(
         &mut self,
-        dates: &[NaiveDate],
+        dates: &[WNaiveDate],
         first_height: &mut DateMap<usize>,
         last_height: &mut DateMap<usize>,
     ) where
         T: Sum,
     {
         dates.iter().for_each(|date| {
-            let date = *date;
-
             let first_height = first_height.get_or_import(date).unwrap();
             let last_height = last_height.get_or_import(date).unwrap();
             let range = first_height..=last_height;
 
-            self.date.insert(date, self.height.sum_range(&range));
+            self.date.insert(*date, self.height.sum_range(&range));
         })
     }
 
-    pub fn multi_insert_const(&mut self, heights: &[usize], dates: &[NaiveDate], constant: T) {
+    pub fn multi_insert_const(&mut self, heights: &[usize], dates: &[WNaiveDate], constant: T) {
         self.height.multi_insert_const(heights, constant);
 
         self.date.multi_insert_const(dates, constant);
@@ -83,7 +74,7 @@ where
     pub fn multi_insert_simple_transform<F, K>(
         &mut self,
         heights: &[usize],
-        dates: &[NaiveDate],
+        dates: &[WNaiveDate],
         source: &mut BiMap<K>,
         transform: &F,
     ) where
@@ -101,7 +92,7 @@ where
     pub fn multi_insert_add<A, B>(
         &mut self,
         heights: &[usize],
-        dates: &[NaiveDate],
+        dates: &[WNaiveDate],
         added: &mut BiMap<A>,
         adder: &mut BiMap<B>,
     ) where
@@ -119,7 +110,7 @@ where
     pub fn multi_insert_subtract<A, B>(
         &mut self,
         heights: &[usize],
-        dates: &[NaiveDate],
+        dates: &[WNaiveDate],
         subtracted: &mut BiMap<A>,
         subtracter: &mut BiMap<B>,
     ) where
@@ -138,7 +129,7 @@ where
     pub fn multi_insert_multiply<A, B>(
         &mut self,
         heights: &[usize],
-        dates: &[NaiveDate],
+        dates: &[WNaiveDate],
         multiplied: &mut BiMap<A>,
         multiplier: &mut BiMap<B>,
     ) where
@@ -156,7 +147,7 @@ where
     pub fn multi_insert_divide<A, B>(
         &mut self,
         heights: &[usize],
-        dates: &[NaiveDate],
+        dates: &[WNaiveDate],
         divided: &mut BiMap<A>,
         divider: &mut BiMap<B>,
     ) where
@@ -174,7 +165,7 @@ where
     pub fn multi_insert_percentage<A, B>(
         &mut self,
         heights: &[usize],
-        dates: &[NaiveDate],
+        dates: &[WNaiveDate],
         divided: &mut BiMap<A>,
         divider: &mut BiMap<B>,
     ) where
@@ -192,7 +183,7 @@ where
     pub fn multi_insert_cumulative<K>(
         &mut self,
         heights: &[usize],
-        dates: &[NaiveDate],
+        dates: &[WNaiveDate],
         source: &mut BiMap<K>,
     ) where
         K: MapValue,
@@ -208,7 +199,7 @@ where
     pub fn multi_insert_last_x_sum<K>(
         &mut self,
         heights: &[usize],
-        dates: &[NaiveDate],
+        dates: &[WNaiveDate],
         source: &mut BiMap<K>,
         days: usize,
     ) where
@@ -229,7 +220,7 @@ where
     pub fn multi_insert_simple_average<K>(
         &mut self,
         heights: &[usize],
-        dates: &[NaiveDate],
+        dates: &[WNaiveDate],
         source: &mut BiMap<K>,
         days: usize,
     ) where
@@ -249,7 +240,7 @@ where
     pub fn multi_insert_net_change(
         &mut self,
         heights: &[usize],
-        dates: &[NaiveDate],
+        dates: &[WNaiveDate],
         source: &mut BiMap<T>,
         days: usize,
     ) where
@@ -267,7 +258,7 @@ where
     pub fn multi_insert_median(
         &mut self,
         heights: &[usize],
-        dates: &[NaiveDate],
+        dates: &[WNaiveDate],
         source: &mut BiMap<T>,
         days: Option<usize>,
     ) where
@@ -285,7 +276,7 @@ where
     pub fn multi_insert_percentile(
         &mut self,
         heights: &[usize],
-        dates: &[NaiveDate],
+        dates: &[WNaiveDate],
         source: &mut BiMap<T>,
         percentile: f32,
         days: Option<usize>,
@@ -304,8 +295,6 @@ where
 }
 
 pub trait AnyBiMap {
-    // fn are_date_and_height_safe(&self, date: NaiveDate, height: usize) -> bool;
-
     #[allow(unused)]
     fn as_any_map(&self) -> Vec<&(dyn AnyMap + Send + Sync)>;
 
@@ -326,11 +315,6 @@ impl<T> AnyBiMap for BiMap<T>
 where
     T: MapValue,
 {
-    // #[inline(always)]
-    // fn are_date_and_height_safe(&self, date: NaiveDate, height: usize) -> bool {
-    //     self.date.is_date_safe(date) && self.height.is_height_safe(height)
-    // }
-
     fn as_any_map(&self) -> Vec<&(dyn AnyMap + Send + Sync)> {
         vec![self.date.as_any_map(), self.height.as_any_map()]
     }

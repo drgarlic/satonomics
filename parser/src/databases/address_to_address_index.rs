@@ -1,10 +1,9 @@
 use std::{collections::BTreeMap, mem, thread};
 
-use chrono::NaiveDate;
-
+use allocative::Allocative;
 use rayon::prelude::*;
 
-use crate::structs::Address;
+use crate::structs::{Address, WNaiveDate};
 
 use super::{
     AnyDatabaseGroup, Database, Metadata, SizedDatabase, U8x19, U8x31,
@@ -29,6 +28,7 @@ type PushOnlyDatabase = U32Database;
 type EmptyDatabase = U32Database;
 type MultisigDatabase = UnsizedDatabase;
 
+#[derive(Allocative)]
 pub struct AddressToAddressIndex {
     pub metadata: Metadata,
 
@@ -261,7 +261,7 @@ impl AnyDatabaseGroup for AddressToAddressIndex {
         }
     }
 
-    fn export(&mut self, height: usize, date: NaiveDate) -> color_eyre::Result<()> {
+    fn export(&mut self, height: usize, date: WNaiveDate) -> color_eyre::Result<()> {
         thread::scope(|s| {
             s.spawn(|| {
                 mem::take(&mut self.p2pk)

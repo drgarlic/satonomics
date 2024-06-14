@@ -1,11 +1,11 @@
-use bitcoin::Amount;
+use allocative::Allocative;
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
 
 use crate::{
     actions::SentData,
     states::DateDataVec,
-    structs::BlockData,
+    structs::{BlockData, WAmount},
     utils::{
         convert_price_to_significant_cents, difference_in_days_between_timestamps,
         timestamp_to_year,
@@ -14,7 +14,7 @@ use crate::{
 
 use super::{SplitByUTXOCohort, UTXOCohortDurableStates, UTXOCohortsOneShotStates};
 
-#[derive(Default, Deref, DerefMut)]
+#[derive(Default, Deref, DerefMut, Allocative)]
 pub struct UTXOCohortsDurableStates(SplitByUTXOCohort<UTXOCohortDurableStates>);
 
 impl UTXOCohortsDurableStates {
@@ -28,11 +28,11 @@ impl UTXOCohortsDurableStates {
                 .iter()
                 .flat_map(|date_data| &date_data.blocks)
                 .for_each(|block_data| {
-                    let amount = *block_data.amount;
+                    let amount = block_data.amount;
                     let utxo_count = block_data.spendable_outputs as usize;
 
                     // No need to either insert or remove if 0
-                    if amount == Amount::ZERO {
+                    if amount == WAmount::ZERO {
                         return;
                     }
 
@@ -60,11 +60,11 @@ impl UTXOCohortsDurableStates {
         last_block_data: &BlockData,
         previous_last_block_data: Option<&BlockData>,
     ) {
-        let amount = *block_data.amount;
+        let amount = block_data.amount;
         let utxo_count = block_data.spendable_outputs as usize;
 
         // No need to either insert or remove if 0
-        if amount == Amount::ZERO {
+        if amount == WAmount::ZERO {
             return;
         }
 
@@ -118,7 +118,7 @@ impl UTXOCohortsDurableStates {
         let utxo_count = sent_data.count as usize;
 
         // No need to either insert or remove if 0
-        if amount == Amount::ZERO {
+        if amount == WAmount::ZERO {
             return;
         }
 

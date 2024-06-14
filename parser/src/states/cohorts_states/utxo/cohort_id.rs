@@ -1,4 +1,6 @@
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Default)]
+use allocative::Allocative;
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Default, Allocative)]
 pub enum UTXOCohortId {
     #[default]
     UpTo1d,

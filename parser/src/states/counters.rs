@@ -1,10 +1,11 @@
-use savefile_derive::Savefile;
+use allocative::Allocative;
+use bincode::{Decode, Encode};
 
 use crate::structs::Counter;
 
 use super::AnyState;
 
-#[derive(Default, Debug, Savefile)]
+#[derive(Default, Debug, Encode, Decode, Allocative)]
 pub struct Counters {
     pub op_return_addresses: Counter,
     pub push_only_addresses: Counter,

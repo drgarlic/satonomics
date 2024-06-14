@@ -1,6 +1,6 @@
-use std::thread;
+use std::thread::{self};
 
-use chrono::NaiveDate;
+use allocative::Allocative;
 
 mod _database;
 mod _trait;
@@ -25,6 +25,7 @@ pub use txout_index_to_amount::*;
 
 use crate::{structs::WNaiveDate, utils::time};
 
+#[derive(Allocative)]
 pub struct Databases {
     pub address_index_to_address_data: AddressIndexToAddressData,
     pub address_index_to_empty_address_data: AddressIndexToEmptyAddressData,
@@ -58,16 +59,16 @@ impl Databases {
         }
     }
 
-    pub fn export(&mut self, height: usize, date: NaiveDate) -> color_eyre::Result<()> {
+    pub fn export(&mut self, height: usize, date: WNaiveDate) -> color_eyre::Result<()> {
         thread::scope(|s| {
             s.spawn(|| {
-                time("  Database txid_to_tx_data", || {
+                time("> Database txid_to_tx_data", || {
                     self.txid_to_tx_data.export(height, date)
                 })
             });
 
             s.spawn(|| {
-                time("  Database txout_index_to_amount", || {
+                time("> Database txout_index_to_amount", || {
                     self.txout_index_to_amount.export(height, date)
                 })
             });
@@ -75,26 +76,26 @@ impl Databases {
 
         thread::scope(|s| {
             s.spawn(|| {
-                time("  Database address_index_to_address_data", || {
+                time("> Database address_index_to_address_data", || {
                     self.address_index_to_address_data.export(height, date)
                 })
             });
 
             s.spawn(|| {
-                time("  Database address_index_to_empty_address_data", || {
+                time("> Database address_index_to_empty_address_data", || {
                     self.address_index_to_empty_address_data
                         .export(height, date)
                 })
             });
 
             s.spawn(|| {
-                time("  Database address_to_address_index", || {
+                time("> Database address_to_address_index", || {
                     self.address_to_address_index.export(height, date)
                 })
             });
 
             s.spawn(|| {
-                time("  Database txout_index_to_address_index", || {
+                time("> Database txout_index_to_address_index", || {
                     self.txout_index_to_address_index.export(height, date)
                 })
             });
@@ -113,15 +114,17 @@ impl Databases {
 
         let _ = self.txid_to_tx_data.reset();
         let _ = self.txout_index_to_amount.reset();
+
+        // sleep(Duration::from_secs(60))
     }
 
-    pub fn check_if_needs_to_compute_addresses(&self, height: usize, date: NaiveDate) -> bool {
+    pub fn check_if_needs_to_compute_addresses(&self, height: usize, date: WNaiveDate) -> bool {
         let check_height = |last_height: Option<usize>| {
             last_height.map_or(true, |last_height| last_height < height)
         };
 
         let check_date =
-            |last_date: Option<WNaiveDate>| last_date.map_or(true, |last_date| *last_date < date);
+            |last_date: Option<WNaiveDate>| last_date.map_or(true, |last_date| last_date < date);
 
         let check_metadata = |metadata: &Metadata| {
             check_height(metadata.last_height) || check_date(metadata.last_date)
@@ -134,7 +137,7 @@ impl Databases {
     pub fn check_if_usable(
         &self,
         min_initial_last_address_height: Option<usize>,
-        min_initial_last_address_date: Option<NaiveDate>,
+        min_initial_last_address_date: Option<WNaiveDate>,
     ) -> bool {
         let are_tx_databases_in_sync = self
             .txout_index_to_amount
@@ -173,7 +176,6 @@ impl Databases {
 
         // let are_address_datasets_farer_or_in_sync_with_address_databases =
         min_initial_last_address_height >= self.address_to_address_index.metadata.last_height
-            && min_initial_last_address_date
-                >= self.address_to_address_index.metadata.last_date.map(|d| *d)
+            && min_initial_last_address_date >= self.address_to_address_index.metadata.last_date
     }
 }

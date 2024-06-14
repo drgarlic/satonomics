@@ -63,7 +63,7 @@ pub fn find_first_inserted_unsafe_height(
             log(&format!("min_datasets_inserted_last_height: {:?}", min_datasets_inserted_last_height));
             log(&format!("min_datasets_inserted_last_date: {:?}", min_datasets_inserted_last_date));
 
-            let inserted_last_date_is_older_than_saved_state = min_datasets_inserted_last_date.map_or(true, |min_datasets_last_date| min_datasets_last_date < *last_safe_date);
+            let inserted_last_date_is_older_than_saved_state = min_datasets_inserted_last_date.map_or(true, |min_datasets_last_date| min_datasets_last_date < last_safe_date);
 
             if inserted_last_date_is_older_than_saved_state {
                 dbg!(min_datasets_inserted_last_date , *last_safe_date);
@@ -74,7 +74,7 @@ pub fn find_first_inserted_unsafe_height(
             datasets
                 .date_metadata
                 .last_height
-                ._get(&last_safe_date)
+                .get(&last_safe_date)
                 .and_then(|last_safe_height| {
                     let inserted_heights_and_dates_are_out_of_sync = min_datasets_inserted_last_height.map_or(true, |min_datasets_inserted_last_height| min_datasets_inserted_last_height < last_safe_height);
 
@@ -86,7 +86,7 @@ pub fn find_first_inserted_unsafe_height(
                         let computed = datasets_min_initial_states.computed.last_date.and_then(
                             |last_date| datasets.date_metadata
                                 .last_height
-                                .get(last_date)
+                                .get(&last_date)
                                 .and_then(|last_date_height| {
                                     if datasets_min_initial_states.computed.last_height.map_or(true, |last_height| {
                                         last_height < last_date_height

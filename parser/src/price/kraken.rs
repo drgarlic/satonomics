@@ -1,13 +1,9 @@
 use std::collections::BTreeMap;
 
-use chrono::NaiveDate;
 use color_eyre::eyre::ContextCompat;
 use serde_json::Value;
 
-use crate::{
-    datasets::OHLC,
-    utils::{log, timestamp_to_naive_date},
-};
+use crate::{datasets::OHLC, structs::WNaiveDate, utils::log};
 
 pub struct Kraken;
 
@@ -59,7 +55,7 @@ impl Kraken {
             .collect::<BTreeMap<_, _>>())
     }
 
-    pub fn fetch_daily_prices() -> color_eyre::Result<BTreeMap<NaiveDate, OHLC>> {
+    pub fn fetch_daily_prices() -> color_eyre::Result<BTreeMap<WNaiveDate, OHLC>> {
         log("fetch kraken daily");
 
         let body: Value = reqwest::blocking::get(
@@ -82,7 +78,8 @@ impl Kraken {
             .map(|value| {
                 let array = value.as_array().unwrap();
 
-                let date = timestamp_to_naive_date(array.first().unwrap().as_u64().unwrap() as u32);
+                let date =
+                    WNaiveDate::from_timestamp(array.first().unwrap().as_u64().unwrap() as u32);
 
                 let get_f32 = |index: usize| {
                     array

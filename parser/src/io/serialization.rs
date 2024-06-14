@@ -1,10 +1,12 @@
 use std::fmt::Debug;
 
+use allocative::Allocative;
+use bincode::{Decode, Encode};
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::io::{Binary, Json};
 
-#[derive(PartialEq, PartialOrd, Ord, Eq, Debug, Clone, Copy, Default)]
+#[derive(PartialEq, PartialOrd, Ord, Eq, Debug, Clone, Copy, Default, Allocative)]
 pub enum Serialization {
     #[default]
     Binary,
@@ -33,7 +35,7 @@ impl Serialization {
 
     pub fn import<T>(&self, path: &str) -> color_eyre::Result<T>
     where
-        T: savefile::Deserialize + DeserializeOwned + Debug,
+        T: Debug + DeserializeOwned + Decode,
     {
         match self {
             Serialization::Binary => Binary::import(path),
@@ -43,7 +45,7 @@ impl Serialization {
 
     pub fn export<T>(&self, path: &str, value: &T) -> color_eyre::Result<()>
     where
-        T: savefile::Serialize + Serialize,
+        T: Debug + Serialize + Encode,
     {
         match self {
             Serialization::Binary => Binary::export(path, value),

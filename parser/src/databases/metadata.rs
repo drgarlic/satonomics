@@ -1,5 +1,5 @@
-use chrono::NaiveDate;
-use savefile_derive::Savefile;
+use allocative::Allocative;
+use bincode::{Decode, Encode};
 use std::{
     fmt::Debug,
     fs, io,
@@ -11,7 +11,7 @@ use crate::{
     structs::{Counter, WNaiveDate},
 };
 
-#[derive(Savefile, Default, Debug)]
+#[derive(Default, Debug, Encode, Decode, Allocative)]
 pub struct Metadata {
     path: String,
     data: MetadataData,
@@ -39,17 +39,13 @@ impl Metadata {
         }
     }
 
-    // pub fn should_export(&self, height: usize, date: NaiveDate) -> bool {
-    //     self.last_height.unwrap_or_default() < height || *self.last_date.unwrap_or_default() < date
-    // }
-
-    pub fn export(&mut self, height: usize, date: NaiveDate) -> color_eyre::Result<()> {
+    pub fn export(&mut self, height: usize, date: WNaiveDate) -> color_eyre::Result<()> {
         if self.last_height.unwrap_or_default() < height {
             self.last_height.replace(height);
         }
 
-        if *self.last_date.unwrap_or_default() < date {
-            self.last_date.replace(WNaiveDate::wrap(date));
+        if self.last_date.unwrap_or_default() < date {
+            self.last_date.replace(date);
         }
 
         self.data.export(&self.path)
@@ -77,7 +73,7 @@ impl Metadata {
     }
 }
 
-#[derive(Savefile, Default, Debug)]
+#[derive(Default, Debug, Encode, Decode, Allocative)]
 pub struct MetadataData {
     pub serial: usize,
     pub len: Counter,

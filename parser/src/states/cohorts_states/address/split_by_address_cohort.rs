@@ -1,8 +1,10 @@
+use allocative::Allocative;
+
 use crate::structs::{AddressData, AddressSize, AddressSplit, AddressType};
 
 use super::AddressCohortId;
 
-#[derive(Default)]
+#[derive(Default, Allocative)]
 pub struct SplitByAddressCohort<T> {
     pub all: T,
 

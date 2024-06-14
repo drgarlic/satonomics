@@ -6,6 +6,7 @@ mod supply;
 mod unrealized;
 mod utxo;
 
+use allocative::Allocative;
 pub use input::*;
 // pub use output::*;
 pub use price_paid::*;
@@ -18,7 +19,7 @@ use crate::datasets::AnyDataset;
 
 use super::AnyDatasetGroup;
 
-#[derive(Default)]
+#[derive(Default, Allocative)]
 pub struct SubDataset {
     pub input: InputSubDataset,
     // pub output: OutputSubDataset,

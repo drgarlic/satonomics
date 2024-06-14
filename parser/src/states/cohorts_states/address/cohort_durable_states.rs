@@ -1,15 +1,15 @@
-use bitcoin::Amount;
+use allocative::Allocative;
 
 use crate::{
     states::{DurableStates, OneShotStates, PriceInCentsToValue, UnrealizedState},
-    structs::{LiquiditySplitResult, SplitByLiquidity},
+    structs::{LiquiditySplitResult, SplitByLiquidity, WAmount},
 };
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Allocative)]
 pub struct AddressCohortDurableStates {
     pub address_count: usize,
     pub split_durable_states: SplitByLiquidity<DurableStates>,
-    pub cents_to_split_amount: PriceInCentsToValue<SplitByLiquidity<Amount>>,
+    pub cents_to_split_amount: PriceInCentsToValue<SplitByLiquidity<WAmount>>,
 }
 
 const ONE_THIRD: f64 = 0.33333333333;
@@ -17,7 +17,7 @@ const ONE_THIRD: f64 = 0.33333333333;
 impl AddressCohortDurableStates {
     pub fn increment(
         &mut self,
-        amount: Amount,
+        amount: WAmount,
         utxo_count: usize,
         mean_cents_paid: u32,
         split_amount: &LiquiditySplitResult,
@@ -37,7 +37,7 @@ impl AddressCohortDurableStates {
 
     pub fn decrement(
         &mut self,
-        amount: Amount,
+        amount: WAmount,
         utxo_count: usize,
         mean_cents_paid: u32,
         split_amount: &LiquiditySplitResult,
@@ -57,7 +57,7 @@ impl AddressCohortDurableStates {
 
     pub fn _crement(
         &mut self,
-        amount: Amount,
+        amount: WAmount,
         utxo_count: usize,
         mean_cents_paid: u32,
         split_amount_result: &LiquiditySplitResult,
@@ -80,13 +80,13 @@ impl AddressCohortDurableStates {
 
         let illiquid_amount = split_amount_result.illiquid.trunc();
         let illiquid_amount_rest = split_amount_result.illiquid - illiquid_amount;
-        let mut illiquid_amount = Amount::from_sat(illiquid_amount as u64);
+        let mut illiquid_amount = WAmount::from_sat(illiquid_amount as u64);
         let mut illiquid_utxo_count = split_utxo_count_result.illiquid.trunc() as usize;
         let illiquid_utxo_count_rest = split_utxo_count_result.illiquid.fract();
 
         let liquid_amount = split_amount_result.liquid.trunc();
         let liquid_amount_rest = split_amount_result.liquid - liquid_amount;
-        let mut liquid_amount = Amount::from_sat(liquid_amount as u64);
+        let mut liquid_amount = WAmount::from_sat(liquid_amount as u64);
         let mut liquid_utxo_count = split_utxo_count_result.liquid.trunc() as usize;
         let liquid_utxo_count_rest = split_utxo_count_result.liquid.fract();
 
@@ -94,7 +94,7 @@ impl AddressCohortDurableStates {
         let mut highly_liquid_utxo_count = utxo_count - illiquid_utxo_count - liquid_utxo_count;
 
         let amount_diff = amount - illiquid_amount - liquid_amount - highly_liquid_amount;
-        if amount_diff > Amount::ZERO {
+        if amount_diff > WAmount::ZERO {
             if illiquid_amount_rest >= ONE_THIRD && illiquid_amount_rest > liquid_amount_rest {
                 illiquid_amount += amount_diff;
             } else if illiquid_amount_rest >= ONE_THIRD {

@@ -4,57 +4,13 @@ use std::{
     ops::{AddAssign, SubAssign},
 };
 
-use bitcoin::Amount;
+use allocative::Allocative;
 use color_eyre::eyre::eyre;
 use derive_deref::{Deref, DerefMut};
 
-use crate::structs::SplitByLiquidity;
+use crate::structs::{SplitByLiquidity, WAmount};
 
-pub trait CanSubtract {
-    fn can_subtract(&self, other: &Self) -> bool;
-}
-
-impl CanSubtract for Amount {
-    fn can_subtract(&self, other: &Self) -> bool {
-        self >= other
-    }
-}
-
-impl CanSubtract for SplitByLiquidity<Amount> {
-    fn can_subtract(&self, other: &Self) -> bool {
-        self.all >= other.all
-            && self.illiquid >= other.illiquid
-            && self.liquid >= other.liquid
-            && self.highly_liquid >= other.highly_liquid
-    }
-}
-
-pub trait IsZero {
-    fn is_zero(&self) -> color_eyre::Result<bool>;
-}
-
-impl IsZero for Amount {
-    fn is_zero(&self) -> color_eyre::Result<bool> {
-        Ok(*self == Amount::ZERO)
-    }
-}
-
-impl IsZero for SplitByLiquidity<Amount> {
-    fn is_zero(&self) -> color_eyre::Result<bool> {
-        if self.all == Amount::ZERO
-            && (self.illiquid != Amount::ZERO
-                || self.liquid != Amount::ZERO
-                || self.highly_liquid != Amount::ZERO)
-        {
-            dbg!(&self);
-            Err(eyre!("Bad split"))
-        } else {
-            Ok(self.all == Amount::ZERO)
-        }
-    }
-}
-
-#[derive(Deref, DerefMut, Default, Debug)]
+#[derive(Deref, DerefMut, Default, Debug, Allocative)]
 pub struct PriceInCentsToValue<T>(BTreeMap<u32, T>);
 
 impl<T> PriceInCentsToValue<T>
@@ -141,5 +97,49 @@ where
         }
 
         // one_shot_states
+    }
+}
+
+pub trait CanSubtract {
+    fn can_subtract(&self, other: &Self) -> bool;
+}
+
+impl CanSubtract for WAmount {
+    fn can_subtract(&self, other: &Self) -> bool {
+        self >= other
+    }
+}
+
+impl CanSubtract for SplitByLiquidity<WAmount> {
+    fn can_subtract(&self, other: &Self) -> bool {
+        self.all >= other.all
+            && self.illiquid >= other.illiquid
+            && self.liquid >= other.liquid
+            && self.highly_liquid >= other.highly_liquid
+    }
+}
+
+pub trait IsZero {
+    fn is_zero(&self) -> color_eyre::Result<bool>;
+}
+
+impl IsZero for WAmount {
+    fn is_zero(&self) -> color_eyre::Result<bool> {
+        Ok(*self == WAmount::ZERO)
+    }
+}
+
+impl IsZero for SplitByLiquidity<WAmount> {
+    fn is_zero(&self) -> color_eyre::Result<bool> {
+        if self.all == WAmount::ZERO
+            && (self.illiquid != WAmount::ZERO
+                || self.liquid != WAmount::ZERO
+                || self.highly_liquid != WAmount::ZERO)
+        {
+            dbg!(&self);
+            Err(eyre!("Bad split"))
+        } else {
+            Ok(self.all == WAmount::ZERO)
+        }
     }
 }

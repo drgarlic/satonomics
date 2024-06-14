@@ -2,7 +2,6 @@
 
 use std::{collections::BTreeMap, path::Path};
 
-use chrono::NaiveDate;
 use color_eyre::eyre::ContextCompat;
 use itertools::Itertools;
 use serde_json::Value;
@@ -10,7 +9,8 @@ use serde_json::Value;
 use crate::{
     datasets::OHLC,
     io::{Json, IMPORTS_FOLDER_PATH},
-    utils::{log, timestamp_to_naive_date},
+    structs::WNaiveDate,
+    utils::log,
 };
 
 pub struct Binance;
@@ -144,7 +144,7 @@ impl Binance {
             .collect::<BTreeMap<_, _>>())
     }
 
-    pub fn fetch_daily_prices() -> color_eyre::Result<BTreeMap<NaiveDate, OHLC>> {
+    pub fn fetch_daily_prices() -> color_eyre::Result<BTreeMap<WNaiveDate, OHLC>> {
         log("binance: fetch 1d");
 
         let body: Value = reqwest::blocking::get(
@@ -160,8 +160,9 @@ impl Binance {
                 // [timestamp, open, high, low, close, volume, ...]
                 let array = value.as_array().unwrap();
 
-                let date =
-                    timestamp_to_naive_date(array.first().unwrap().as_u64().unwrap() as u32 / 1000);
+                let date = WNaiveDate::from_timestamp(
+                    array.first().unwrap().as_u64().unwrap() as u32 / 1000,
+                );
 
                 let get_f32 = |index: usize| {
                     array

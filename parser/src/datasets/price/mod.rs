@@ -1,28 +1,27 @@
-// mod date;
-// mod height;
 mod ohlc;
 
 use std::collections::BTreeMap;
 
-use chrono::{Days, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Timelike, Utc};
+use allocative::Allocative;
+use chrono::{Days, NaiveDateTime, NaiveTime, TimeZone, Timelike, Utc};
 use color_eyre::eyre::Error;
 
 pub use ohlc::*;
 
 use crate::{
     price::{Binance, Kraken},
-    structs::{AnyBiMap, AnyDateMap, BiMap},
-    timestamp_to_naive_date,
+    structs::{AnyBiMap, AnyDateMap, BiMap, WNaiveDate},
     utils::{ONE_MONTH_IN_DAYS, ONE_WEEK_IN_DAYS, ONE_YEAR_IN_DAYS},
     DateMap,
 };
 
 use super::{AnyDataset, ComputeData, MinInitialStates};
 
+#[derive(Allocative)]
 pub struct PriceDatasets {
     min_initial_states: MinInitialStates,
 
-    kraken_daily: Option<BTreeMap<NaiveDate, OHLC>>,
+    kraken_daily: Option<BTreeMap<WNaiveDate, OHLC>>,
     kraken_1mn: Option<BTreeMap<u32, OHLC>>,
     binance_1mn: Option<BTreeMap<u32, OHLC>>,
     binance_har: Option<BTreeMap<u32, OHLC>>,
@@ -77,8 +76,8 @@ impl PriceDatasets {
             kraken_1mn: None,
             kraken_daily: None,
 
-            ohlcs: BiMap::_new_json(1, &format!("{price_path}/ohlc"), usize::MAX),
-            closes: BiMap::_new_json(1, &f("close"), usize::MAX),
+            ohlcs: BiMap::new_json(1, &format!("{price_path}/ohlc")),
+            closes: BiMap::new_json(1, &f("close")),
             market_cap: BiMap::new_bin(1, &f("market_cap")),
             price_1w_sma: DateMap::new_bin(1, &f("price_1w_sma")),
             price_1m_sma: DateMap::new_bin(1, &f("price_1m_sma")),
@@ -235,7 +234,7 @@ impl PriceDatasets {
                 |(last_value, date, closes)| {
                     let previous_value = date
                         .checked_sub_days(Days::new(4 * ONE_YEAR_IN_DAYS as u64))
-                        .and_then(|date| closes.get_or_import(date))
+                        .and_then(|date| closes.get_or_import(&WNaiveDate::wrap(date)))
                         .unwrap_or_default();
 
                     (((last_value / previous_value).powf(1.0 / 4.0)) - 1.0) * 100.0
@@ -243,9 +242,9 @@ impl PriceDatasets {
             );
     }
 
-    pub fn get_date_ohlc(&mut self, date: NaiveDate) -> color_eyre::Result<OHLC> {
+    pub fn get_date_ohlc(&mut self, date: WNaiveDate) -> color_eyre::Result<OHLC> {
         if self.ohlcs.date.is_date_safe(date) {
-            Ok(self.ohlcs.date.get(date).unwrap().to_owned())
+            Ok(self.ohlcs.date.get(&date).unwrap().to_owned())
         } else {
             let ohlc = self.get_from_daily_kraken(&date)?;
 
@@ -255,7 +254,7 @@ impl PriceDatasets {
         }
     }
 
-    fn get_from_daily_kraken(&mut self, date: &NaiveDate) -> color_eyre::Result<OHLC> {
+    fn get_from_daily_kraken(&mut self, date: &WNaiveDate) -> color_eyre::Result<OHLC> {
         if self.kraken_daily.is_none() {
             self.kraken_daily.replace(
                 Kraken::fetch_daily_prices()
@@ -303,7 +302,7 @@ impl PriceDatasets {
         let ohlc = self.get_from_1mn_kraken(timestamp, previous_timestamp).unwrap_or_else(|_| {
                 self.get_from_1mn_binance(timestamp, previous_timestamp)
                     .unwrap_or_else(|_| self.get_from_har_binance(timestamp, previous_timestamp).unwrap_or_else(|_| {
-                        let date = timestamp_to_naive_date(timestamp);
+                        let date = WNaiveDate::from_timestamp(timestamp);
 
                         panic!(
                             "Can't find price for {height} - {timestamp} - {date}, please update binance.har file"

@@ -1,14 +1,14 @@
-use chrono::NaiveDate;
+use allocative::Allocative;
 use itertools::Itertools;
 
 use crate::{
     datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
     states::PricePaidState,
-    structs::{AnyBiMap, BiMap},
+    structs::{AnyBiMap, BiMap, WNaiveDate},
     utils::ONE_MONTH_IN_DAYS,
 };
 
-#[derive(Default)]
+#[derive(Default, Allocative)]
 pub struct PricePaidSubDataset {
     min_initial_states: MinInitialStates,
 
@@ -209,7 +209,7 @@ impl PricePaidSubDataset {
         })
     }
 
-    fn insert_date_default(&mut self, date: NaiveDate) {
+    fn insert_date_default(&mut self, date: WNaiveDate) {
         self.inserted_as_mut_vec().into_iter().for_each(|bi| {
             bi.date.insert_default(date);
         })

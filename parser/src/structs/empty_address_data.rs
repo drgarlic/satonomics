@@ -1,12 +1,12 @@
-use bitcoin::Amount;
+use allocative::Allocative;
 use sanakirja::{direct_repr, Storable, UnsizedStorable};
 
-use super::{AddressData, AddressType};
+use super::{AddressData, AddressType, WAmount};
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Default)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Default, Allocative)]
 pub struct EmptyAddressData {
     pub address_type: AddressType,
-    pub transfered: Amount,
+    pub transfered: WAmount,
 }
 direct_repr!(EmptyAddressData);
 

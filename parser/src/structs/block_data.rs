@@ -1,9 +1,9 @@
-use bitcoin::Amount;
-use savefile_derive::Savefile;
+use allocative::Allocative;
+use bincode::{Decode, Encode};
 
 use super::WAmount;
 
-#[derive(Savefile, Debug)]
+#[derive(Debug, Encode, Decode, Allocative)]
 pub struct BlockData {
     pub height: u32,
     pub price: f32,
@@ -18,7 +18,7 @@ impl BlockData {
             height,
             price,
             timestamp,
-            amount: WAmount::wrap(Amount::ZERO),
+            amount: WAmount::ZERO,
             spendable_outputs: 0,
         }
     }

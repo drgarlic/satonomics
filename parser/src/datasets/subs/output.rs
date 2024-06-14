@@ -27,7 +27,7 @@ impl OutputSubDataset {
 
             count: BiMap::new_bin(1, &f("output_count")),
             volume: BiMap::new_bin(1, &f("output_volume")),
-            annualized_volume: BiMap::_new_bin(1, &f("annualized_output_volume"), usize::MAX),
+            annualized_volume: BiMap::new_bin(1, &f("annualized_output_volume")),
             velocity: BiMap::new_bin(1, &f("output_velocity")),
         };
 

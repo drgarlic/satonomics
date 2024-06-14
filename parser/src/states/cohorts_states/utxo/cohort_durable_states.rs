@@ -1,17 +1,20 @@
-use bitcoin::Amount;
+use allocative::Allocative;
 
-use crate::states::{DurableStates, OneShotStates, PriceInCentsToValue, UnrealizedState};
+use crate::{
+    states::{DurableStates, OneShotStates, PriceInCentsToValue, UnrealizedState},
+    structs::WAmount,
+};
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Allocative)]
 pub struct UTXOCohortDurableStates {
     pub durable_states: DurableStates,
-    pub cents_to_amount: PriceInCentsToValue<Amount>,
+    pub cents_to_amount: PriceInCentsToValue<WAmount>,
 }
 
 impl UTXOCohortDurableStates {
     pub fn increment(
         &mut self,
-        amount: Amount,
+        amount: WAmount,
         utxo_count: usize,
         mean_cents_paid: u32,
     ) -> color_eyre::Result<()> {
@@ -20,7 +23,7 @@ impl UTXOCohortDurableStates {
 
     pub fn decrement(
         &mut self,
-        amount: Amount,
+        amount: WAmount,
         utxo_count: usize,
         mean_cents_paid: u32,
     ) -> color_eyre::Result<()> {
@@ -29,7 +32,7 @@ impl UTXOCohortDurableStates {
 
     pub fn _crement(
         &mut self,
-        amount: Amount,
+        amount: WAmount,
         utxo_count: usize,
         mean_cents_paid: u32,
         increment: bool,

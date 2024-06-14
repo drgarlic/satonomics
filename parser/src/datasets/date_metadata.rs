@@ -1,3 +1,5 @@
+use allocative::Allocative;
+
 use crate::{
     datasets::AnyDataset,
     structs::{AnyDateMap, DateMap},
@@ -5,6 +7,7 @@ use crate::{
 
 use super::{InsertData, MinInitialStates};
 
+#[derive(Allocative)]
 pub struct DateMetadataDataset {
     min_initial_states: MinInitialStates,
 
@@ -20,8 +23,8 @@ impl DateMetadataDataset {
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
-            first_height: DateMap::_new_bin(1, &f("first_height"), usize::MAX, true),
-            last_height: DateMap::_new_bin(1, &f("last_height"), usize::MAX, true),
+            first_height: DateMap::new_bin(1, &f("first_height")),
+            last_height: DateMap::new_bin(1, &f("last_height")),
         };
 
         s.min_initial_states

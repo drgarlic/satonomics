@@ -1,7 +1,7 @@
 use std::{collections::BTreeMap, ops::RangeInclusive};
 
-use bitcoin::Amount;
-use chrono::NaiveDate;
+use allocative::Allocative;
+
 use itertools::Itertools;
 
 use rayon::prelude::*;
@@ -38,41 +38,37 @@ use crate::{
     states::{
         AddressCohortsInputStates,
         AddressCohortsOneShotStates,
-        AddressCohortsOutputStates,
         AddressCohortsRealizedStates,
         States,
         UTXOCohortsOneShotStates,
         // UTXOCohortsReceivedStates,
         UTXOCohortsSentStates,
     },
-    structs::AddressRealizedData,
+    structs::{WAmount, WNaiveDate},
 };
 
 pub struct InsertData<'a> {
     pub address_cohorts_input_states: &'a Option<AddressCohortsInputStates>,
     pub address_cohorts_one_shot_states: &'a Option<AddressCohortsOneShotStates>,
-    pub address_cohorts_output_states: &'a Option<AddressCohortsOutputStates>,
     pub address_cohorts_realized_states: &'a Option<AddressCohortsRealizedStates>,
-    pub address_index_to_address_realized_data: &'a BTreeMap<u32, AddressRealizedData>,
-    pub amount_sent: Amount,
+    pub amount_sent: WAmount,
     pub block_interval: u32,
     pub block_price: f32,
     pub block_size: usize,
     pub block_vbytes: u64,
     pub block_weight: u64,
-    pub coinbase: Amount,
+    pub coinbase: WAmount,
     pub compute_addresses: bool,
     pub databases: &'a Databases,
-    pub date: NaiveDate,
+    pub date: WNaiveDate,
     pub date_blocks_range: &'a RangeInclusive<usize>,
     pub date_first_height: usize,
-    pub date_price: f32,
     pub difficulty: f64,
-    pub fees: &'a Vec<Amount>,
+    pub fees: &'a Vec<WAmount>,
     pub height: usize,
     pub is_date_last_block: bool,
-    pub satblocks_destroyed: Amount,
-    pub satdays_destroyed: Amount,
+    pub satblocks_destroyed: WAmount,
+    pub satdays_destroyed: WAmount,
     pub states: &'a States,
     pub timestamp: u32,
     pub transaction_count: usize,
@@ -83,9 +79,10 @@ pub struct InsertData<'a> {
 
 pub struct ComputeData<'a> {
     pub heights: &'a [usize],
-    pub dates: &'a [NaiveDate],
+    pub dates: &'a [WNaiveDate],
 }
 
+#[derive(Allocative)]
 pub struct AllDatasets {
     min_initial_states: MinInitialStates,
 

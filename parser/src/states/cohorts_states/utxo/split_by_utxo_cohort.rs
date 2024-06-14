@@ -1,6 +1,8 @@
+use allocative::Allocative;
+
 use super::{UTXOCheck, UTXOCohortId, UTXO_FILTERS};
 
-#[derive(Default)]
+#[derive(Default, Allocative)]
 pub struct SplitByUTXOCohort<T> {
     pub sth: T,
     pub lth: T,

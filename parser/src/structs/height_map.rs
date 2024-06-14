@@ -9,9 +9,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use allocative::Allocative;
+use bincode::{Decode, Encode};
 use itertools::Itertools;
 use ordered_float::{FloatCore, OrderedFloat};
-use savefile_derive::Savefile;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -25,13 +26,13 @@ use super::{AnyMap, MapValue};
 
 pub const HEIGHT_MAP_CHUNK_SIZE: usize = 10_000;
 
-#[derive(Debug, Savefile, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Encode, Decode, Allocative)]
 pub struct SerializedHeightMap<T> {
     version: u32,
     map: Vec<T>,
 }
 
-#[derive(Default)]
+#[derive(Default, Allocative)]
 pub struct HeightMap<T>
 where
     T: MapValue,
@@ -60,28 +61,12 @@ where
         Self::new(version, path, Serialization::Binary, 1, true)
     }
 
-    pub fn _new_bin(version: u32, path: &str, chunks_in_memory: usize, export_last: bool) -> Self {
-        Self::new(
-            version,
-            path,
-            Serialization::Binary,
-            chunks_in_memory,
-            export_last,
-        )
+    pub fn _new_bin(version: u32, path: &str, export_last: bool) -> Self {
+        Self::new(version, path, Serialization::Binary, 1, export_last)
     }
 
-    pub fn new_json(version: u32, path: &str) -> Self {
-        Self::new(version, path, Serialization::Json, 1, true)
-    }
-
-    pub fn _new_json(version: u32, path: &str, chunks_in_memory: usize, export_last: bool) -> Self {
-        Self::new(
-            version,
-            path,
-            Serialization::Json,
-            chunks_in_memory,
-            export_last,
-        )
+    pub fn new_json(version: u32, path: &str, export_last: bool) -> Self {
+        Self::new(version, path, Serialization::Json, usize::MAX, export_last)
     }
 
     fn new(
@@ -302,35 +287,36 @@ where
     // }
 
     fn pre_export(&mut self) {
-        self.to_insert
-            .iter_mut()
-            .enumerate()
-            .for_each(|(_, (chunk_start, map))| {
-                let serialized =
-                    self.imported
-                        .entry(chunk_start.to_owned())
-                        .or_insert(SerializedHeightMap {
-                            version: self.version,
-                            map: vec![],
-                        });
+        self.to_insert.iter_mut().for_each(|(chunk_start, map)| {
+            let serialized = self
+                .imported
+                .entry(*chunk_start)
+                .or_insert(SerializedHeightMap {
+                    version: self.version,
+                    map: vec![],
+                });
 
-                mem::take(map)
-                    .into_iter()
-                    .for_each(|(chunk_height, value)| {
-                        match serialized.map.len().cmp(&chunk_height) {
-                            Ordering::Greater => serialized.map[chunk_height] = value,
-                            Ordering::Equal => serialized.map.push(value),
-                            Ordering::Less => panic!(),
-                        }
-                    });
-            });
+            mem::take(map)
+                .into_iter()
+                .for_each(
+                    |(chunk_height, value)| match serialized.map.len().cmp(&chunk_height) {
+                        Ordering::Greater => serialized.map[chunk_height] = value,
+                        Ordering::Equal => serialized.map.push(value),
+                        Ordering::Less => panic!(),
+                    },
+                );
+        });
     }
 
     fn export(&self) -> color_eyre::Result<()> {
         let len = self.imported.len();
 
         self.to_insert.iter().enumerate().try_for_each(
-            |(index, (chunk_start, _))| -> color_eyre::Result<()> {
+            |(index, (chunk_start, map))| -> color_eyre::Result<()> {
+                if !map.is_empty() {
+                    unreachable!()
+                }
+
                 let chunk_name = Self::height_to_chunk_name(*chunk_start);
 
                 let path = self
@@ -357,24 +343,17 @@ where
     }
 
     fn post_export(&mut self) {
-        let len = self.imported.len();
-
-        let keys = self
-            .imported
+        self.imported
             .keys()
+            .rev()
             .enumerate()
-            .filter(|(index, _)| {
-                let v = self.chunks_in_memory;
-                let v = v.checked_mul(HEIGHT_MAP_CHUNK_SIZE).unwrap_or(v);
-                v.checked_add(*index).unwrap_or(v) < len
-            })
-            .map(|(_, key)| key)
-            .cloned()
-            .collect_vec();
-
-        keys.into_iter().for_each(|key| {
-            self.imported.remove(&key);
-        });
+            .filter(|(index, _)| *index + 1 > self.chunks_in_memory)
+            .map(|(_, key)| *key)
+            .collect_vec()
+            .iter()
+            .for_each(|key| {
+                self.imported.remove(key);
+            });
 
         self.to_insert.clear();
     }

@@ -1,3 +1,5 @@
+use allocative::Allocative;
+
 use crate::{
     datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
     states::RealizedState,
@@ -6,7 +8,7 @@ use crate::{
 };
 
 /// TODO: Fix fees not taken into account ?
-#[derive(Default)]
+#[derive(Default, Allocative)]
 pub struct RealizedSubDataset {
     min_initial_states: MinInitialStates,
 

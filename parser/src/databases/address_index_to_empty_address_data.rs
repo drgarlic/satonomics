@@ -4,11 +4,11 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use chrono::NaiveDate;
+use allocative::Allocative;
 
 use rayon::prelude::*;
 
-use crate::structs::EmptyAddressData;
+use crate::structs::{EmptyAddressData, WNaiveDate};
 
 use super::{AnyDatabaseGroup, Metadata, SizedDatabase};
 
@@ -16,9 +16,11 @@ type Key = u32;
 type Value = EmptyAddressData;
 type Database = SizedDatabase<Key, Value>;
 
+#[derive(Allocative)]
 pub struct AddressIndexToEmptyAddressData {
-    map: BTreeMap<usize, Database>,
     pub metadata: Metadata,
+
+    map: BTreeMap<usize, Database>,
 }
 
 impl Deref for AddressIndexToEmptyAddressData {
@@ -67,7 +69,12 @@ impl AddressIndexToEmptyAddressData {
     pub fn unsafe_get_from_db(&self, key: &Key) -> Option<&Value> {
         let db_index = Self::db_index(key);
 
-        self.get(&db_index).unwrap().db_get(key)
+        self.get(&db_index)
+            .unwrap_or_else(|| {
+                dbg!(&self.map.keys(), &key, &db_index);
+                panic!()
+            })
+            .db_get(key)
     }
 
     pub fn open_db(&mut self, key: &Key) -> &mut Database {
@@ -97,7 +104,7 @@ impl AnyDatabaseGroup for AddressIndexToEmptyAddressData {
         }
     }
 
-    fn export(&mut self, height: usize, date: NaiveDate) -> color_eyre::Result<()> {
+    fn export(&mut self, height: usize, date: WNaiveDate) -> color_eyre::Result<()> {
         mem::take(&mut self.map)
             .into_par_iter()
             .try_for_each(|(_, db)| db.export())?;

@@ -1,3 +1,4 @@
+use allocative::Allocative;
 use itertools::Itertools;
 
 use crate::{
@@ -8,7 +9,7 @@ use crate::{
     structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap},
 };
 
-#[derive(Default)]
+#[derive(Default, Allocative)]
 pub struct UTXODataset {
     id: UTXOCohortId,
 

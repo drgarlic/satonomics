@@ -1,9 +1,8 @@
-use bitcoin::Amount;
 use derive_deref::{Deref, DerefMut};
 
 use crate::{
     states::InputState,
-    structs::{AddressRealizedData, LiquidityClassification, SplitByLiquidity},
+    structs::{AddressRealizedData, LiquidityClassification, SplitByLiquidity, WAmount},
 };
 
 use super::SplitByAddressCohort;
@@ -28,17 +27,17 @@ impl AddressCohortsInputStates {
 
             state.illiquid.iterate(
                 split_count.illiquid,
-                Amount::from_sat(split_volume.illiquid.round() as u64),
+                WAmount::from_sat(split_volume.illiquid.round() as u64),
             );
 
             state.liquid.iterate(
                 split_count.liquid,
-                Amount::from_sat(split_volume.liquid.round() as u64),
+                WAmount::from_sat(split_volume.liquid.round() as u64),
             );
 
             state.highly_liquid.iterate(
                 split_count.highly_liquid,
-                Amount::from_sat(split_volume.highly_liquid.round() as u64),
+                WAmount::from_sat(split_volume.highly_liquid.round() as u64),
             );
 
             Ok(())

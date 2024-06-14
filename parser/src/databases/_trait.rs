@@ -1,8 +1,6 @@
 use std::{fs, io};
 
-use chrono::NaiveDate;
-
-use crate::utils::log;
+use crate::{structs::WNaiveDate, utils::log};
 
 use super::databases_folder_path;
 
@@ -12,7 +10,7 @@ where
 {
     fn import() -> Self;
 
-    fn export(&mut self, height: usize, date: NaiveDate) -> color_eyre::Result<()>;
+    fn export(&mut self, height: usize, date: WNaiveDate) -> color_eyre::Result<()>;
 
     fn folder<'a>() -> &'a str;
 

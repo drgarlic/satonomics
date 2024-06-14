@@ -4,11 +4,10 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use chrono::NaiveDate;
-
+use allocative::Allocative;
 use rayon::prelude::*;
 
-use crate::structs::{TxoutIndex, WAmount};
+use crate::structs::{TxoutIndex, WAmount, WNaiveDate};
 
 use super::{AnyDatabaseGroup, Metadata, SizedDatabase};
 
@@ -16,6 +15,7 @@ type Key = TxoutIndex;
 type Value = WAmount;
 type Database = SizedDatabase<Key, Value>;
 
+#[derive(Allocative)]
 pub struct TxoutIndexToAmount {
     pub metadata: Metadata,
 
@@ -94,7 +94,7 @@ impl AnyDatabaseGroup for TxoutIndexToAmount {
         }
     }
 
-    fn export(&mut self, height: usize, date: NaiveDate) -> color_eyre::Result<()> {
+    fn export(&mut self, height: usize, date: WNaiveDate) -> color_eyre::Result<()> {
         mem::take(&mut self.map)
             .into_par_iter()
             .try_for_each(|(_, db)| db.export())?;

@@ -1,13 +1,13 @@
-use bitcoin::Amount;
+use crate::structs::WAmount;
 
 #[derive(Debug, Default)]
 pub struct OutputState {
     pub count: f64,
-    pub volume: Amount,
+    pub volume: WAmount,
 }
 
 impl OutputState {
-    pub fn iterate(&mut self, count: f64, volume: Amount) {
+    pub fn iterate(&mut self, count: f64, volume: WAmount) {
         self.count += count;
         self.volume += volume;
     }

@@ -4,6 +4,7 @@ use std::{
     fs,
 };
 
+use allocative::Allocative;
 use derive_deref::{Deref, DerefMut};
 
 // https://docs.rs/sanakirja/latest/sanakirja/index.html
@@ -25,6 +26,8 @@ pub type SizedDatabase<Key, Value> = Database<Key, Key, Value, page::Page<Key, V
 pub type UnsizedDatabase<KeyTree, KeyDB, Value> =
     Database<KeyTree, KeyDB, Value, page_unsized::Page<KeyDB, Value>>;
 
+#[derive(Allocative)]
+#[allocative(bound = "KeyTree: Allocative, KeyDB, Value: Allocative, Page")]
 /// There is no `cached_gets` since it's much cheaper and faster to do a parallel search first using `unsafe_get` than caching gets along the way.
 pub struct Database<KeyTree, KeyDB, Value, Page>
 where
@@ -33,11 +36,13 @@ where
     Value: Storable + PartialEq,
     Page: BTreeMutPage<KeyDB, Value>,
 {
-    // cached_updates: BTreeMap<KeyTree, Value>,
     pub cached_puts: BTreeMap<KeyTree, Value>,
     pub cached_dels: BTreeSet<KeyTree>,
+    #[allocative(skip)]
     db: Db_<KeyDB, Value, Page>,
+    #[allocative(skip)]
     txn: MutTxn<Env, ()>,
+    #[allocative(skip)]
     key_tree_to_key_db: fn(&KeyTree) -> &KeyDB,
 }
 
@@ -66,7 +71,6 @@ where
         Ok(Self {
             cached_puts: BTreeMap::default(),
             cached_dels: BTreeSet::default(),
-            // cached_updates: BTreeMap::default(),
             db,
             txn,
             key_tree_to_key_db,
@@ -114,24 +118,6 @@ where
         self.cached_puts.get_mut(key)
     }
 
-    // pub fn db_take(&mut self, key: &KeyTree) -> Option<&Value> {
-    //     self.cached_dels.insert(key.clone());
-    //     self.db_get(key)
-    // }
-
-    // pub fn take(&mut self, key: &KeyTree) -> Option<Value> {
-    //     if !self.cached_dels.contains(key) {
-    //         self.remove_from_puts(key).or_else(|| {
-    //             self.cached_dels.insert(key.clone());
-
-    //             self.db_get(key).cloned()
-    //         })
-    //     } else {
-    //         dbg!(key);
-    //         panic!("Can't take twice");
-    //     }
-    // }
-
     #[inline(always)]
     pub fn remove(&mut self, key: &KeyTree) -> Option<Value> {
         self.remove_from_puts(key).or_else(|| {
@@ -156,11 +142,6 @@ where
     pub fn remove_from_puts(&mut self, key: &KeyTree) -> Option<Value> {
         self.cached_puts.remove(key)
     }
-
-    // #[inline(always)]
-    // pub fn remove_from_updates(&mut self, key: &KeyTree) -> Option<Value> {
-    //     self.cached_updates.remove(key)
-    // }
 
     #[inline(always)]
     pub fn insert(&mut self, key: KeyTree, value: Value) -> Option<Value> {
@@ -223,7 +204,9 @@ where
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Default, Copy)]
+#[derive(
+    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Default, Copy, Allocative,
+)]
 pub struct U8x19([u8; 19]);
 direct_repr!(U8x19);
 impl From<&[u8]> for U8x19 {
@@ -234,7 +217,9 @@ impl From<&[u8]> for U8x19 {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Default, Copy)]
+#[derive(
+    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Default, Copy, Allocative,
+)]
 pub struct U8x31([u8; 31]);
 direct_repr!(U8x31);
 impl From<&[u8]> for U8x31 {

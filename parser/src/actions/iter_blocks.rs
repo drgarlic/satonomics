@@ -12,13 +12,14 @@ use crate::{
     databases::Databases,
     datasets::{AllDatasets, ComputeData},
     states::States,
-    structs::DateData,
-    utils::{log, timestamp_to_naive_date},
+    structs::{DateData, WNaiveDate},
+    utils::{generate_allocation_files, log, time},
 };
 
 pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Result<()> {
     let should_insert = true;
     let should_export = true;
+    let study_ram_usage = false;
 
     log("Starting...");
 
@@ -63,7 +64,7 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
     let mut blocks_loop_date = None;
 
     'parsing: loop {
-        let time = Instant::now();
+        let instant = Instant::now();
 
         let mut processed_heights = BTreeSet::new();
         let mut processed_dates = BTreeSet::new();
@@ -83,12 +84,12 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
                 if let Some(current_block) = current_block_opt {
                     let timestamp = current_block.header.time;
 
-                    let current_block_date = timestamp_to_naive_date(timestamp);
+                    let current_block_date = WNaiveDate::from_timestamp(timestamp);
                     let current_block_height = height + blocks_loop_i;
 
                     let next_block_date = next_block_opt
                         .as_ref()
-                        .map(|next_block| timestamp_to_naive_date(next_block.header.time));
+                        .map(|next_block| WNaiveDate::from_timestamp(next_block.header.time));
 
                     // Always run for the first block of the loop
                     if blocks_loop_date.is_none() {
@@ -97,7 +98,7 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
                         if states
                             .date_data_vec
                             .last()
-                            .map(|date_data| *date_data.date < current_block_date)
+                            .map(|date_data| *date_data.date < *current_block_date)
                             .unwrap_or(true)
                         {
                             states
@@ -181,7 +182,7 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
 
         log(&format!(
             "Parsing month took {} seconds (last height: {last_height})\n",
-            time.elapsed().as_secs_f32(),
+            instant.elapsed().as_secs_f32(),
         ));
 
         if first_unsafe_heights.computed <= last_height {
@@ -201,9 +202,17 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
                 height: last_height,
                 states: is_safe.then_some(&states),
             })?;
+
+            if study_ram_usage {
+                time("Exporing allocation files", || {
+                    generate_allocation_files(&datasets, &databases, &states, last_height)
+                })?;
+            }
         } else {
             log("Skipping export");
         }
+
+        println!();
     }
 
     Ok(())

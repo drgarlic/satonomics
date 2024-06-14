@@ -1,10 +1,12 @@
+use allocative::Allocative;
+
 use crate::{
     datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
     states::UnrealizedState,
     structs::{AnyBiMap, BiMap},
 };
 
-#[derive(Default)]
+#[derive(Default, Allocative)]
 pub struct UnrealizedSubDataset {
     min_initial_states: MinInitialStates,
 

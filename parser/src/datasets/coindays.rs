@@ -1,3 +1,5 @@
+use allocative::Allocative;
+
 use crate::{
     datasets::AnyDataset,
     structs::{AnyBiMap, BiMap},
@@ -5,6 +7,7 @@ use crate::{
 
 use super::{InsertData, MinInitialStates};
 
+#[derive(Allocative)]
 pub struct CoindaysDataset {
     min_initial_states: MinInitialStates,
 

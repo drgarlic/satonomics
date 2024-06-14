@@ -6,13 +6,15 @@ mod counters;
 mod date_data_vec;
 
 pub use _trait::*;
+
+use allocative::Allocative;
 pub use cohorts_states::*;
 use counters::*;
 use date_data_vec::*;
 
 use crate::{databases::AddressIndexToAddressData, utils::log};
 
-#[derive(Default)]
+#[derive(Default, Allocative)]
 pub struct States {
     pub address_counters: Counters,
     pub date_data_vec: DateDataVec,

@@ -1,6 +1,7 @@
+use allocative::Allocative;
 use color_eyre::eyre::eyre;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Allocative)]
 pub struct UTXOState {
     pub count: usize,
 }

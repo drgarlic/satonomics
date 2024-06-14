@@ -1,10 +1,9 @@
-use chrono::NaiveDate;
 use itertools::Itertools;
 use rayon::prelude::*;
 
 use crate::{
     datasets::{ComputeData, InsertData},
-    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, AnyMap},
+    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, AnyMap, WNaiveDate},
 };
 
 use super::MinInitialStates;
@@ -28,7 +27,7 @@ pub trait AnyDataset {
     }
 
     #[inline(always)]
-    fn should_insert_date(&self, date: NaiveDate) -> bool {
+    fn should_insert_date(&self, date: WNaiveDate) -> bool {
         !self.to_all_inserted_date_map_vec().is_empty()
             && self
                 .get_min_initial_states()
@@ -129,7 +128,7 @@ pub trait AnyDataset {
     }
 
     #[inline(always)]
-    fn should_compute_date(&self, date: NaiveDate) -> bool {
+    fn should_compute_date(&self, date: WNaiveDate) -> bool {
         !self.to_all_computed_date_map_vec().is_empty()
             && self
                 .get_min_initial_states()

@@ -1,18 +1,17 @@
 use std::thread;
 
-use chrono::NaiveDate;
-
 use crate::{
     databases::Databases,
     datasets::AllDatasets,
     states::States,
+    structs::WNaiveDate,
     utils::{log, time},
 };
 
 pub struct ExportedData<'a> {
     pub databases: Option<&'a mut Databases>,
     pub datasets: &'a mut AllDatasets,
-    pub date: NaiveDate,
+    pub date: WNaiveDate,
     pub height: usize,
     pub states: Option<&'a States>,
 }
@@ -43,8 +42,6 @@ pub fn export(
 
         Ok(())
     })?;
-
-    println!();
 
     Ok(())
 }

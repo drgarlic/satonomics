@@ -1,24 +1,43 @@
-use savefile::{load_file, save_file, Deserialize, Serialize};
+use std::{
+    fmt::Debug,
+    fs::File,
+    io::{BufReader, BufWriter},
+};
+
+use bincode::{config, decode_from_std_read, encode_into_std_write, Decode, Encode};
 
 pub struct Binary;
-
-// NOTES:
-// bincode 2.0: it was very consistent in terms of timing until it wasn't at around ~800 000 blocks processed with times between 100s and 3000s, might want to try again later
-// savefile: less consistent maybe even slower but good enough for now (as of height ~350 000)
-// rkyv: need to try but having an archived mirror of all serialized struct seems annoying
 
 impl Binary {
     pub fn import<T>(path: &str) -> color_eyre::Result<T>
     where
-        T: Deserialize,
+        T: Decode,
     {
-        Ok(load_file(path, 0)?)
+        let config = config::standard();
+
+        let file = File::open(path)?;
+
+        let mut reader = BufReader::new(file);
+
+        let decoded = decode_from_std_read(&mut reader, config)?;
+
+        Ok(decoded)
     }
 
     pub fn export<T>(path: &str, value: &T) -> color_eyre::Result<()>
     where
-        T: Serialize,
+        T: Debug + Encode,
     {
-        Ok(save_file(path, 0, value)?)
+        let config = config::standard();
+
+        let file = File::create(path).inspect_err(|_| {
+            dbg!(path, value);
+        })?;
+
+        let mut writer = BufWriter::new(file);
+
+        encode_into_std_write(value, &mut writer, config)?;
+
+        Ok(())
     }
 }

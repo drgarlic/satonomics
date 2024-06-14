@@ -3,7 +3,7 @@
 /.vscode
 /.zed
 
-*flamegraph*
+flamegraph
 /profile.json
 
 /inputs*/

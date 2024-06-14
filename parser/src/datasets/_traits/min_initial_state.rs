@@ -1,10 +1,10 @@
-use chrono::NaiveDate;
+use allocative::Allocative;
 
-use crate::structs::{AnyDateMap, AnyHeightMap};
+use crate::structs::{AnyDateMap, AnyHeightMap, WNaiveDate};
 
 use super::{AnyDataset, AnyDatasets};
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Allocative)]
 pub struct MinInitialStates {
     pub inserted: MinInitialState,
     pub computed: MinInitialState,
@@ -31,11 +31,11 @@ impl MinInitialStates {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Allocative)]
 pub struct MinInitialState {
-    pub first_unsafe_date: Option<NaiveDate>,
+    pub first_unsafe_date: Option<WNaiveDate>,
     pub first_unsafe_height: Option<usize>,
-    pub last_date: Option<NaiveDate>,
+    pub last_date: Option<WNaiveDate>,
     pub last_height: Option<usize>,
 }
 
@@ -172,8 +172,8 @@ impl MinInitialState {
     fn min_datasets_date(
         datasets: &dyn AnyDatasets,
         is_not_empty: impl Fn(&&(dyn AnyDataset + Sync + Send)) -> bool,
-        map: impl Fn(&(dyn AnyDataset + Sync + Send)) -> Option<NaiveDate>,
-    ) -> Option<NaiveDate> {
+        map: impl Fn(&(dyn AnyDataset + Sync + Send)) -> Option<WNaiveDate>,
+    ) -> Option<WNaiveDate> {
         Self::min_date(
             datasets
                 .to_any_dataset_vec()
@@ -235,7 +235,7 @@ impl MinInitialState {
     #[inline(always)]
     fn compute_min_initial_last_date_from_dataset(
         arr: &[&(dyn AnyDateMap + Sync + Send)],
-    ) -> Option<NaiveDate> {
+    ) -> Option<WNaiveDate> {
         Self::min_date(arr.iter().map(|map| map.get_initial_last_date()))
     }
 
@@ -249,7 +249,7 @@ impl MinInitialState {
     #[inline(always)]
     fn compute_min_initial_first_unsafe_date_from_dataset(
         arr: &[&(dyn AnyDateMap + Sync + Send)],
-    ) -> Option<NaiveDate> {
+    ) -> Option<WNaiveDate> {
         Self::min_date(arr.iter().map(|map| map.get_initial_first_unsafe_date()))
     }
 
@@ -261,7 +261,7 @@ impl MinInitialState {
     }
 
     #[inline(always)]
-    fn min_date(iter: impl Iterator<Item = Option<NaiveDate>>) -> Option<NaiveDate> {
+    fn min_date(iter: impl Iterator<Item = Option<WNaiveDate>>) -> Option<WNaiveDate> {
         iter.min().and_then(|opt| opt)
     }
 

@@ -1,7 +1,10 @@
-use savefile_derive::Savefile;
+use allocative::Allocative;
+use bincode::{Decode, Encode};
 
 // https://unchained.com/blog/bitcoin-address-types-compared/
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default, Savefile)]
+#[derive(
+    Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default, Encode, Decode, Allocative,
+)]
 pub enum AddressType {
     Empty,
     OpReturn,

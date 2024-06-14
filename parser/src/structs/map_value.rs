@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 
+use bincode::{Decode, Encode};
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::OHLC;
@@ -7,17 +8,7 @@ use crate::OHLC;
 use super::WNaiveDate;
 
 pub trait MapValue:
-    Clone
-    + Copy
-    + Default
-    + Debug
-    + Serialize
-    + DeserializeOwned
-    + savefile::Serialize
-    + savefile::Deserialize
-    + savefile::ReprC
-    + Sync
-    + Send
+    Clone + Copy + Default + Debug + Serialize + DeserializeOwned + Encode + Decode + Sync + Send
 {
 }
 

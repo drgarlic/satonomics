@@ -1,3 +1,4 @@
+use allocative::Allocative;
 use itertools::Itertools;
 
 use crate::{
@@ -10,7 +11,7 @@ use crate::{
 
 use super::cohort_metadata::MetadataDataset;
 
-#[derive(Default)]
+#[derive(Default, Allocative)]
 pub struct CohortDataset {
     min_initial_states: MinInitialStates,
 

@@ -1,11 +1,13 @@
 use std::{fmt::Debug, fs, io};
 
+use bincode::{Decode, Encode};
+
 use crate::io::{Binary, OUTPUTS_FOLDER_PATH};
 
 // https://github.com/djkoloski/rust_serialization_benchmark
 pub trait AnyState
 where
-    Self: Debug + savefile::Serialize + savefile::Deserialize,
+    Self: Debug + Encode + Decode,
 {
     fn name<'a>() -> &'a str;
 

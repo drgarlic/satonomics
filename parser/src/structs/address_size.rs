@@ -1,8 +1,8 @@
-// use super::AddressData;
+use allocative::Allocative;
 
-use bitcoin::Amount;
+use super::WAmount;
 
-#[derive(PartialEq, PartialOrd, Ord, Eq, Debug)]
+#[derive(PartialEq, PartialOrd, Ord, Eq, Debug, Allocative)]
 pub enum AddressSize {
     Empty,
     Plankton,
@@ -16,7 +16,7 @@ pub enum AddressSize {
 }
 
 impl AddressSize {
-    pub fn from_amount(amount: Amount) -> Self {
+    pub fn from_amount(amount: WAmount) -> Self {
         match amount.to_sat() {
             0 => Self::Empty,
             1..=9_999_999 => Self::Plankton,

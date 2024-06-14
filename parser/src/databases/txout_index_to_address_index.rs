@@ -4,11 +4,10 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use chrono::NaiveDate;
-
+use allocative::Allocative;
 use rayon::prelude::*;
 
-use crate::structs::TxoutIndex;
+use crate::structs::{TxoutIndex, WNaiveDate};
 
 use super::{AnyDatabaseGroup, Metadata, SizedDatabase};
 
@@ -16,9 +15,11 @@ type Key = TxoutIndex;
 type Value = u32;
 type Database = SizedDatabase<Key, Value>;
 
+#[derive(Allocative)]
 pub struct TxoutIndexToAddressIndex {
-    map: BTreeMap<usize, Database>,
     pub metadata: Metadata,
+
+    map: BTreeMap<usize, Database>,
 }
 
 impl Deref for TxoutIndexToAddressIndex {
@@ -93,7 +94,7 @@ impl AnyDatabaseGroup for TxoutIndexToAddressIndex {
         }
     }
 
-    fn export(&mut self, height: usize, date: NaiveDate) -> color_eyre::Result<()> {
+    fn export(&mut self, height: usize, date: WNaiveDate) -> color_eyre::Result<()> {
         mem::take(&mut self.map)
             .into_par_iter()
             .try_for_each(|(_, db)| {

@@ -4,11 +4,13 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use chrono::NaiveDate;
-
+use allocative::Allocative;
 use rayon::prelude::*;
 
-use crate::structs::AddressData;
+use crate::{
+    structs::{AddressData, WNaiveDate},
+    utils::time,
+};
 
 use super::{databases_folder_path, AnyDatabaseGroup, Metadata, SizedDatabase};
 
@@ -16,6 +18,7 @@ type Key = u32;
 type Value = AddressData;
 type Database = SizedDatabase<Key, Value>;
 
+#[derive(Allocative)]
 pub struct AddressIndexToAddressData {
     pub metadata: Metadata,
 
@@ -44,12 +47,6 @@ impl AddressIndexToAddressData {
 
         self.open_db(&key).unsafe_insert(key, value)
     }
-
-    // pub fn undo_insert(&mut self, key: &Key) -> Option<Value> {
-    //     self.metadata.called_remove();
-
-    //     self.open_db(key).remove_from_puts(key)
-    // }
 
     pub fn remove(&mut self, key: &Key) -> Option<Value> {
         self.metadata.called_remove();
@@ -89,20 +86,30 @@ impl AddressIndexToAddressData {
     where
         F: FnMut((&Key, &Value)),
     {
-        self.open_all();
+        time("Iter through address_index_to_address_data", || {
+            self.open_all();
 
-        self.map
-            .values()
-            .for_each(|database| database.iter(callback));
+            // MUST CLEAR MAP, otherwise some weird shit in happening later in the export I think
+            mem::take(&mut self.map)
+                .values()
+                .for_each(|database| database.iter(callback));
+        });
     }
 
     fn open_all(&mut self) {
         fs::read_dir(databases_folder_path(Self::folder()))
             .unwrap()
-            .map(|entry| entry.unwrap().path())
-            .filter(|path| path.extension().is_none())
-            .map(|path| path.file_stem().unwrap().to_str().unwrap().to_owned())
-            .filter(|path| path.contains(".."))
+            .map(|entry| {
+                entry
+                    .unwrap()
+                    .path()
+                    .file_name()
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .to_owned()
+            })
+            .filter(|file_name| file_name.contains(".."))
             .for_each(|path| {
                 self.open_db(&path.split("..").next().unwrap().parse::<u32>().unwrap());
             });
@@ -121,12 +128,16 @@ impl AnyDatabaseGroup for AddressIndexToAddressData {
         }
     }
 
-    fn export(&mut self, height: usize, date: NaiveDate) -> color_eyre::Result<()> {
+    fn export(&mut self, height: usize, date: WNaiveDate) -> color_eyre::Result<()> {
         mem::take(&mut self.map)
             .into_par_iter()
-            .try_for_each(|(_, db)| db.export())?;
+            .try_for_each(|(_, db)| {
+                // dbg!(&db.cached_puts);
 
-        self.metadata.export(height, date)?;
+                db.export()
+            })?;
+
+        self.metadata.export(height, date).unwrap();
 
         Ok(())
     }
