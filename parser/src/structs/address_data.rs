@@ -48,7 +48,7 @@ impl AddressData {
         amount: WAmount,
         current_price: Price,
         sent_amount_price: Price,
-    ) -> color_eyre::Result<f64> {
+    ) -> color_eyre::Result<ProfitOrLoss> {
         let previous_amount = self.amount;
 
         if previous_amount < amount {
@@ -68,8 +68,13 @@ impl AddressData {
 
         let current_sent_dollar_value = current_price * amount;
 
-        // realized_profit_or_loss
-        Ok((current_sent_dollar_value - previous_sent_dollar_value).to_dollar())
+        let profit_or_loss = if current_sent_dollar_value >= previous_sent_dollar_value {
+            ProfitOrLoss::Profit(current_sent_dollar_value - previous_sent_dollar_value)
+        } else {
+            ProfitOrLoss::Loss(previous_sent_dollar_value - current_sent_dollar_value)
+        };
+
+        Ok(profit_or_loss)
     }
 
     #[inline(always)]
@@ -99,4 +104,9 @@ impl AddressData {
     pub fn compute_liquidity_classification(&self) -> LiquidityClassification {
         LiquidityClassification::new(self.sent, self.received)
     }
+}
+
+pub enum ProfitOrLoss {
+    Profit(Price),
+    Loss(Price),
 }
