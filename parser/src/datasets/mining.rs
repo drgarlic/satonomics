@@ -211,7 +211,7 @@ impl MiningDataset {
         let coinbase_in_dollars = self
             .coinbase_in_dollars
             .height
-            .insert(height, coinbase.to_btc() as f32 * block_price);
+            .insert(height, (block_price * coinbase).to_dollar() as f32);
 
         let sumed_fees = WAmount::from_sat(fees.iter().map(|amount| amount.to_sat()).sum());
 
@@ -220,7 +220,7 @@ impl MiningDataset {
         let sumed_fees_in_dollars = self
             .fees_in_dollars
             .height
-            .insert(height, sumed_fees.to_btc() as f32 * block_price);
+            .insert(height, (block_price * sumed_fees).to_dollar() as f32);
 
         let subsidy = coinbase - sumed_fees;
         self.subsidy.height.insert(height, subsidy.to_btc());
@@ -228,7 +228,7 @@ impl MiningDataset {
         let subsidy_in_dollars = self
             .subsidy_in_dollars
             .height
-            .insert(height, subsidy.to_btc() as f32 * block_price);
+            .insert(height, (block_price * subsidy).to_dollar() as f32);
 
         self.difficulty.height.insert(height, difficulty);
 

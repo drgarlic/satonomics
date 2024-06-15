@@ -18,7 +18,7 @@ use crate::{
     },
     structs::{
         Address, AddressData, AddressRealizedData, BlockData, BlockPath, Counter, EmptyAddressData,
-        PartialTxoutData, TxData, TxoutIndex, WAmount, WNaiveDate,
+        PartialTxoutData, Price, TxData, TxoutIndex, WAmount, WNaiveDate,
     },
 };
 
@@ -88,17 +88,21 @@ pub fn parse(
         None
     };
 
-    let block_price = datasets
-        .price
-        .get_height_ohlc(height, timestamp, previous_timestamp)
-        .unwrap_or_else(|_| panic!("Expect {height} to have a price"))
-        .close;
+    let block_price = Price::from_dollar(
+        datasets
+            .price
+            .get_height_ohlc(height, timestamp, previous_timestamp)
+            .unwrap_or_else(|_| panic!("Expect {height} to have a price"))
+            .close as f64,
+    );
 
-    let date_price = datasets
-        .price
-        .get_date_ohlc(date)
-        .unwrap_or_else(|_| panic!("Expect {date} to have a price"))
-        .close;
+    let date_price = Price::from_dollar(
+        datasets
+            .price
+            .get_date_ohlc(date)
+            .unwrap_or_else(|_| panic!("Expect {date} to have a price"))
+            .close as f64,
+    );
 
     let difficulty = block.header.difficulty_float();
     let block_size = block.total_size();

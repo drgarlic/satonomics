@@ -44,7 +44,7 @@ use crate::{
         // UTXOCohortsReceivedStates,
         UTXOCohortsSentStates,
     },
-    structs::{WAmount, WNaiveDate},
+    structs::{Price, WAmount, WNaiveDate},
 };
 
 pub struct InsertData<'a> {
@@ -53,7 +53,7 @@ pub struct InsertData<'a> {
     pub address_cohorts_realized_states: &'a Option<AddressCohortsRealizedStates>,
     pub amount_sent: WAmount,
     pub block_interval: u32,
-    pub block_price: f32,
+    pub block_price: Price,
     pub block_size: usize,
     pub block_vbytes: u64,
     pub block_weight: u64,

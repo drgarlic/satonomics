@@ -5,7 +5,7 @@ use rayon::prelude::*;
 
 use crate::{
     databases::AddressIndexToAddressData,
-    structs::{AddressData, AddressRealizedData, WAmount},
+    structs::{AddressData, AddressRealizedData, Price, WAmount},
 };
 
 use super::{AddressCohortDurableStates, AddressCohortsOneShotStates, SplitByAddressCohort};
@@ -63,16 +63,15 @@ impl AddressCohortsDurableStates {
 
         let amount = address_data.amount;
         let utxo_count = address_data.outputs_len as usize;
-        let realized_cap = address_data.realized_cap_in_cents;
+        let realized_cap = address_data.realized_cap;
 
-        let mean_cents_paid = (address_data.realized_cap_in_cents * WAmount::ONE_BTC.to_sat()
-            / address_data.amount.to_sat()) as u32;
+        let mean_price_paid = (address_data.realized_cap * WAmount::ONE_BTC) / amount;
 
         let liquidity_classification = address_data.compute_liquidity_classification();
 
         let split_sat_amount = liquidity_classification.split(amount.to_sat() as f64);
         let split_utxo_count = liquidity_classification.split(utxo_count as f64);
-        let split_realized_cap_in_cents = liquidity_classification.split(utxo_count as f64);
+        let split_realized_cap = liquidity_classification.split(utxo_count as f64);
 
         self.0
             .iterate(address_data, |state: &mut AddressCohortDurableStates| {
@@ -81,10 +80,10 @@ impl AddressCohortsDurableStates {
                         amount,
                         utxo_count,
                         realized_cap,
-                        mean_cents_paid,
+                        mean_price_paid,
                         &split_sat_amount,
                         &split_utxo_count,
-                        &split_realized_cap_in_cents,
+                        &split_realized_cap,
                     ) {
                         dbg!(
                             report.to_string(),
@@ -98,10 +97,10 @@ impl AddressCohortsDurableStates {
                     amount,
                     utxo_count,
                     realized_cap,
-                    mean_cents_paid,
+                    mean_price_paid,
                     &split_sat_amount,
                     &split_utxo_count,
-                    &split_realized_cap_in_cents,
+                    &split_realized_cap,
                 ) {
                     dbg!(
                         report.to_string(),
@@ -120,8 +119,8 @@ impl AddressCohortsDurableStates {
 
     pub fn compute_one_shot_states(
         &mut self,
-        block_price: f32,
-        date_price: Option<f32>,
+        block_price: Price,
+        date_price: Option<Price>,
     ) -> AddressCohortsOneShotStates {
         let mut one_shot_states = AddressCohortsOneShotStates::default();
 

@@ -1,7 +1,7 @@
 use allocative::Allocative;
 use color_eyre::eyre::eyre;
 
-use crate::structs::WAmount;
+use crate::structs::{Price, WAmount};
 
 use super::{CapitalizationState, SupplyState, UTXOState};
 
@@ -17,7 +17,7 @@ impl DurableStates {
         &mut self,
         amount: WAmount,
         utxo_count: usize,
-        realized_cap_in_cents: u64,
+        realized_cap: Price,
     ) -> color_eyre::Result<()> {
         if amount == WAmount::ZERO {
             if utxo_count != 0 {
@@ -25,7 +25,7 @@ impl DurableStates {
                 return Err(eyre!("Shouldn't be possible"));
             }
         } else {
-            self.capitalization_state.increment(realized_cap_in_cents);
+            self.capitalization_state.increment(realized_cap);
             self.supply_state.increment(amount);
             self.utxo_state.increment(utxo_count);
         }
@@ -37,7 +37,7 @@ impl DurableStates {
         &mut self,
         amount: WAmount,
         utxo_count: usize,
-        realized_cap: u64,
+        realized_cap: Price,
     ) -> color_eyre::Result<()> {
         if amount == WAmount::ZERO {
             if utxo_count != 0 {

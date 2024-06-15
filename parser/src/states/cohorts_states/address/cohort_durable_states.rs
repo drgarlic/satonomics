@@ -2,7 +2,7 @@ use allocative::Allocative;
 
 use crate::{
     states::{DurableStates, OneShotStates, PriceInCentsToValue, UnrealizedState},
-    structs::{LiquiditySplitResult, SplitByLiquidity, WAmount},
+    structs::{LiquiditySplitResult, Price, SplitByLiquidity, WAmount},
 };
 
 #[derive(Default, Debug, Allocative)]
@@ -21,11 +21,11 @@ impl AddressCohortDurableStates {
         &mut self,
         amount: WAmount,
         utxo_count: usize,
-        realized_cap: u64,
-        mean_cents_paid: u32,
+        realized_cap: Price,
+        mean_price_paid: Price,
         split_sat_amount_result: &LiquiditySplitResult,
         split_utxo_count_result: &LiquiditySplitResult,
-        split_realized_cap_in_cents_result: &LiquiditySplitResult,
+        split_realized_cap_result: &LiquiditySplitResult,
     ) -> color_eyre::Result<()> {
         self.address_count += 1;
 
@@ -33,10 +33,10 @@ impl AddressCohortDurableStates {
             amount,
             utxo_count,
             realized_cap,
-            mean_cents_paid,
+            mean_price_paid,
             split_sat_amount_result,
             split_utxo_count_result,
-            split_realized_cap_in_cents_result,
+            split_realized_cap_result,
             true,
         )
     }
@@ -46,11 +46,11 @@ impl AddressCohortDurableStates {
         &mut self,
         amount: WAmount,
         utxo_count: usize,
-        realized_cap: u64,
-        mean_cents_paid: u32,
+        realized_cap: Price,
+        mean_price_paid: Price,
         split_sat_amount_result: &LiquiditySplitResult,
         split_utxo_count_result: &LiquiditySplitResult,
-        split_realized_cap_in_cents_result: &LiquiditySplitResult,
+        split_realized_cap_result: &LiquiditySplitResult,
     ) -> color_eyre::Result<()> {
         self.address_count -= 1;
 
@@ -58,10 +58,10 @@ impl AddressCohortDurableStates {
             amount,
             utxo_count,
             realized_cap,
-            mean_cents_paid,
+            mean_price_paid,
             split_sat_amount_result,
             split_utxo_count_result,
-            split_realized_cap_in_cents_result,
+            split_realized_cap_result,
             false,
         )
     }
@@ -71,21 +71,21 @@ impl AddressCohortDurableStates {
         &mut self,
         amount: WAmount,
         utxo_count: usize,
-        realized_cap_in_cents: u64,
-        mean_cents_paid: u32,
+        realized_cap: Price,
+        mean_price_paid: Price,
         split_sat_amount_result: &LiquiditySplitResult,
         split_utxo_count_result: &LiquiditySplitResult,
-        split_realized_cap_in_cents_result: &LiquiditySplitResult,
+        split_realized_cap_result: &LiquiditySplitResult,
         increment: bool,
     ) -> color_eyre::Result<()> {
         if increment {
             self.split_durable_states
                 .all
-                .increment(amount, utxo_count, realized_cap_in_cents)
+                .increment(amount, utxo_count, realized_cap)
         } else {
             self.split_durable_states
                 .all
-                .decrement(amount, utxo_count, realized_cap_in_cents)
+                .decrement(amount, utxo_count, realized_cap)
         }
         .inspect_err(|report| {
             dbg!(
@@ -101,24 +101,23 @@ impl AddressCohortDurableStates {
         let mut illiquid_amount = WAmount::from_sat(illiquid_amount as u64);
         let mut illiquid_utxo_count = split_utxo_count_result.illiquid.trunc() as usize;
         let illiquid_utxo_count_rest = split_utxo_count_result.illiquid.fract();
-        let mut illiquid_realized_cap_in_cents =
-            split_realized_cap_in_cents_result.illiquid.trunc() as u64;
-        let illiquid_realized_cap_in_cents_rest =
-            split_realized_cap_in_cents_result.illiquid.fract();
+        let mut illiquid_realized_cap =
+            Price::from_cent(split_realized_cap_result.illiquid.trunc() as u64);
+        let illiquid_realized_cap_rest = split_realized_cap_result.illiquid.fract();
 
         let liquid_amount = split_sat_amount_result.liquid.trunc();
         let liquid_amount_rest = split_sat_amount_result.liquid - liquid_amount;
         let mut liquid_amount = WAmount::from_sat(liquid_amount as u64);
         let mut liquid_utxo_count = split_utxo_count_result.liquid.trunc() as usize;
         let liquid_utxo_count_rest = split_utxo_count_result.liquid.fract();
-        let mut liquid_realized_cap_in_cents =
-            split_realized_cap_in_cents_result.liquid.trunc() as u64;
-        let liquid_realized_cap_in_cents_rest = split_realized_cap_in_cents_result.liquid.fract();
+        let mut liquid_realized_cap =
+            Price::from_cent(split_realized_cap_result.liquid.trunc() as u64);
+        let liquid_realized_cap_rest = split_realized_cap_result.liquid.fract();
 
         let mut highly_liquid_amount = amount - illiquid_amount - liquid_amount;
         let mut highly_liquid_utxo_count = utxo_count - illiquid_utxo_count - liquid_utxo_count;
-        let mut highly_liquid_realized_cap_in_cents =
-            realized_cap_in_cents - illiquid_realized_cap_in_cents - liquid_realized_cap_in_cents;
+        let mut highly_liquid_realized_cap =
+            realized_cap - illiquid_realized_cap - liquid_realized_cap;
 
         let amount_diff = amount - illiquid_amount - liquid_amount - highly_liquid_amount;
         if amount_diff > WAmount::ZERO {
@@ -145,19 +144,17 @@ impl AddressCohortDurableStates {
             }
         }
 
-        let realized_cap_in_cents_diff = realized_cap_in_cents
-            - illiquid_realized_cap_in_cents
-            - liquid_realized_cap_in_cents
-            - highly_liquid_realized_cap_in_cents;
-        if realized_cap_in_cents_diff > 0 {
-            if illiquid_realized_cap_in_cents_rest >= ONE_THIRD
-                && illiquid_realized_cap_in_cents_rest > liquid_realized_cap_in_cents_rest
+        let realized_cap_diff =
+            realized_cap - illiquid_realized_cap - liquid_realized_cap - highly_liquid_realized_cap;
+        if realized_cap_diff > Price::ZERO {
+            if illiquid_realized_cap_rest >= ONE_THIRD
+                && illiquid_realized_cap_rest > liquid_realized_cap_rest
             {
-                illiquid_realized_cap_in_cents += realized_cap_in_cents_diff;
-            } else if illiquid_realized_cap_in_cents_rest >= ONE_THIRD {
-                liquid_realized_cap_in_cents += realized_cap_in_cents_diff;
+                illiquid_realized_cap += realized_cap_diff;
+            } else if illiquid_realized_cap_rest >= ONE_THIRD {
+                liquid_realized_cap += realized_cap_diff;
             } else {
-                highly_liquid_realized_cap_in_cents += realized_cap_in_cents_diff;
+                highly_liquid_realized_cap += realized_cap_diff;
             }
         }
 
@@ -175,19 +172,19 @@ impl AddressCohortDurableStates {
             highly_liquid: highly_liquid_utxo_count,
         };
 
-        let split_realized_cap_in_cents = SplitByLiquidity {
-            all: realized_cap_in_cents,
-            illiquid: illiquid_realized_cap_in_cents,
-            liquid: liquid_realized_cap_in_cents,
-            highly_liquid: highly_liquid_realized_cap_in_cents,
+        let split_realized_cap = SplitByLiquidity {
+            all: realized_cap,
+            illiquid: illiquid_realized_cap,
+            liquid: liquid_realized_cap,
+            highly_liquid: highly_liquid_realized_cap,
         };
 
         if increment {
             self.cents_to_split_amount
-                .increment(mean_cents_paid, split_amount);
+                .increment(mean_price_paid, split_amount);
         } else {
             self.cents_to_split_amount
-                .decrement(mean_cents_paid, split_amount)
+                .decrement(mean_price_paid, split_amount)
                 .inspect_err(|report| {
                     dbg!(
                         report,
@@ -196,7 +193,7 @@ impl AddressCohortDurableStates {
                         split_utxo_count_result,
                         split_amount,
                         split_utxo_count,
-                        split_realized_cap_in_cents,
+                        split_realized_cap,
                     );
                 })?;
         }
@@ -205,13 +202,13 @@ impl AddressCohortDurableStates {
             self.split_durable_states.illiquid.increment(
                 illiquid_amount,
                 illiquid_utxo_count,
-                illiquid_realized_cap_in_cents,
+                illiquid_realized_cap,
             )
         } else {
             self.split_durable_states.illiquid.decrement(
                 illiquid_amount,
                 illiquid_utxo_count,
-                illiquid_realized_cap_in_cents,
+                illiquid_realized_cap,
             )
         }
         .inspect_err(|report| {
@@ -222,7 +219,7 @@ impl AddressCohortDurableStates {
                 split_utxo_count_result,
                 split_amount,
                 split_utxo_count,
-                split_realized_cap_in_cents,
+                split_realized_cap,
             );
         })?;
 
@@ -230,13 +227,13 @@ impl AddressCohortDurableStates {
             self.split_durable_states.liquid.increment(
                 liquid_amount,
                 liquid_utxo_count,
-                liquid_realized_cap_in_cents,
+                liquid_realized_cap,
             )
         } else {
             self.split_durable_states.liquid.decrement(
                 liquid_amount,
                 liquid_utxo_count,
-                liquid_realized_cap_in_cents,
+                liquid_realized_cap,
             )
         }
         .inspect_err(|report| {
@@ -247,7 +244,7 @@ impl AddressCohortDurableStates {
                 split_utxo_count_result,
                 split_amount,
                 split_utxo_count,
-                split_realized_cap_in_cents,
+                split_realized_cap,
             );
         })?;
 
@@ -255,13 +252,13 @@ impl AddressCohortDurableStates {
             self.split_durable_states.highly_liquid.increment(
                 highly_liquid_amount,
                 highly_liquid_utxo_count,
-                highly_liquid_realized_cap_in_cents,
+                highly_liquid_realized_cap,
             )
         } else {
             self.split_durable_states.highly_liquid.decrement(
                 highly_liquid_amount,
                 highly_liquid_utxo_count,
-                highly_liquid_realized_cap_in_cents,
+                highly_liquid_realized_cap,
             )
         }
         .inspect_err(|report| {
@@ -272,7 +269,7 @@ impl AddressCohortDurableStates {
                 split_utxo_count_result,
                 split_amount,
                 split_utxo_count,
-                split_realized_cap_in_cents,
+                split_realized_cap,
             );
         })?;
 
@@ -281,8 +278,8 @@ impl AddressCohortDurableStates {
 
     pub fn compute_one_shot_states(
         &self,
-        block_price: f32,
-        date_price: Option<f32>,
+        block_price: Price,
+        date_price: Option<Price>,
     ) -> SplitByLiquidity<OneShotStates> {
         let mut one_shot_states: SplitByLiquidity<OneShotStates> = SplitByLiquidity::default();
 

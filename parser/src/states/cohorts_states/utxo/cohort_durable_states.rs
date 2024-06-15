@@ -2,8 +2,7 @@ use allocative::Allocative;
 
 use crate::{
     states::{DurableStates, OneShotStates, PriceInCentsToValue, UnrealizedState},
-    structs::WAmount,
-    utils::convert_price_to_significant_cents,
+    structs::{Price, WAmount},
 };
 
 #[derive(Default, Debug, Allocative)]
@@ -17,7 +16,7 @@ impl UTXOCohortDurableStates {
         &mut self,
         amount: WAmount,
         utxo_count: usize,
-        price: f32,
+        price: Price,
     ) -> color_eyre::Result<()> {
         self._crement(amount, utxo_count, price, true)
     }
@@ -26,7 +25,7 @@ impl UTXOCohortDurableStates {
         &mut self,
         amount: WAmount,
         utxo_count: usize,
-        price: f32,
+        price: Price,
     ) -> color_eyre::Result<()> {
         self._crement(amount, utxo_count, price, false)
     }
@@ -35,16 +34,16 @@ impl UTXOCohortDurableStates {
         &mut self,
         amount: WAmount,
         utxo_count: usize,
-        price: f32,
+        price: Price,
         increment: bool,
     ) -> color_eyre::Result<()> {
-        let price_in_cents = convert_price_to_significant_cents(price);
+        let price = price.to_significant();
 
         if increment {
-            self.cents_to_amount.increment(price_in_cents, amount);
+            self.cents_to_amount.increment(price, amount);
         } else {
             self.cents_to_amount
-                .decrement(price_in_cents, amount)
+                .decrement(price, amount)
                 .inspect_err(|report| {
                     dbg!(
                         report,
@@ -55,14 +54,14 @@ impl UTXOCohortDurableStates {
                 })?;
         }
 
-        let realized_cap_in_cents = (amount.to_btc() * price as f64 * 100.0) as u64;
+        let realized_cap = price * amount;
 
         if increment {
             self.durable_states
-                .increment(amount, utxo_count, realized_cap_in_cents)
+                .increment(amount, utxo_count, realized_cap)
         } else {
             self.durable_states
-                .decrement(amount, utxo_count, realized_cap_in_cents)
+                .decrement(amount, utxo_count, realized_cap)
         }
         .inspect_err(|report| {
             dbg!(report, "split all failed", amount, utxo_count);
@@ -71,8 +70,8 @@ impl UTXOCohortDurableStates {
 
     pub fn compute_one_shot_states(
         &self,
-        block_price: f32,
-        date_price: Option<f32>,
+        block_price: Price,
+        date_price: Option<Price>,
     ) -> OneShotStates {
         let mut one_shot_states = OneShotStates::default();
 

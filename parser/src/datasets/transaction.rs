@@ -90,11 +90,11 @@ impl TransactionDataset {
     ) {
         self.count.height.insert(height, transaction_count);
 
-        let volume = self.volume.height.insert(height, amount_sent.to_btc());
+        self.volume.height.insert(height, amount_sent.to_btc());
 
         self.volume_in_dollars
             .height
-            .insert(height, volume as f32 * block_price);
+            .insert(height, (block_price * amount_sent).to_dollar() as f32);
 
         if is_date_last_block {
             self.count.date_insert_sum_range(date, date_blocks_range);

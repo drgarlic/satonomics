@@ -8,7 +8,7 @@ use allocative::Allocative;
 use color_eyre::eyre::eyre;
 use derive_deref::{Deref, DerefMut};
 
-use crate::structs::{SplitByLiquidity, WAmount};
+use crate::structs::{Price, SplitByLiquidity, WAmount};
 
 #[derive(Deref, DerefMut, Default, Debug, Allocative)]
 pub struct PriceInCentsToValue<T>(BTreeMap<u32, T>);
@@ -26,23 +26,25 @@ where
         + PartialEq
         + IsZero,
 {
-    pub fn increment(&mut self, cents: u32, value: T) {
-        *self.entry(cents).or_default() += value;
+    pub fn increment(&mut self, price: Price, value: T) {
+        *self.entry(price.to_cent() as u32).or_default() += value;
     }
 
-    pub fn decrement(&mut self, cents: u32, value: T) -> color_eyre::Result<()> {
+    pub fn decrement(&mut self, price: Price, value: T) -> color_eyre::Result<()> {
+        let cent = price.to_cent() as u32;
+
         let delete = {
-            let self_value = self.get_mut(&cents);
+            let self_value = self.get_mut(&cent);
 
             if self_value.is_none() {
-                dbg!(&self.0, cents, value);
+                dbg!(&self.0, price, value);
                 return Err(eyre!("self_value is none"));
             }
 
             let self_value = self_value.unwrap();
 
             if !self_value.can_subtract(&value) {
-                dbg!(*self_value, &self.0, cents, value);
+                dbg!(*self_value, &self.0, price, value);
                 return Err(eyre!("self value < value"));
             }
 
@@ -52,51 +54,27 @@ where
         };
 
         if delete {
-            self.remove(&cents).unwrap();
+            self.remove(&cent).unwrap();
         }
 
         Ok(())
     }
 
-    pub fn iterate(&self, supply: T, mut iterate: impl FnMut(f32, T)) {
-        // let mut one_shot_states = OneShotStates::default();
-
-        // if date_price.is_some() {
-        //     one_shot_states
-        //         .unrealized_date_state
-        //         .replace(UnrealizedState::default());
-        // }
-
+    pub fn iterate(&self, supply: T, mut iterate: impl FnMut(Price, T)) {
         let mut processed = T::default();
 
-        self.iter().for_each(|(cents, value)| {
+        self.iter().for_each(|(cent, value)| {
             let value = *value;
 
             processed += value;
 
-            let mean_price_paid = ((*cents as f64) / 100.0) as f32;
-
-            iterate(mean_price_paid, value)
-
-            // one_shot_states
-            //     .price_paid_state
-            //     .iterate(mean_price_paid, amount, supply);
-
-            // one_shot_states
-            //     .unrealized_block_state
-            //     .iterate(mean_price_paid, block_price, amount);
-
-            // if let Some(unrealized_date_state) = one_shot_states.unrealized_date_state.as_mut() {
-            //     unrealized_date_state.iterate(mean_price_paid, date_price.unwrap(), amount);
-            // }
+            iterate(Price::from_cent(*cent as u64), value)
         });
 
         if processed != supply {
             dbg!(processed, supply);
             panic!("processed_amount isn't equal to supply")
         }
-
-        // one_shot_states
     }
 }
 

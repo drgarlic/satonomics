@@ -1,4 +1,4 @@
-use crate::structs::WAmount;
+use crate::structs::{Price, WAmount};
 
 #[derive(Default, Debug)]
 pub struct PricePaidState {
@@ -26,7 +26,7 @@ pub struct PricePaidState {
 }
 
 impl PricePaidState {
-    pub fn iterate(&mut self, price: f32, amount: WAmount, total_supply: WAmount) {
+    pub fn iterate(&mut self, price: Price, amount: WAmount, total_supply: WAmount) {
         let PricePaidState {
             processed_amount,
             pp_05p,
@@ -58,6 +58,8 @@ impl PricePaidState {
         if pp_95p.is_some() {
             return;
         }
+
+        let price = price.to_dollar() as f32;
 
         if processed_amount_in_btc >= total_supply_in_btc * 0.95 {
             pp_95p.replace(price);

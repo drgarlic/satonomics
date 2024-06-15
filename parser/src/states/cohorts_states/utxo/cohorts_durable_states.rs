@@ -5,7 +5,7 @@ use rayon::prelude::*;
 use crate::{
     actions::SentData,
     states::DateDataVec,
-    structs::{BlockData, WAmount},
+    structs::{BlockData, Price, WAmount},
     utils::{difference_in_days_between_timestamps, timestamp_to_year},
 };
 
@@ -139,8 +139,8 @@ impl UTXOCohortsDurableStates {
 
     pub fn compute_one_shot_states(
         &mut self,
-        block_price: f32,
-        date_price: Option<f32>,
+        block_price: Price,
+        date_price: Option<Price>,
     ) -> UTXOCohortsOneShotStates {
         let mut one_shot_states = UTXOCohortsOneShotStates::default();
 

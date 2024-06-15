@@ -84,11 +84,11 @@ impl UnrealizedSubDataset {
 
         self.unrealized_profit
             .height
-            .insert(height, block_state.unrealized_profit);
+            .insert(height, block_state.unrealized_profit.to_dollar() as f32);
 
         self.unrealized_loss
             .height
-            .insert(height, block_state.unrealized_loss);
+            .insert(height, block_state.unrealized_loss.to_dollar() as f32);
 
         if is_date_last_block {
             let date_state = date_state.as_ref().unwrap();
@@ -99,11 +99,11 @@ impl UnrealizedSubDataset {
 
             self.unrealized_profit
                 .date
-                .insert(date, date_state.unrealized_profit);
+                .insert(date, date_state.unrealized_profit.to_dollar() as f32);
 
             self.unrealized_loss
                 .date
-                .insert(date, date_state.unrealized_loss);
+                .insert(date, date_state.unrealized_loss.to_dollar() as f32);
         }
     }
 

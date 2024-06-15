@@ -72,11 +72,11 @@ impl RealizedSubDataset {
     ) {
         self.realized_profit
             .height
-            .insert(height, height_state.realized_profit);
+            .insert(height, height_state.realized_profit.to_dollar() as f32);
 
         self.realized_loss
             .height
-            .insert(height, height_state.realized_loss);
+            .insert(height, height_state.realized_loss.to_dollar() as f32);
 
         if is_date_last_block {
             self.realized_profit

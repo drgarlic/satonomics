@@ -1,16 +1,18 @@
 use allocative::Allocative;
 
+use crate::structs::Price;
+
 #[derive(Debug, Default, Allocative)]
 pub struct CapitalizationState {
-    pub realized_cap_in_cents: u64,
+    pub realized_cap: Price,
 }
 
 impl CapitalizationState {
-    pub fn increment(&mut self, realized_cap_in_cents: u64) {
-        self.realized_cap_in_cents += realized_cap_in_cents;
+    pub fn increment(&mut self, realized_cap: Price) {
+        self.realized_cap += realized_cap;
     }
 
-    pub fn decrement(&mut self, realized_cap_in_cents: u64) {
-        self.realized_cap_in_cents -= realized_cap_in_cents;
+    pub fn decrement(&mut self, realized_cap: Price) {
+        self.realized_cap -= realized_cap;
     }
 }

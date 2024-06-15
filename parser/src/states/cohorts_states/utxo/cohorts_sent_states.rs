@@ -1,11 +1,11 @@
-use std::collections::BTreeMap;
+use std::{cmp::Ordering, collections::BTreeMap};
 
 use derive_deref::{Deref, DerefMut};
 
 use crate::{
     actions::SentData,
     states::{DateDataVec, InputState, RealizedState},
-    structs::BlockPath,
+    structs::{BlockPath, Price},
     utils::{difference_in_days_between_timestamps, timestamp_to_year},
 };
 
@@ -25,7 +25,7 @@ impl UTXOCohortsSentStates {
         &mut self,
         date_data_vec: &DateDataVec,
         block_path_to_sent_data: &BTreeMap<BlockPath, SentData>,
-        current_price: f32,
+        current_price: Price,
     ) {
         if let Some(last_block_data) = date_data_vec.last_block() {
             block_path_to_sent_data
@@ -43,20 +43,20 @@ impl UTXOCohortsSentStates {
 
                     let amount_sent = sent_data.volume;
 
-                    let amount_sent_as_btc = amount_sent.to_btc();
-
                     self.initial_filtered_apply(&days_old, &year, |state| {
                         state.input.iterate(sent_data.count as f64, amount_sent);
 
-                        let previous_dollar_amount = previous_price * amount_sent_as_btc as f32;
-                        let current_dollar_amount = current_price * amount_sent_as_btc as f32;
+                        let previous_value = previous_price * amount_sent;
+                        let current_value = current_price * amount_sent;
 
-                        if previous_dollar_amount < current_dollar_amount {
-                            state.realized.realized_profit +=
-                                current_dollar_amount - previous_dollar_amount;
-                        } else if current_dollar_amount < previous_dollar_amount {
-                            state.realized.realized_loss +=
-                                previous_dollar_amount - current_dollar_amount;
+                        match previous_value.cmp(&current_value) {
+                            Ordering::Less => {
+                                state.realized.realized_profit += current_value - previous_value;
+                            }
+                            Ordering::Greater => {
+                                state.realized.realized_loss += previous_value - current_value;
+                            }
+                            Ordering::Equal => {}
                         }
                     })
                 })

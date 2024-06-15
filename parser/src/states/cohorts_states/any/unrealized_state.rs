@@ -1,24 +1,26 @@
-use std::ops::Add;
+use std::{cmp::Ordering, ops::Add};
 
-use crate::structs::WAmount;
+use crate::structs::{Price, WAmount};
 
 #[derive(Debug, Default)]
 pub struct UnrealizedState {
     pub supply_in_profit: WAmount,
-    pub unrealized_profit: f32,
-    pub unrealized_loss: f32,
+    pub unrealized_profit: Price,
+    pub unrealized_loss: Price,
 }
 
 impl UnrealizedState {
     #[inline]
-    pub fn iterate(&mut self, price_then: f32, price_now: f32, amount: WAmount) {
-        let amount_in_btc = amount.to_btc() as f32;
-
-        if price_then < price_now {
-            self.unrealized_profit += amount_in_btc * (price_now - price_then);
-            self.supply_in_profit += amount;
-        } else if price_then > price_now {
-            self.unrealized_loss += amount_in_btc * (price_then - price_now);
+    pub fn iterate(&mut self, price_then: Price, price_now: Price, amount: WAmount) {
+        match price_then.cmp(&price_now) {
+            Ordering::Less => {
+                self.unrealized_profit += (price_now - price_then) * amount;
+                self.supply_in_profit += amount;
+            }
+            Ordering::Greater => {
+                self.unrealized_loss += (price_then - price_now) * amount;
+            }
+            Ordering::Equal => {}
         }
     }
 }
