@@ -17,13 +17,13 @@ impl AddressCohortsInputStates {
         liquidity_classification: &LiquidityClassification,
     ) -> color_eyre::Result<()> {
         let count = realized_data.utxos_destroyed as f64;
-        let volume = realized_data.sent;
+        let sent = realized_data.sent;
 
         let split_count = liquidity_classification.split(count);
-        let split_volume = liquidity_classification.split(volume.to_sat() as f64);
+        let split_volume = liquidity_classification.split(sent.to_sat() as f64);
 
         let iterate = move |state: &mut SplitByLiquidity<InputState>| -> color_eyre::Result<()> {
-            state.all.iterate(count, volume);
+            state.all.iterate(count, sent);
 
             state.illiquid.iterate(
                 split_count.illiquid,

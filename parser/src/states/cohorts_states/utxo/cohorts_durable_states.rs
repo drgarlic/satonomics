@@ -6,10 +6,7 @@ use crate::{
     actions::SentData,
     states::DateDataVec,
     structs::{BlockData, WAmount},
-    utils::{
-        convert_price_to_significant_cents, difference_in_days_between_timestamps,
-        timestamp_to_year,
-    },
+    utils::{difference_in_days_between_timestamps, timestamp_to_year},
 };
 
 use super::{SplitByUTXOCohort, UTXOCohortDurableStates, UTXOCohortsOneShotStates};
@@ -36,8 +33,6 @@ impl UTXOCohortsDurableStates {
                         return;
                     }
 
-                    let price_in_cents = convert_price_to_significant_cents(block_data.price);
-
                     let increment_days_old = difference_in_days_between_timestamps(
                         block_data.timestamp,
                         last_block_data.timestamp,
@@ -46,7 +41,9 @@ impl UTXOCohortsDurableStates {
                     let block_data_year = timestamp_to_year(block_data.timestamp);
 
                     s.initial_filtered_apply(&increment_days_old, &block_data_year, |state| {
-                        state.increment(amount, utxo_count, price_in_cents).unwrap();
+                        state
+                            .increment(amount, utxo_count, block_data.price)
+                            .unwrap();
                     });
                 });
         }
@@ -68,8 +65,6 @@ impl UTXOCohortsDurableStates {
             return;
         }
 
-        let price_in_cents = convert_price_to_significant_cents(block_data.price);
-
         let increment_days_old =
             difference_in_days_between_timestamps(block_data.timestamp, last_block_data.timestamp);
 
@@ -77,7 +72,9 @@ impl UTXOCohortsDurableStates {
 
         if block_data.height == last_block_data.height {
             self.initial_filtered_apply(&increment_days_old, &block_data_year, |state| {
-                state.increment(amount, utxo_count, price_in_cents).unwrap();
+                state
+                    .increment(amount, utxo_count, block_data.price)
+                    .unwrap();
             })
         } else {
             let previous_last_block_data = previous_last_block_data.unwrap_or_else(|| {
@@ -99,10 +96,14 @@ impl UTXOCohortsDurableStates {
                 &increment_days_old,
                 &decrement_days_old,
                 |state| {
-                    state.increment(amount, utxo_count, price_in_cents).unwrap();
+                    state
+                        .increment(amount, utxo_count, block_data.price)
+                        .unwrap();
                 },
                 |state| {
-                    state.decrement(amount, utxo_count, price_in_cents).unwrap();
+                    state
+                        .decrement(amount, utxo_count, block_data.price)
+                        .unwrap();
                 },
             );
         }
@@ -122,8 +123,6 @@ impl UTXOCohortsDurableStates {
             return;
         }
 
-        let price_in_cents = convert_price_to_significant_cents(block_data.price);
-
         let days_old = difference_in_days_between_timestamps(
             block_data.timestamp,
             previous_last_block_data.timestamp,
@@ -132,7 +131,9 @@ impl UTXOCohortsDurableStates {
         let block_data_year = timestamp_to_year(block_data.timestamp);
 
         self.initial_filtered_apply(&days_old, &block_data_year, |state| {
-            state.decrement(amount, utxo_count, price_in_cents).unwrap();
+            state
+                .decrement(amount, utxo_count, block_data.price)
+                .unwrap();
         })
     }
 

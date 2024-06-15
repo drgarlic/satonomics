@@ -3,6 +3,7 @@ use allocative::Allocative;
 use crate::{
     states::{DurableStates, OneShotStates, PriceInCentsToValue, UnrealizedState},
     structs::WAmount,
+    utils::convert_price_to_significant_cents,
 };
 
 #[derive(Default, Debug, Allocative)]
@@ -16,32 +17,34 @@ impl UTXOCohortDurableStates {
         &mut self,
         amount: WAmount,
         utxo_count: usize,
-        mean_cents_paid: u32,
+        price: f32,
     ) -> color_eyre::Result<()> {
-        self._crement(amount, utxo_count, mean_cents_paid, true)
+        self._crement(amount, utxo_count, price, true)
     }
 
     pub fn decrement(
         &mut self,
         amount: WAmount,
         utxo_count: usize,
-        mean_cents_paid: u32,
+        price: f32,
     ) -> color_eyre::Result<()> {
-        self._crement(amount, utxo_count, mean_cents_paid, false)
+        self._crement(amount, utxo_count, price, false)
     }
 
     pub fn _crement(
         &mut self,
         amount: WAmount,
         utxo_count: usize,
-        mean_cents_paid: u32,
+        price: f32,
         increment: bool,
     ) -> color_eyre::Result<()> {
+        let price_in_cents = convert_price_to_significant_cents(price);
+
         if increment {
-            self.cents_to_amount.increment(mean_cents_paid, amount);
+            self.cents_to_amount.increment(price_in_cents, amount);
         } else {
             self.cents_to_amount
-                .decrement(mean_cents_paid, amount)
+                .decrement(price_in_cents, amount)
                 .inspect_err(|report| {
                     dbg!(
                         report,
@@ -52,10 +55,14 @@ impl UTXOCohortDurableStates {
                 })?;
         }
 
+        let realized_cap_in_cents = (amount.to_btc() * price as f64 * 100.0) as u64;
+
         if increment {
-            self.durable_states.increment(amount, utxo_count)
+            self.durable_states
+                .increment(amount, utxo_count, realized_cap_in_cents)
         } else {
-            self.durable_states.decrement(amount, utxo_count)
+            self.durable_states
+                .decrement(amount, utxo_count, realized_cap_in_cents)
         }
         .inspect_err(|report| {
             dbg!(report, "split all failed", amount, utxo_count);

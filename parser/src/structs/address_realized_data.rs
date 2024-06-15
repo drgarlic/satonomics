@@ -31,6 +31,7 @@ impl AddressRealizedData {
 
     pub fn send(&mut self, amount: WAmount, realized_profit_or_loss: f32) {
         self.sent += amount;
+
         self.utxos_destroyed += 1;
 
         if realized_profit_or_loss >= 0.0 {

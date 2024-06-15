@@ -5,8 +5,7 @@ use rayon::prelude::*;
 
 use crate::{
     databases::AddressIndexToAddressData,
-    structs::{AddressData, AddressRealizedData},
-    utils::convert_cents_to_significant_cents,
+    structs::{AddressData, AddressRealizedData, WAmount},
 };
 
 use super::{AddressCohortDurableStates, AddressCohortsOneShotStates, SplitByAddressCohort};
@@ -64,13 +63,16 @@ impl AddressCohortsDurableStates {
 
         let amount = address_data.amount;
         let utxo_count = address_data.outputs_len as usize;
+        let realized_cap = address_data.realized_cap_in_cents;
 
-        let mean_cents_paid = convert_cents_to_significant_cents(address_data.mean_cents_paid);
+        let mean_cents_paid = (address_data.realized_cap_in_cents * WAmount::ONE_BTC.to_sat()
+            / address_data.amount.to_sat()) as u32;
 
         let liquidity_classification = address_data.compute_liquidity_classification();
 
         let split_sat_amount = liquidity_classification.split(amount.to_sat() as f64);
         let split_utxo_count = liquidity_classification.split(utxo_count as f64);
+        let split_realized_cap_in_cents = liquidity_classification.split(utxo_count as f64);
 
         self.0
             .iterate(address_data, |state: &mut AddressCohortDurableStates| {
@@ -78,9 +80,11 @@ impl AddressCohortsDurableStates {
                     if let Err(report) = state.increment(
                         amount,
                         utxo_count,
+                        realized_cap,
                         mean_cents_paid,
                         &split_sat_amount,
                         &split_utxo_count,
+                        &split_realized_cap_in_cents,
                     ) {
                         dbg!(
                             report.to_string(),
@@ -93,9 +97,11 @@ impl AddressCohortsDurableStates {
                 } else if let Err(report) = state.decrement(
                     amount,
                     utxo_count,
+                    realized_cap,
                     mean_cents_paid,
                     &split_sat_amount,
                     &split_utxo_count,
+                    &split_realized_cap_in_cents,
                 ) {
                     dbg!(
                         report.to_string(),

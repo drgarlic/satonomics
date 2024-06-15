@@ -14,84 +14,111 @@ pub struct AddressCohortDurableStates {
 
 const ONE_THIRD: f64 = 0.33333333333;
 
+// TODO: Clean that mess, move to a generic liquidity split and somehow support rest for non floats
 impl AddressCohortDurableStates {
+    #[allow(clippy::too_many_arguments)]
     pub fn increment(
         &mut self,
         amount: WAmount,
         utxo_count: usize,
+        realized_cap: u64,
         mean_cents_paid: u32,
-        split_amount: &LiquiditySplitResult,
-        split_utxo_count: &LiquiditySplitResult,
+        split_sat_amount_result: &LiquiditySplitResult,
+        split_utxo_count_result: &LiquiditySplitResult,
+        split_realized_cap_in_cents_result: &LiquiditySplitResult,
     ) -> color_eyre::Result<()> {
         self.address_count += 1;
 
         self._crement(
             amount,
             utxo_count,
+            realized_cap,
             mean_cents_paid,
-            split_amount,
-            split_utxo_count,
+            split_sat_amount_result,
+            split_utxo_count_result,
+            split_realized_cap_in_cents_result,
             true,
         )
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn decrement(
         &mut self,
         amount: WAmount,
         utxo_count: usize,
+        realized_cap: u64,
         mean_cents_paid: u32,
-        split_amount: &LiquiditySplitResult,
-        split_utxo_count: &LiquiditySplitResult,
+        split_sat_amount_result: &LiquiditySplitResult,
+        split_utxo_count_result: &LiquiditySplitResult,
+        split_realized_cap_in_cents_result: &LiquiditySplitResult,
     ) -> color_eyre::Result<()> {
         self.address_count -= 1;
 
         self._crement(
             amount,
             utxo_count,
+            realized_cap,
             mean_cents_paid,
-            split_amount,
-            split_utxo_count,
+            split_sat_amount_result,
+            split_utxo_count_result,
+            split_realized_cap_in_cents_result,
             false,
         )
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn _crement(
         &mut self,
         amount: WAmount,
         utxo_count: usize,
+        realized_cap_in_cents: u64,
         mean_cents_paid: u32,
-        split_amount_result: &LiquiditySplitResult,
+        split_sat_amount_result: &LiquiditySplitResult,
         split_utxo_count_result: &LiquiditySplitResult,
+        split_realized_cap_in_cents_result: &LiquiditySplitResult,
         increment: bool,
     ) -> color_eyre::Result<()> {
         if increment {
-            self.split_durable_states.all.increment(amount, utxo_count)
+            self.split_durable_states
+                .all
+                .increment(amount, utxo_count, realized_cap_in_cents)
         } else {
-            self.split_durable_states.all.decrement(amount, utxo_count)
+            self.split_durable_states
+                .all
+                .decrement(amount, utxo_count, realized_cap_in_cents)
         }
         .inspect_err(|report| {
             dbg!(
                 report,
                 "split all failed",
-                split_amount_result,
+                split_sat_amount_result,
                 split_utxo_count_result
             );
         })?;
 
-        let illiquid_amount = split_amount_result.illiquid.trunc();
-        let illiquid_amount_rest = split_amount_result.illiquid - illiquid_amount;
+        let illiquid_amount = split_sat_amount_result.illiquid.trunc();
+        let illiquid_amount_rest = split_sat_amount_result.illiquid - illiquid_amount;
         let mut illiquid_amount = WAmount::from_sat(illiquid_amount as u64);
         let mut illiquid_utxo_count = split_utxo_count_result.illiquid.trunc() as usize;
         let illiquid_utxo_count_rest = split_utxo_count_result.illiquid.fract();
+        let mut illiquid_realized_cap_in_cents =
+            split_realized_cap_in_cents_result.illiquid.trunc() as u64;
+        let illiquid_realized_cap_in_cents_rest =
+            split_realized_cap_in_cents_result.illiquid.fract();
 
-        let liquid_amount = split_amount_result.liquid.trunc();
-        let liquid_amount_rest = split_amount_result.liquid - liquid_amount;
+        let liquid_amount = split_sat_amount_result.liquid.trunc();
+        let liquid_amount_rest = split_sat_amount_result.liquid - liquid_amount;
         let mut liquid_amount = WAmount::from_sat(liquid_amount as u64);
         let mut liquid_utxo_count = split_utxo_count_result.liquid.trunc() as usize;
         let liquid_utxo_count_rest = split_utxo_count_result.liquid.fract();
+        let mut liquid_realized_cap_in_cents =
+            split_realized_cap_in_cents_result.liquid.trunc() as u64;
+        let liquid_realized_cap_in_cents_rest = split_realized_cap_in_cents_result.liquid.fract();
 
         let mut highly_liquid_amount = amount - illiquid_amount - liquid_amount;
         let mut highly_liquid_utxo_count = utxo_count - illiquid_utxo_count - liquid_utxo_count;
+        let mut highly_liquid_realized_cap_in_cents =
+            realized_cap_in_cents - illiquid_realized_cap_in_cents - liquid_realized_cap_in_cents;
 
         let amount_diff = amount - illiquid_amount - liquid_amount - highly_liquid_amount;
         if amount_diff > WAmount::ZERO {
@@ -118,6 +145,22 @@ impl AddressCohortDurableStates {
             }
         }
 
+        let realized_cap_in_cents_diff = realized_cap_in_cents
+            - illiquid_realized_cap_in_cents
+            - liquid_realized_cap_in_cents
+            - highly_liquid_realized_cap_in_cents;
+        if realized_cap_in_cents_diff > 0 {
+            if illiquid_realized_cap_in_cents_rest >= ONE_THIRD
+                && illiquid_realized_cap_in_cents_rest > liquid_realized_cap_in_cents_rest
+            {
+                illiquid_realized_cap_in_cents += realized_cap_in_cents_diff;
+            } else if illiquid_realized_cap_in_cents_rest >= ONE_THIRD {
+                liquid_realized_cap_in_cents += realized_cap_in_cents_diff;
+            } else {
+                highly_liquid_realized_cap_in_cents += realized_cap_in_cents_diff;
+            }
+        }
+
         let split_amount = SplitByLiquidity {
             all: amount,
             illiquid: illiquid_amount,
@@ -132,6 +175,13 @@ impl AddressCohortDurableStates {
             highly_liquid: highly_liquid_utxo_count,
         };
 
+        let split_realized_cap_in_cents = SplitByLiquidity {
+            all: realized_cap_in_cents,
+            illiquid: illiquid_realized_cap_in_cents,
+            liquid: liquid_realized_cap_in_cents,
+            highly_liquid: highly_liquid_realized_cap_in_cents,
+        };
+
         if increment {
             self.cents_to_split_amount
                 .increment(mean_cents_paid, split_amount);
@@ -142,71 +192,87 @@ impl AddressCohortDurableStates {
                     dbg!(
                         report,
                         "cents_to_split_amount decrement",
-                        split_amount_result,
+                        split_sat_amount_result,
                         split_utxo_count_result,
                         split_amount,
                         split_utxo_count,
+                        split_realized_cap_in_cents,
                     );
                 })?;
         }
 
         if increment {
-            self.split_durable_states
-                .illiquid
-                .increment(illiquid_amount, illiquid_utxo_count)
+            self.split_durable_states.illiquid.increment(
+                illiquid_amount,
+                illiquid_utxo_count,
+                illiquid_realized_cap_in_cents,
+            )
         } else {
-            self.split_durable_states
-                .illiquid
-                .decrement(illiquid_amount, illiquid_utxo_count)
+            self.split_durable_states.illiquid.decrement(
+                illiquid_amount,
+                illiquid_utxo_count,
+                illiquid_realized_cap_in_cents,
+            )
         }
         .inspect_err(|report| {
             dbg!(
                 report,
                 "split illiquid failed",
-                split_amount_result,
+                split_sat_amount_result,
                 split_utxo_count_result,
                 split_amount,
                 split_utxo_count,
+                split_realized_cap_in_cents,
             );
         })?;
 
         if increment {
-            self.split_durable_states
-                .liquid
-                .increment(liquid_amount, liquid_utxo_count)
+            self.split_durable_states.liquid.increment(
+                liquid_amount,
+                liquid_utxo_count,
+                liquid_realized_cap_in_cents,
+            )
         } else {
-            self.split_durable_states
-                .liquid
-                .decrement(liquid_amount, liquid_utxo_count)
+            self.split_durable_states.liquid.decrement(
+                liquid_amount,
+                liquid_utxo_count,
+                liquid_realized_cap_in_cents,
+            )
         }
         .inspect_err(|report| {
             dbg!(
                 report,
                 "split liquid failed",
-                split_amount_result,
+                split_sat_amount_result,
                 split_utxo_count_result,
                 split_amount,
                 split_utxo_count,
+                split_realized_cap_in_cents,
             );
         })?;
 
         if increment {
-            self.split_durable_states
-                .highly_liquid
-                .increment(highly_liquid_amount, highly_liquid_utxo_count)
+            self.split_durable_states.highly_liquid.increment(
+                highly_liquid_amount,
+                highly_liquid_utxo_count,
+                highly_liquid_realized_cap_in_cents,
+            )
         } else {
-            self.split_durable_states
-                .highly_liquid
-                .decrement(highly_liquid_amount, highly_liquid_utxo_count)
+            self.split_durable_states.highly_liquid.decrement(
+                highly_liquid_amount,
+                highly_liquid_utxo_count,
+                highly_liquid_realized_cap_in_cents,
+            )
         }
         .inspect_err(|report| {
             dbg!(
                 report,
                 "split highly liquid failed",
-                split_amount_result,
+                split_sat_amount_result,
                 split_utxo_count_result,
                 split_amount,
                 split_utxo_count,
+                split_realized_cap_in_cents,
             );
         })?;
 

@@ -2,8 +2,6 @@ use crate::structs::WAmount;
 
 #[derive(Default, Debug)]
 pub struct PricePaidState {
-    pub realized_cap: f32,
-
     pub pp_05p: Option<f32>,
     pub pp_10p: Option<f32>,
     pub pp_15p: Option<f32>,
@@ -31,7 +29,6 @@ impl PricePaidState {
     pub fn iterate(&mut self, price: f32, amount: WAmount, total_supply: WAmount) {
         let PricePaidState {
             processed_amount,
-            realized_cap,
             pp_05p,
             pp_10p,
             pp_15p,
@@ -52,8 +49,6 @@ impl PricePaidState {
             pp_90p,
             pp_95p,
         } = self;
-
-        *realized_cap += amount.to_btc() as f32 * price;
 
         *processed_amount += amount;
 

@@ -78,6 +78,12 @@ impl CohortDataset {
             .any(|sub| sub.utxo.should_insert(insert_data))
     }
 
+    pub fn should_insert_capitalization(&self, insert_data: &InsertData) -> bool {
+        self.sub_datasets_vec()
+            .iter()
+            .any(|sub| sub.capitalization.should_insert(insert_data))
+    }
+
     pub fn should_insert_supply(&self, insert_data: &InsertData) -> bool {
         self.sub_datasets_vec()
             .iter()
@@ -214,6 +220,44 @@ impl CohortDataset {
                 .split_durable_states
                 .highly_liquid
                 .utxo_state,
+        );
+    }
+
+    fn insert_capitalization_data(
+        &mut self,
+        insert_data: &InsertData,
+        liquidity_split_state: &AddressCohortDurableStates,
+    ) {
+        self.all.capitalization.insert(
+            insert_data,
+            &liquidity_split_state
+                .split_durable_states
+                .all
+                .capitalization_state,
+        );
+
+        self.illiquid.capitalization.insert(
+            insert_data,
+            &liquidity_split_state
+                .split_durable_states
+                .illiquid
+                .capitalization_state,
+        );
+
+        self.liquid.capitalization.insert(
+            insert_data,
+            &liquidity_split_state
+                .split_durable_states
+                .liquid
+                .capitalization_state,
+        );
+
+        self.highly_liquid.capitalization.insert(
+            insert_data,
+            &liquidity_split_state
+                .split_durable_states
+                .highly_liquid
+                .capitalization_state,
         );
     }
 
@@ -358,6 +402,10 @@ impl CohortDataset {
             self.insert_utxo_data(insert_data, liquidity_split_processed_address_state);
         }
 
+        if self.should_insert_capitalization(insert_data) {
+            self.insert_capitalization_data(insert_data, liquidity_split_processed_address_state);
+        }
+
         if self.should_insert_supply(insert_data) {
             self.insert_supply_data(insert_data, liquidity_split_processed_address_state);
         }
@@ -370,7 +418,6 @@ impl CohortDataset {
             self.insert_unrealized_data(insert_data);
         }
 
-        // MUST BE after insert_supply
         if self.should_insert_price_paid(insert_data) {
             self.insert_price_paid_data(insert_data);
         }
@@ -400,10 +447,10 @@ impl CohortDataset {
             .any(|sub| sub.supply.should_compute(compute_data))
     }
 
-    pub fn should_compute_price_paid(&self, compute_data: &ComputeData) -> bool {
+    pub fn should_compute_capitalization(&self, compute_data: &ComputeData) -> bool {
         self.sub_datasets_vec()
             .iter()
-            .any(|sub| sub.price_paid.should_compute(compute_data))
+            .any(|sub| sub.capitalization.should_compute(compute_data))
     }
 
     fn should_compute_realized(&self, compute_data: &ComputeData) -> bool {
@@ -495,20 +542,22 @@ impl CohortDataset {
             .compute(compute_data, market_cap);
     }
 
-    fn compute_price_paid_data(&mut self, compute_data: &ComputeData, closes: &mut BiMap<f32>) {
+    fn compute_capitalization_data(&mut self, compute_data: &ComputeData, closes: &mut BiMap<f32>) {
         self.all
-            .price_paid
+            .capitalization
             .compute(compute_data, closes, &mut self.all.supply.supply);
 
-        self.illiquid
-            .price_paid
-            .compute(compute_data, closes, &mut self.illiquid.supply.supply);
+        self.illiquid.capitalization.compute(
+            compute_data,
+            closes,
+            &mut self.illiquid.supply.supply,
+        );
 
         self.liquid
-            .price_paid
+            .capitalization
             .compute(compute_data, closes, &mut self.liquid.supply.supply);
 
-        self.highly_liquid.price_paid.compute(
+        self.highly_liquid.capitalization.compute(
             compute_data,
             closes,
             &mut self.highly_liquid.supply.supply,
@@ -553,8 +602,8 @@ impl CohortDataset {
         }
 
         // MUST BE after compute_supply
-        if self.should_compute_price_paid(compute_data) {
-            self.compute_price_paid_data(compute_data, closes);
+        if self.should_compute_capitalization(compute_data) {
+            self.compute_capitalization_data(compute_data, closes);
         }
 
         // if self.should_compute_output(compute_data) {

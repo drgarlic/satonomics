@@ -500,7 +500,7 @@ pub fn parse(
 
                             // MUST be after `or_insert_with`
                             let address_realized_profit_or_loss = input_address_data
-                                .send(input_amount, input_block_data.price)
+                                .send(input_amount, block_price, input_block_data.price)
                                 .unwrap_or_else(|_| {
                                     dbg!(
                                         input_address_index,

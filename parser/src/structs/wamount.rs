@@ -1,4 +1,7 @@
-use std::ops::{Add, AddAssign, Mul, Sub, SubAssign};
+use std::{
+    iter::Sum,
+    ops::{Add, AddAssign, Mul, Sub, SubAssign},
+};
 
 use allocative::{Allocative, Visitor};
 use bincode::{
@@ -31,6 +34,7 @@ direct_repr!(WAmount);
 
 impl WAmount {
     pub const ZERO: Self = Self(Amount::ZERO);
+    pub const ONE_BTC: Self = Self(Amount::ONE_BTC);
 
     pub fn wrap(amount: Amount) -> Self {
         Self(amount)
@@ -38,18 +42,6 @@ impl WAmount {
 
     pub fn from_sat(sats: u64) -> Self {
         Self(Amount::from_sat(sats))
-    }
-}
-
-impl AddAssign for WAmount {
-    fn add_assign(&mut self, rhs: Self) {
-        **self = **self + *rhs;
-    }
-}
-
-impl SubAssign for WAmount {
-    fn sub_assign(&mut self, rhs: Self) {
-        **self = **self - *rhs;
     }
 }
 
@@ -61,6 +53,12 @@ impl Add for WAmount {
     }
 }
 
+impl AddAssign for WAmount {
+    fn add_assign(&mut self, rhs: Self) {
+        **self = **self + *rhs;
+    }
+}
+
 impl Sub for WAmount {
     type Output = WAmount;
 
@@ -69,11 +67,24 @@ impl Sub for WAmount {
     }
 }
 
+impl SubAssign for WAmount {
+    fn sub_assign(&mut self, rhs: Self) {
+        **self = **self - *rhs;
+    }
+}
+
 impl Mul<u64> for WAmount {
     type Output = WAmount;
 
     fn mul(self, rhs: u64) -> Self::Output {
         WAmount::wrap(self.checked_mul(rhs).expect("Amount multiplication error"))
+    }
+}
+
+impl Sum for WAmount {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let sats = iter.map(|amt| amt.to_sat()).sum();
+        WAmount::from_sat(sats)
     }
 }
 

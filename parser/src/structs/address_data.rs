@@ -10,7 +10,7 @@ pub struct AddressData {
     pub amount: WAmount,
     pub sent: WAmount,
     pub received: WAmount,
-    pub mean_cents_paid: u32,
+    pub realized_cap_in_cents: u64,
     pub outputs_len: u32,
 }
 direct_repr!(AddressData);
@@ -22,32 +22,19 @@ impl AddressData {
             amount: WAmount::ZERO,
             sent: WAmount::ZERO,
             received: WAmount::ZERO,
-            mean_cents_paid: 0,
+            realized_cap_in_cents: 0,
             outputs_len: 0,
         }
     }
 
-    pub fn compute_liquidity_classification(&self) -> LiquidityClassification {
-        LiquidityClassification::new(self.sent, self.received)
-    }
-
     pub fn receive(&mut self, amount: WAmount, price: f32) {
-        let previous_mean_cents_paid = self.mean_cents_paid;
-
         let previous_amount = self.amount;
         let new_amount = previous_amount + amount;
 
-        let received_amount_in_btc = amount.to_btc();
-        let received_dollar_value = received_amount_in_btc * price as f64;
+        let received_btc_amount = amount.to_btc();
+        let received_dollar_value = received_btc_amount * price as f64;
 
-        let previous_btc_amount = previous_amount.to_btc();
-        let new_btc_amount = new_amount.to_btc();
-
-        self.mean_cents_paid = ((previous_mean_cents_paid as f64 / 100.0 * previous_btc_amount
-            + received_dollar_value)
-            / new_btc_amount
-            * 100.0)
-            .round() as u32;
+        self.realized_cap_in_cents += (received_dollar_value * 100.0) as u64;
 
         self.amount = new_amount;
 
@@ -56,9 +43,12 @@ impl AddressData {
         self.outputs_len += 1;
     }
 
-    pub fn send(&mut self, amount: WAmount, price: f32) -> color_eyre::Result<f32> {
-        let previous_mean_cents_paid = self.mean_cents_paid;
-
+    pub fn send(
+        &mut self,
+        amount: WAmount,
+        current_price: f32,
+        sent_amount_price: f32,
+    ) -> color_eyre::Result<f32> {
         let previous_amount = self.amount;
 
         if previous_amount < amount {
@@ -67,8 +57,10 @@ impl AddressData {
 
         let new_amount = previous_amount - amount;
 
-        let sent_amount_in_btc = amount.to_btc();
-        let sent_dollar_value = sent_amount_in_btc * price as f64;
+        let previous_btc_amount = previous_amount.to_btc();
+        let sent_btc_amount = amount.to_btc();
+
+        let previous_sent_dollar_value = previous_btc_amount * sent_amount_price as f64;
 
         self.amount = new_amount;
 
@@ -76,11 +68,12 @@ impl AddressData {
 
         self.outputs_len -= 1;
 
+        self.realized_cap_in_cents -= (sent_btc_amount * sent_amount_price as f64 * 100.0) as u64;
+
+        let current_sent_dollar_value = sent_btc_amount * current_price as f64;
+
         // realized_profit_or_loss
-        Ok(
-            (sent_dollar_value - (sent_amount_in_btc * previous_mean_cents_paid as f64 / 100.0))
-                as f32,
-        )
+        Ok((current_sent_dollar_value - previous_sent_dollar_value) as f32)
     }
 
     #[inline(always)]
@@ -102,8 +95,12 @@ impl AddressData {
             amount: WAmount::ZERO,
             sent: empty.transfered,
             received: empty.transfered,
-            mean_cents_paid: 0,
+            realized_cap_in_cents: 0,
             outputs_len: 0,
         }
+    }
+
+    pub fn compute_liquidity_classification(&self) -> LiquidityClassification {
+        LiquidityClassification::new(self.sent, self.received)
     }
 }

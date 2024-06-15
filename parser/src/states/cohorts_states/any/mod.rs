@@ -1,3 +1,4 @@
+mod capitalization_state;
 mod durable_states;
 mod input_state;
 mod one_shot_states;
@@ -9,6 +10,7 @@ mod supply_state;
 mod unrealized_state;
 mod utxo_state;
 
+pub use capitalization_state::*;
 pub use durable_states::*;
 pub use input_state::*;
 pub use one_shot_states::*;

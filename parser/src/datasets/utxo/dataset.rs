@@ -67,6 +67,17 @@ impl UTXODataset {
             );
         }
 
+        if self.subs.capitalization.should_insert(insert_data) {
+            self.subs.capitalization.insert(
+                insert_data,
+                &states
+                    .utxo_cohorts_durable_states
+                    .get(&self.id)
+                    .durable_states
+                    .capitalization_state,
+            );
+        }
+
         if self.subs.unrealized.should_insert(insert_data) {
             self.subs.unrealized.insert(
                 insert_data,
@@ -131,9 +142,9 @@ impl UTXODataset {
             self.subs.realized.compute(compute_data, market_cap);
         }
 
-        if self.subs.price_paid.should_compute(compute_data) {
+        if self.subs.capitalization.should_compute(compute_data) {
             self.subs
-                .price_paid
+                .capitalization
                 .compute(compute_data, closes, &mut self.subs.supply.supply);
         }
 

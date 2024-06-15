@@ -409,7 +409,7 @@ impl CointimeDataset {
                 dates,
                 &mut self.active_cap.date,
                 |(active_cap, date, _)| {
-                    let investor_cap = self.investor_cap.date.get(&date).unwrap();
+                    let investor_cap = self.investor_cap.date.get(date).unwrap();
                     (active_cap - investor_cap) / active_cap
                 },
             );

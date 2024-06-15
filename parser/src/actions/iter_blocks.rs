@@ -35,19 +35,6 @@ pub fn iter_blocks(bitcoin_db: &BitcoinDB, block_count: usize) -> color_eyre::Re
 
     let mut states =
         States::import(&mut databases.address_index_to_address_data).unwrap_or_default();
-    // ROM: 8GB of bin files
-    // RAM: 17.62GB with everything
-    // ---
-    // Addresses and Utxos states: 10MB
-    // address_index_to_address_data: 4.35GB RAM vs 2GB ROM
-    // txout_index_to_address_index: 4.45GB RAM vs 1.81GB ROM
-    // txout_index_to_sats: 5.89GB RAM vs 2.53GB ROM
-    // tx_index_to_tx_data: 2.73GB RAM vs 1.24GB ROM
-
-    // while true {
-    //     dbg!(memory_stats::memory_stats());
-    //     std::thread::sleep(std::time::Duration::from_secs(10))
-    // }
 
     log("Imported states");
 

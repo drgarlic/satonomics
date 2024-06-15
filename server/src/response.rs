@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 
 use axum::response::{IntoResponse, Json, Response};
+use bincode::Decode;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
@@ -27,7 +28,7 @@ pub fn typed_value_to_response<T>(
     chunk: Option<Chunk>,
 ) -> color_eyre::Result<Response>
 where
-    T: Serialize + Debug + DeserializeOwned + savefile::Deserialize + savefile::ReprC,
+    T: Serialize + Debug + DeserializeOwned + Decode,
 {
     Ok(match kind {
         Kind::Date => dataset_to_response(import_map::<T>(relative_path)?, chunk.unwrap()),

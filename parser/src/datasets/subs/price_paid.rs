@@ -2,10 +2,9 @@ use allocative::Allocative;
 use itertools::Itertools;
 
 use crate::{
-    datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
+    datasets::{AnyDataset, InsertData, MinInitialStates},
     states::PricePaidState,
     structs::{AnyBiMap, BiMap, WNaiveDate},
-    utils::ONE_MONTH_IN_DAYS,
 };
 
 #[derive(Default, Allocative)]
@@ -13,7 +12,6 @@ pub struct PricePaidSubDataset {
     min_initial_states: MinInitialStates,
 
     // Inserted
-    pub realized_cap: BiMap<f32>,
     pp_median: BiMap<f32>,
     pp_95p: BiMap<f32>,
     pp_90p: BiMap<f32>,
@@ -33,11 +31,6 @@ pub struct PricePaidSubDataset {
     pp_15p: BiMap<f32>,
     pp_10p: BiMap<f32>,
     pp_05p: BiMap<f32>,
-
-    // Computed
-    pub realized_price: BiMap<f32>,
-    pub mvrv: BiMap<f32>,
-    pub realized_cap_1m_net_change: BiMap<f32>,
 }
 
 impl PricePaidSubDataset {
@@ -46,11 +39,6 @@ impl PricePaidSubDataset {
 
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
-
-            realized_cap: BiMap::new_bin(1, &f("realized_cap")),
-            realized_cap_1m_net_change: BiMap::new_bin(1, &f("realized_cap_1m_net_change")),
-            realized_price: BiMap::new_bin(1, &f("realized_price")),
-            mvrv: BiMap::new_bin(1, &f("mvrv")),
 
             pp_median: BiMap::new_bin(1, &f("median_price_paid")),
             pp_95p: BiMap::new_bin(1, &f("95p_price_paid")),
@@ -90,7 +78,6 @@ impl PricePaidSubDataset {
         state: &PricePaidState,
     ) {
         let PricePaidState {
-            realized_cap,
             pp_05p,
             pp_10p,
             pp_15p,
@@ -112,12 +99,6 @@ impl PricePaidSubDataset {
             pp_95p,
             ..
         } = state;
-
-        let realized_cap = self.realized_cap.height.insert(height, *realized_cap);
-
-        if is_date_last_block {
-            self.realized_cap.date.insert(date, realized_cap);
-        }
 
         // Check if iter was empty
         if pp_05p.is_none() {
@@ -173,36 +154,6 @@ impl PricePaidSubDataset {
         }
     }
 
-    pub fn compute(
-        &mut self,
-        &ComputeData { heights, dates }: &ComputeData,
-        closes: &mut BiMap<f32>,
-        cohort_supply: &mut BiMap<f64>,
-    ) {
-        self.realized_price.multi_insert_divide(
-            heights,
-            dates,
-            &mut self.realized_cap,
-            cohort_supply,
-        );
-
-        self.mvrv.height.multi_insert_divide(
-            heights,
-            &mut closes.height,
-            &mut self.realized_price.height,
-        );
-        self.mvrv
-            .date
-            .multi_insert_divide(dates, &mut closes.date, &mut self.realized_price.date);
-
-        self.realized_cap_1m_net_change.multi_insert_net_change(
-            heights,
-            dates,
-            &mut self.realized_cap,
-            ONE_MONTH_IN_DAYS,
-        )
-    }
-
     fn insert_height_default(&mut self, height: usize) {
         self.inserted_as_mut_vec().into_iter().for_each(|bi| {
             bi.height.insert_default(height);
@@ -217,7 +168,6 @@ impl PricePaidSubDataset {
 
     pub fn inserted_as_vec(&self) -> Vec<&BiMap<f32>> {
         vec![
-            &self.realized_cap,
             &self.pp_95p,
             &self.pp_90p,
             &self.pp_85p,
@@ -242,7 +192,6 @@ impl PricePaidSubDataset {
 
     pub fn inserted_as_mut_vec(&mut self) -> Vec<&mut BiMap<f32>> {
         vec![
-            &mut self.realized_cap,
             &mut self.pp_95p,
             &mut self.pp_90p,
             &mut self.pp_85p,
@@ -283,21 +232,5 @@ impl AnyDataset for PricePaidSubDataset {
             .into_iter()
             .map(|dataset| dataset as &mut dyn AnyBiMap)
             .collect_vec()
-    }
-
-    fn to_computed_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![
-            &self.realized_price,
-            &self.mvrv,
-            &self.realized_cap_1m_net_change,
-        ]
-    }
-
-    fn to_computed_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![
-            &mut self.realized_price,
-            &mut self.mvrv,
-            &mut self.realized_cap_1m_net_change,
-        ]
     }
 }
