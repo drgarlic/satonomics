@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use bincode::{Decode, Encode};
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::OHLC;
+use crate::datasets::OHLC;
 
 use super::WNaiveDate;
 

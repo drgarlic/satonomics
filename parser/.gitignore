@@ -3,7 +3,7 @@
 /.vscode
 /.zed
 
-flamegraph
+flamegraph*
 /profile.json
 
 /inputs*/
@@ -12,7 +12,3 @@ flamegraph
 /exports*/
 /imports*/
 benches
-
-
-database2.rs
-sparsed_vec.rs

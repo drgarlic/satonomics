@@ -39,6 +39,7 @@ impl AddressData {
         self.outputs_len += 1;
 
         let received_value = price * amount;
+
         self.realized_cap += received_value;
     }
 
@@ -68,7 +69,7 @@ impl AddressData {
         let current_sent_dollar_value = current_price * amount;
 
         // realized_profit_or_loss
-        Ok(current_sent_dollar_value.to_dollar() - previous_sent_dollar_value.to_dollar())
+        Ok((current_sent_dollar_value - previous_sent_dollar_value).to_dollar())
     }
 
     #[inline(always)]

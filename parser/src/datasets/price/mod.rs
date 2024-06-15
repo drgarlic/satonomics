@@ -10,9 +10,8 @@ pub use ohlc::*;
 
 use crate::{
     price::{Binance, Kraken},
-    structs::{AnyBiMap, AnyDateMap, BiMap, WNaiveDate},
+    structs::{AnyBiMap, AnyDateMap, BiMap, DateMap, WNaiveDate},
     utils::{ONE_MONTH_IN_DAYS, ONE_WEEK_IN_DAYS, ONE_YEAR_IN_DAYS},
-    DateMap,
 };
 
 use super::{AnyDataset, ComputeData, MinInitialStates};

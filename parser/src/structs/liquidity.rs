@@ -32,7 +32,7 @@ impl LiquidityClassification {
             if sent == WAmount::ZERO {
                 0.0
             } else {
-                let liquidity = sent.to_btc() / received.to_btc();
+                let liquidity = sent.to_sat() as f64 / received.to_sat() as f64;
 
                 if liquidity.is_nan() {
                     dbg!(sent, received);

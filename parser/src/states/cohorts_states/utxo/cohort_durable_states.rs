@@ -1,14 +1,14 @@
 use allocative::Allocative;
 
 use crate::{
-    states::{DurableStates, OneShotStates, PriceInCentsToValue, UnrealizedState},
+    states::{DurableStates, OneShotStates, PriceToValue, UnrealizedState},
     structs::{Price, WAmount},
 };
 
 #[derive(Default, Debug, Allocative)]
 pub struct UTXOCohortDurableStates {
     pub durable_states: DurableStates,
-    pub cents_to_amount: PriceInCentsToValue<WAmount>,
+    pub price_to_amount: PriceToValue<WAmount>,
 }
 
 impl UTXOCohortDurableStates {
@@ -40,9 +40,9 @@ impl UTXOCohortDurableStates {
         let price = price.to_significant();
 
         if increment {
-            self.cents_to_amount.increment(price, amount);
+            self.price_to_amount.increment(price, amount);
         } else {
-            self.cents_to_amount
+            self.price_to_amount
                 .decrement(price, amount)
                 .inspect_err(|report| {
                     dbg!(
@@ -85,7 +85,7 @@ impl UTXOCohortDurableStates {
 
         let one_shot_states_ref = &mut one_shot_states;
 
-        self.cents_to_amount.iterate(supply, |price_paid, amount| {
+        self.price_to_amount.iterate(supply, |price_paid, amount| {
             one_shot_states_ref
                 .price_paid_state
                 .iterate(price_paid, amount, supply);

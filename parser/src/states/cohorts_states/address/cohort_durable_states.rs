@@ -1,7 +1,7 @@
 use allocative::Allocative;
 
 use crate::{
-    states::{DurableStates, OneShotStates, PriceInCentsToValue, UnrealizedState},
+    states::{DurableStates, OneShotStates, PriceToValue, UnrealizedState},
     structs::{LiquiditySplitResult, Price, SplitByLiquidity, WAmount},
 };
 
@@ -9,7 +9,7 @@ use crate::{
 pub struct AddressCohortDurableStates {
     pub address_count: usize,
     pub split_durable_states: SplitByLiquidity<DurableStates>,
-    pub cents_to_split_amount: PriceInCentsToValue<SplitByLiquidity<WAmount>>,
+    pub cents_to_split_amount: PriceToValue<SplitByLiquidity<WAmount>>,
 }
 
 const ONE_THIRD: f64 = 0.33333333333;

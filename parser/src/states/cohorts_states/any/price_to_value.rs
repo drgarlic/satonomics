@@ -11,9 +11,9 @@ use derive_deref::{Deref, DerefMut};
 use crate::structs::{Price, SplitByLiquidity, WAmount};
 
 #[derive(Deref, DerefMut, Default, Debug, Allocative)]
-pub struct PriceInCentsToValue<T>(BTreeMap<u32, T>);
+pub struct PriceToValue<T>(BTreeMap<u32, T>);
 
-impl<T> PriceInCentsToValue<T>
+impl<T> PriceToValue<T>
 where
     T: Default
         + Debug

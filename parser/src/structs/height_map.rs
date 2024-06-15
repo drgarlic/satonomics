@@ -18,8 +18,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     bitcoin::NUMBER_OF_UNSAFE_BLOCKS,
     io::{format_path, Serialization},
-    log,
-    utils::LossyFrom,
+    utils::{log, LossyFrom},
 };
 
 use super::{AnyMap, MapValue};

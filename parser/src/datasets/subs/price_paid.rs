@@ -111,25 +111,82 @@ impl PricePaidSubDataset {
             return;
         }
 
-        let pp_05p = self.pp_05p.height.insert(height, pp_05p.unwrap());
-        let pp_10p = self.pp_10p.height.insert(height, pp_10p.unwrap());
-        let pp_15p = self.pp_15p.height.insert(height, pp_15p.unwrap());
-        let pp_20p = self.pp_20p.height.insert(height, pp_20p.unwrap());
-        let pp_25p = self.pp_25p.height.insert(height, pp_25p.unwrap());
-        let pp_30p = self.pp_30p.height.insert(height, pp_30p.unwrap());
-        let pp_35p = self.pp_35p.height.insert(height, pp_35p.unwrap());
-        let pp_40p = self.pp_40p.height.insert(height, pp_40p.unwrap());
-        let pp_45p = self.pp_45p.height.insert(height, pp_45p.unwrap());
-        let pp_median = self.pp_median.height.insert(height, pp_median.unwrap());
-        let pp_55p = self.pp_55p.height.insert(height, pp_55p.unwrap());
-        let pp_60p = self.pp_60p.height.insert(height, pp_60p.unwrap());
-        let pp_65p = self.pp_65p.height.insert(height, pp_65p.unwrap());
-        let pp_70p = self.pp_70p.height.insert(height, pp_70p.unwrap());
-        let pp_75p = self.pp_75p.height.insert(height, pp_75p.unwrap());
-        let pp_80p = self.pp_80p.height.insert(height, pp_80p.unwrap());
-        let pp_85p = self.pp_85p.height.insert(height, pp_85p.unwrap());
-        let pp_90p = self.pp_90p.height.insert(height, pp_90p.unwrap());
-        let pp_95p = self.pp_95p.height.insert(height, pp_95p.unwrap());
+        let pp_05p = self
+            .pp_05p
+            .height
+            .insert(height, pp_05p.unwrap().to_dollar() as f32);
+        let pp_10p = self
+            .pp_10p
+            .height
+            .insert(height, pp_10p.unwrap().to_dollar() as f32);
+        let pp_15p = self
+            .pp_15p
+            .height
+            .insert(height, pp_15p.unwrap().to_dollar() as f32);
+        let pp_20p = self
+            .pp_20p
+            .height
+            .insert(height, pp_20p.unwrap().to_dollar() as f32);
+        let pp_25p = self
+            .pp_25p
+            .height
+            .insert(height, pp_25p.unwrap().to_dollar() as f32);
+        let pp_30p = self
+            .pp_30p
+            .height
+            .insert(height, pp_30p.unwrap().to_dollar() as f32);
+        let pp_35p = self
+            .pp_35p
+            .height
+            .insert(height, pp_35p.unwrap().to_dollar() as f32);
+        let pp_40p = self
+            .pp_40p
+            .height
+            .insert(height, pp_40p.unwrap().to_dollar() as f32);
+        let pp_45p = self
+            .pp_45p
+            .height
+            .insert(height, pp_45p.unwrap().to_dollar() as f32);
+        let pp_median = self
+            .pp_median
+            .height
+            .insert(height, pp_median.unwrap().to_dollar() as f32);
+        let pp_55p = self
+            .pp_55p
+            .height
+            .insert(height, pp_55p.unwrap().to_dollar() as f32);
+        let pp_60p = self
+            .pp_60p
+            .height
+            .insert(height, pp_60p.unwrap().to_dollar() as f32);
+        let pp_65p = self
+            .pp_65p
+            .height
+            .insert(height, pp_65p.unwrap().to_dollar() as f32);
+        let pp_70p = self
+            .pp_70p
+            .height
+            .insert(height, pp_70p.unwrap().to_dollar() as f32);
+        let pp_75p = self
+            .pp_75p
+            .height
+            .insert(height, pp_75p.unwrap().to_dollar() as f32);
+        let pp_80p = self
+            .pp_80p
+            .height
+            .insert(height, pp_80p.unwrap().to_dollar() as f32);
+        let pp_85p = self
+            .pp_85p
+            .height
+            .insert(height, pp_85p.unwrap().to_dollar() as f32);
+        let pp_90p = self
+            .pp_90p
+            .height
+            .insert(height, pp_90p.unwrap().to_dollar() as f32);
+        let pp_95p = self
+            .pp_95p
+            .height
+            .insert(height, pp_95p.unwrap().to_dollar() as f32);
 
         if is_date_last_block {
             self.pp_05p.date.insert(date, pp_05p);

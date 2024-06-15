@@ -8,7 +8,7 @@ use leveldb::{
     options::{Options, ReadOptions},
 };
 
-use crate::log;
+use crate::utils::log;
 
 use super::{BlockchainRead, OpResult};
 

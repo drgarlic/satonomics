@@ -5,7 +5,7 @@ use rayon::prelude::*;
 
 use crate::{
     databases::AddressIndexToAddressData,
-    structs::{AddressData, AddressRealizedData, Price, WAmount},
+    structs::{AddressData, AddressRealizedData, Price},
 };
 
 use super::{AddressCohortDurableStates, AddressCohortsOneShotStates, SplitByAddressCohort};
@@ -65,7 +65,7 @@ impl AddressCohortsDurableStates {
         let utxo_count = address_data.outputs_len as usize;
         let realized_cap = address_data.realized_cap;
 
-        let mean_price_paid = (address_data.realized_cap * WAmount::ONE_BTC) / amount;
+        let mean_price_paid = address_data.realized_cap / amount;
 
         let liquidity_classification = address_data.compute_liquidity_classification();
 

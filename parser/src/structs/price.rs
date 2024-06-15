@@ -20,7 +20,7 @@ impl Price {
     }
 
     pub fn to_dollar(self) -> f64 {
-        (self.0 * 100) as f64
+        self.0 as f64 / 100.0
     }
 
     pub fn from_cent(cent: u64) -> Self {
@@ -28,7 +28,7 @@ impl Price {
     }
 
     pub fn from_dollar(dollar: f64) -> Self {
-        Self((dollar / 100.0) as u64)
+        Self((dollar * 100.0) as u64)
     }
 
     // Only affects percentiles and unrealized, doesn't need to be precise
@@ -83,7 +83,7 @@ impl Mul<WAmount> for Price {
     type Output = Self;
 
     fn mul(self, rhs: WAmount) -> Self::Output {
-        Self((self.to_dollar() * rhs.to_btc() / 100.0) as u64)
+        Self(self.to_cent() * rhs.to_sat() / WAmount::ONE_BTC_U64)
     }
 }
 
@@ -91,6 +91,6 @@ impl Div<WAmount> for Price {
     type Output = Self;
 
     fn div(self, rhs: WAmount) -> Self::Output {
-        Self((self.to_dollar() / rhs.to_btc() / 100.0) as u64)
+        Self(self.to_cent() * WAmount::ONE_BTC_U64 / rhs.to_sat())
     }
 }

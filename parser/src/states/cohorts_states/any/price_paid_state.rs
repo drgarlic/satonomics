@@ -2,25 +2,25 @@ use crate::structs::{Price, WAmount};
 
 #[derive(Default, Debug)]
 pub struct PricePaidState {
-    pub pp_05p: Option<f32>,
-    pub pp_10p: Option<f32>,
-    pub pp_15p: Option<f32>,
-    pub pp_20p: Option<f32>,
-    pub pp_25p: Option<f32>,
-    pub pp_30p: Option<f32>,
-    pub pp_35p: Option<f32>,
-    pub pp_40p: Option<f32>,
-    pub pp_45p: Option<f32>,
-    pub pp_median: Option<f32>,
-    pub pp_55p: Option<f32>,
-    pub pp_60p: Option<f32>,
-    pub pp_65p: Option<f32>,
-    pub pp_70p: Option<f32>,
-    pub pp_75p: Option<f32>,
-    pub pp_80p: Option<f32>,
-    pub pp_85p: Option<f32>,
-    pub pp_90p: Option<f32>,
-    pub pp_95p: Option<f32>,
+    pub pp_05p: Option<Price>,
+    pub pp_10p: Option<Price>,
+    pub pp_15p: Option<Price>,
+    pub pp_20p: Option<Price>,
+    pub pp_25p: Option<Price>,
+    pub pp_30p: Option<Price>,
+    pub pp_35p: Option<Price>,
+    pub pp_40p: Option<Price>,
+    pub pp_45p: Option<Price>,
+    pub pp_median: Option<Price>,
+    pub pp_55p: Option<Price>,
+    pub pp_60p: Option<Price>,
+    pub pp_65p: Option<Price>,
+    pub pp_70p: Option<Price>,
+    pub pp_75p: Option<Price>,
+    pub pp_80p: Option<Price>,
+    pub pp_85p: Option<Price>,
+    pub pp_90p: Option<Price>,
+    pub pp_95p: Option<Price>,
 
     pub processed_amount: WAmount,
 }
@@ -52,16 +52,14 @@ impl PricePaidState {
 
         *processed_amount += amount;
 
-        let processed_amount_in_btc = processed_amount.to_btc();
-        let total_supply_in_btc = total_supply.to_btc();
-
         if pp_95p.is_some() {
             return;
         }
 
-        let price = price.to_dollar() as f32;
+        let processed_sat_amount = processed_amount.to_sat();
+        let total_sat_supply = total_supply.to_sat();
 
-        if processed_amount_in_btc >= total_supply_in_btc * 0.95 {
+        if processed_sat_amount >= total_sat_supply * 95 / 100 {
             pp_95p.replace(price);
         }
 
@@ -69,7 +67,7 @@ impl PricePaidState {
             return;
         }
 
-        if processed_amount_in_btc >= total_supply_in_btc * 0.9 {
+        if processed_sat_amount >= total_sat_supply * 90 / 100 {
             pp_90p.replace(price);
         }
 
@@ -77,7 +75,7 @@ impl PricePaidState {
             return;
         }
 
-        if processed_amount_in_btc >= total_supply_in_btc * 0.85 {
+        if processed_sat_amount >= total_sat_supply * 85 / 100 {
             pp_85p.replace(price);
         }
 
@@ -85,7 +83,7 @@ impl PricePaidState {
             return;
         }
 
-        if processed_amount_in_btc >= total_supply_in_btc * 0.8 {
+        if processed_sat_amount >= total_sat_supply * 80 / 100 {
             pp_80p.replace(price);
         }
 
@@ -93,7 +91,7 @@ impl PricePaidState {
             return;
         }
 
-        if processed_amount_in_btc >= total_supply_in_btc * 0.75 {
+        if processed_sat_amount >= total_sat_supply * 75 / 100 {
             pp_75p.replace(price);
         }
 
@@ -101,7 +99,7 @@ impl PricePaidState {
             return;
         }
 
-        if processed_amount_in_btc >= total_supply_in_btc * 0.7 {
+        if processed_sat_amount >= total_sat_supply * 70 / 100 {
             pp_70p.replace(price);
         }
 
@@ -109,7 +107,7 @@ impl PricePaidState {
             return;
         }
 
-        if processed_amount_in_btc >= total_supply_in_btc * 0.65 {
+        if processed_sat_amount >= total_sat_supply * 65 / 100 {
             pp_65p.replace(price);
         }
 
@@ -117,7 +115,7 @@ impl PricePaidState {
             return;
         }
 
-        if processed_amount_in_btc >= total_supply_in_btc * 0.6 {
+        if processed_sat_amount >= total_sat_supply * 60 / 100 {
             pp_60p.replace(price);
         }
 
@@ -125,7 +123,7 @@ impl PricePaidState {
             return;
         }
 
-        if processed_amount_in_btc >= total_supply_in_btc * 0.55 {
+        if processed_sat_amount >= total_sat_supply * 55 / 100 {
             pp_55p.replace(price);
         }
 
@@ -133,7 +131,7 @@ impl PricePaidState {
             return;
         }
 
-        if processed_amount_in_btc >= total_supply_in_btc * 0.5 {
+        if processed_sat_amount >= total_sat_supply / 2 {
             pp_median.replace(price);
         }
 
@@ -141,7 +139,7 @@ impl PricePaidState {
             return;
         }
 
-        if processed_amount_in_btc >= total_supply_in_btc * 0.45 {
+        if processed_sat_amount >= total_sat_supply * 45 / 100 {
             pp_45p.replace(price);
         }
 
@@ -149,7 +147,7 @@ impl PricePaidState {
             return;
         }
 
-        if processed_amount_in_btc >= total_supply_in_btc * 0.4 {
+        if processed_sat_amount >= total_sat_supply * 40 / 100 {
             pp_40p.replace(price);
         }
 
@@ -157,7 +155,7 @@ impl PricePaidState {
             return;
         }
 
-        if processed_amount_in_btc >= total_supply_in_btc * 0.35 {
+        if processed_sat_amount >= total_sat_supply * 35 / 100 {
             pp_35p.replace(price);
         }
 
@@ -165,7 +163,7 @@ impl PricePaidState {
             return;
         }
 
-        if processed_amount_in_btc >= total_supply_in_btc * 0.3 {
+        if processed_sat_amount >= total_sat_supply * 30 / 100 {
             pp_30p.replace(price);
         }
 
@@ -173,7 +171,7 @@ impl PricePaidState {
             return;
         }
 
-        if processed_amount_in_btc >= total_supply_in_btc * 0.25 {
+        if processed_sat_amount >= total_sat_supply / 4 {
             pp_25p.replace(price);
         }
 
@@ -181,7 +179,7 @@ impl PricePaidState {
             return;
         }
 
-        if processed_amount_in_btc >= total_supply_in_btc * 0.2 {
+        if processed_sat_amount >= total_sat_supply / 5 {
             pp_20p.replace(price);
         }
 
@@ -189,7 +187,7 @@ impl PricePaidState {
             return;
         }
 
-        if processed_amount_in_btc >= total_supply_in_btc * 0.15 {
+        if processed_sat_amount >= total_sat_supply * 15 / 100 {
             pp_15p.replace(price);
         }
 
@@ -197,7 +195,7 @@ impl PricePaidState {
             return;
         }
 
-        if processed_amount_in_btc >= total_supply_in_btc * 0.1 {
+        if processed_sat_amount >= total_sat_supply / 10 {
             pp_10p.replace(price);
         }
 
@@ -205,7 +203,7 @@ impl PricePaidState {
             return;
         }
 
-        if processed_amount_in_btc >= total_supply_in_btc * 0.05 {
+        if processed_sat_amount >= total_sat_supply / 20 {
             pp_05p.replace(price);
         }
     }

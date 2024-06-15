@@ -17,12 +17,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     io::{format_path, Serialization},
-    log,
-    utils::LossyFrom,
-    HeightMap,
+    utils::{log, LossyFrom},
 };
 
-use super::{AnyMap, MapValue, WNaiveDate};
+use super::{AnyMap, HeightMap, MapValue, WNaiveDate};
 
 const NUMBER_OF_UNSAFE_DATES: usize = 2;
 const MIN_YEAR: usize = 2009;

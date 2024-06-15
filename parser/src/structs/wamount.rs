@@ -34,7 +34,7 @@ direct_repr!(WAmount);
 
 impl WAmount {
     pub const ZERO: Self = Self(Amount::ZERO);
-    pub const ONE_BTC: Self = Self(Amount::ONE_BTC);
+    pub const ONE_BTC_U64: u64 = 100_000_000;
 
     pub fn wrap(amount: Amount) -> Self {
         Self(amount)

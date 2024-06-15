@@ -3,9 +3,8 @@ use allocative::Allocative;
 use crate::{
     bitcoin::TARGET_BLOCKS_PER_DAY,
     datasets::AnyDataset,
-    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, DateMap, WAmount},
+    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, DateMap, HeightMap, WAmount},
     utils::{BYTES_IN_MB, ONE_DAY_IN_DAYS, ONE_MONTH_IN_DAYS, ONE_WEEK_IN_DAYS, ONE_YEAR_IN_DAYS},
-    HeightMap,
 };
 
 use super::{ComputeData, InsertData, MinInitialStates};
@@ -432,11 +431,11 @@ impl MiningDataset {
 
         // https://hashrateindex.com/blog/what-is-bitcoins-hashrate/
         self.hash_rate.multi_insert(dates, |date| {
-            let blocks_mined = self.blocks_mined.get_or_import(date).unwrap() as f64;
+            let blocks_mined = self.blocks_mined.get_or_import(date).unwrap();
 
             let difficulty = self.difficulty.date.get_or_import(date).unwrap();
 
-            ((blocks_mined / TARGET_BLOCKS_PER_DAY as f64) * difficulty * 2.0_f64.powi(32))
+            ((blocks_mined as f64 / TARGET_BLOCKS_PER_DAY as f64) * difficulty * 2.0_f64.powi(32))
                 / 600.0
                 / 1_000_000_000_000_000_000.0
         });
@@ -460,12 +459,11 @@ impl MiningDataset {
         );
 
         self.hash_price.multi_insert(dates, |date| {
-            let coinbase_in_dollars =
-                self.coinbase_in_dollars.date.get_or_import(date).unwrap() as f64;
+            let coinbase_in_dollars = self.coinbase_in_dollars.date.get_or_import(date).unwrap();
 
             let hashrate = self.hash_rate.get_or_import(date).unwrap();
 
-            coinbase_in_dollars / hashrate / 1_000.0
+            coinbase_in_dollars as f64 / hashrate / 1_000.0
         });
 
         self.puell_multiple.multi_insert_divide(

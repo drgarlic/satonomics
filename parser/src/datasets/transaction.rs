@@ -2,9 +2,8 @@ use allocative::Allocative;
 
 use crate::{
     datasets::InsertData,
-    structs::{AnyBiMap, BiMap},
+    structs::{AnyBiMap, BiMap, HeightMap},
     utils::{ONE_DAY_IN_S, ONE_MONTH_IN_DAYS, ONE_WEEK_IN_DAYS, ONE_YEAR_IN_DAYS},
-    HeightMap,
 };
 
 use super::{AnyDataset, ComputeData, MinInitialStates};
