@@ -1,6 +1,7 @@
 use std::{env, sync::Arc};
 
 use axum::{extract::State, http::HeaderMap, response::Response, routing::get, serve, Router};
+use parser::log;
 use reqwest::header::HOST;
 use response::generic_to_reponse;
 use routes::Routes;
@@ -59,12 +60,14 @@ async fn main() -> color_eyre::Result<()> {
         .unwrap()
         .to_str()
         .unwrap()
-        .contains("satonomics_main")
+        .contains("main")
     {
-        "3112"
-    } else {
         "3111"
+    } else {
+        "3110"
     };
+
+    log(&format!("Starting server on port {port}..."));
 
     let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await?;
 

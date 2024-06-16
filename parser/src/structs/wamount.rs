@@ -36,10 +36,12 @@ impl WAmount {
     pub const ZERO: Self = Self(Amount::ZERO);
     pub const ONE_BTC_U64: u64 = 100_000_000;
 
+    #[inline(always)]
     pub fn wrap(amount: Amount) -> Self {
         Self(amount)
     }
 
+    #[inline(always)]
     pub fn from_sat(sats: u64) -> Self {
         Self(Amount::from_sat(sats))
     }
@@ -49,7 +51,7 @@ impl Add for WAmount {
     type Output = WAmount;
 
     fn add(self, rhs: WAmount) -> Self::Output {
-        WAmount::wrap(self.checked_add(*rhs).expect("Amount addition error"))
+        WAmount::from_sat(self.to_sat() + rhs.to_sat())
     }
 }
 
@@ -63,7 +65,7 @@ impl Sub for WAmount {
     type Output = WAmount;
 
     fn sub(self, rhs: WAmount) -> Self::Output {
-        WAmount::wrap(self.checked_sub(*rhs).expect("Amount subtraction error"))
+        WAmount::from_sat(self.to_sat() - rhs.to_sat())
     }
 }
 
@@ -73,11 +75,19 @@ impl SubAssign for WAmount {
     }
 }
 
+impl Mul<WAmount> for WAmount {
+    type Output = WAmount;
+
+    fn mul(self, rhs: WAmount) -> Self::Output {
+        WAmount::from_sat(self.to_sat() * rhs.to_sat())
+    }
+}
+
 impl Mul<u64> for WAmount {
     type Output = WAmount;
 
     fn mul(self, rhs: u64) -> Self::Output {
-        WAmount::wrap(self.checked_mul(rhs).expect("Amount multiplication error"))
+        WAmount::from_sat(self.to_sat() * rhs)
     }
 }
 

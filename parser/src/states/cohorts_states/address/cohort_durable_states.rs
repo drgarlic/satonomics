@@ -9,7 +9,7 @@ use crate::{
 pub struct AddressCohortDurableStates {
     pub address_count: usize,
     pub split_durable_states: SplitByLiquidity<DurableStates>,
-    pub cents_to_split_amount: PriceToValue<SplitByLiquidity<WAmount>>,
+    pub price_to_split_amount: PriceToValue<SplitByLiquidity<WAmount>>,
 }
 
 const ONE_THIRD: f64 = 0.33333333333;
@@ -180,10 +180,10 @@ impl AddressCohortDurableStates {
         };
 
         if increment {
-            self.cents_to_split_amount
+            self.price_to_split_amount
                 .increment(mean_price_paid, split_amount);
         } else {
-            self.cents_to_split_amount
+            self.price_to_split_amount
                 .decrement(mean_price_paid, split_amount)
                 .inspect_err(|report| {
                     dbg!(
@@ -309,7 +309,7 @@ impl AddressCohortDurableStates {
 
         let one_shot_states_ref = &mut one_shot_states;
 
-        self.cents_to_split_amount.iterate(
+        self.price_to_split_amount.iterate(
             SplitByLiquidity {
                 all: all_supply,
                 illiquid: illiquid_supply,
@@ -322,42 +322,11 @@ impl AddressCohortDurableStates {
                     split_amount.all,
                     all_supply,
                 );
-                one_shot_states_ref.illiquid.price_paid_state.iterate(
-                    price_paid,
-                    split_amount.illiquid,
-                    illiquid_supply,
-                );
-                one_shot_states_ref.liquid.price_paid_state.iterate(
-                    price_paid,
-                    split_amount.liquid,
-                    liquid_supply,
-                );
-                one_shot_states_ref.highly_liquid.price_paid_state.iterate(
-                    price_paid,
-                    split_amount.highly_liquid,
-                    highly_liquid_supply,
-                );
-
                 one_shot_states_ref.all.unrealized_block_state.iterate(
                     price_paid,
                     block_price,
                     split_amount.all,
                 );
-                one_shot_states_ref.illiquid.unrealized_block_state.iterate(
-                    price_paid,
-                    block_price,
-                    split_amount.illiquid,
-                );
-                one_shot_states_ref.liquid.unrealized_block_state.iterate(
-                    price_paid,
-                    block_price,
-                    split_amount.liquid,
-                );
-                one_shot_states_ref
-                    .highly_liquid
-                    .unrealized_block_state
-                    .iterate(price_paid, block_price, split_amount.highly_liquid);
-
                 if let Some(unrealized_date_state) =
                     one_shot_states_ref.all.unrealized_date_state.as_mut()
                 {
@@ -368,36 +337,71 @@ impl AddressCohortDurableStates {
                     );
                 }
 
-                if let Some(unrealized_date_state) =
-                    one_shot_states_ref.illiquid.unrealized_date_state.as_mut()
-                {
-                    unrealized_date_state.iterate(
+                if split_amount.illiquid > WAmount::ZERO {
+                    one_shot_states_ref.illiquid.price_paid_state.iterate(
                         price_paid,
-                        date_price.unwrap(),
+                        split_amount.illiquid,
+                        illiquid_supply,
+                    );
+                    one_shot_states_ref.illiquid.unrealized_block_state.iterate(
+                        price_paid,
+                        block_price,
                         split_amount.illiquid,
                     );
+                    if let Some(unrealized_date_state) =
+                        one_shot_states_ref.illiquid.unrealized_date_state.as_mut()
+                    {
+                        unrealized_date_state.iterate(
+                            price_paid,
+                            date_price.unwrap(),
+                            split_amount.illiquid,
+                        );
+                    }
                 }
 
-                if let Some(unrealized_date_state) =
-                    one_shot_states_ref.liquid.unrealized_date_state.as_mut()
-                {
-                    unrealized_date_state.iterate(
+                if split_amount.liquid > WAmount::ZERO {
+                    one_shot_states_ref.liquid.price_paid_state.iterate(
                         price_paid,
-                        date_price.unwrap(),
+                        split_amount.liquid,
+                        liquid_supply,
+                    );
+                    one_shot_states_ref.liquid.unrealized_block_state.iterate(
+                        price_paid,
+                        block_price,
                         split_amount.liquid,
                     );
+                    if let Some(unrealized_date_state) =
+                        one_shot_states_ref.liquid.unrealized_date_state.as_mut()
+                    {
+                        unrealized_date_state.iterate(
+                            price_paid,
+                            date_price.unwrap(),
+                            split_amount.liquid,
+                        );
+                    }
                 }
 
-                if let Some(unrealized_date_state) = one_shot_states_ref
-                    .highly_liquid
-                    .unrealized_date_state
-                    .as_mut()
-                {
-                    unrealized_date_state.iterate(
+                if split_amount.highly_liquid > WAmount::ZERO {
+                    one_shot_states_ref.highly_liquid.price_paid_state.iterate(
                         price_paid,
-                        date_price.unwrap(),
                         split_amount.highly_liquid,
+                        highly_liquid_supply,
                     );
+                    one_shot_states_ref
+                        .highly_liquid
+                        .unrealized_block_state
+                        .iterate(price_paid, block_price, split_amount.highly_liquid);
+                    if let Some(unrealized_date_state) = one_shot_states_ref
+                        .highly_liquid
+                        .unrealized_date_state
+                        .as_mut()
+                    {
+                        unrealized_date_state.iterate(
+                            price_paid,
+                            date_price.unwrap(),
+                            split_amount.highly_liquid,
+                        );
+                    }
                 }
             },
         );
