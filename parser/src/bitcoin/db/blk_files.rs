@@ -2,11 +2,11 @@ use std::{
     collections::HashMap,
     convert::From,
     fs::{self, DirEntry, File},
-    io::{self, BufReader, Cursor, Seek, SeekFrom},
+    io::{self, BufReader, Seek, SeekFrom},
     path::{Path, PathBuf},
 };
 
-use bitcoin::{Block, Transaction};
+use bitcoin::{io::Cursor, Block, Transaction};
 use derive_deref::{Deref, DerefMut};
 
 use super::{

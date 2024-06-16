@@ -1,6 +1,6 @@
-use std::{io::Cursor, path::Path, str::FromStr};
+use std::{path::Path, str::FromStr};
 
-use bitcoin::{hashes::Hash, Txid};
+use bitcoin::{hashes::Hash, io::Cursor, Txid};
 use leveldb::{
     database::Database,
     kv::KV,

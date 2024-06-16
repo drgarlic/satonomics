@@ -184,7 +184,7 @@ pub fn parse(
         .iter()
         .enumerate()
         .try_for_each(|(block_tx_index, tx)| {
-            let txid = tx.txid();
+            let txid = tx.compute_txid();
             let tx_index = databases.txid_to_tx_data.metadata.serial as u32;
 
             transaction_count += 1;

@@ -1,4 +1,4 @@
-use bitcoin::{address::Payload, TxOut};
+use bitcoin::TxOut;
 use bitcoin_hashes::{hash160, Hash};
 use itertools::Itertools;
 
@@ -52,79 +52,70 @@ impl Address {
     ) -> Self {
         let script = &txout.script_pubkey;
 
-        match Payload::from_script(script) {
-            Ok(payload) => {
-                let (prefix, rest) = Self::split_slice(Self::payload_to_slice(&payload));
+        if script.is_p2pk() {
+            let pk = match script.as_bytes().len() {
+                67 => &script.as_bytes()[1..66],
+                35 => &script.as_bytes()[1..34],
+                _ => unreachable!(),
+            };
 
-                if script.is_p2pkh() {
-                    Self::P2PKH((prefix, rest.into()))
-                } else if script.is_p2sh() {
-                    Self::P2SH((prefix, rest.into()))
-                } else if script.is_p2wpkh() {
-                    Self::P2WPKH((prefix, rest.into()))
-                } else if script.is_p2wsh() {
-                    Self::P2WSH((prefix, rest.into()))
-                } else if script.is_p2tr() {
-                    Self::P2TR((prefix, rest.into()))
-                } else {
-                    // https://mempool.space/address/bc1zqyqs3juw9m
-                    Self::new_unknown(unknown_addresses)
-                }
+            let hash = hash160::Hash::hash(pk);
+
+            let (prefix, rest) = Self::split_slice(&hash[..]);
+
+            Self::P2PK((prefix, rest.into()))
+        } else if script.is_p2pkh() {
+            let (prefix, rest) = Self::split_slice(&script.as_bytes()[3..23]);
+            Self::P2PKH((prefix, rest.into()))
+        } else if script.is_p2sh() {
+            let (prefix, rest) = Self::split_slice(&script.as_bytes()[2..22]);
+            Self::P2SH((prefix, rest.into()))
+        } else if script.is_p2wpkh() {
+            let (prefix, rest) = Self::split_slice(&script.as_bytes()[2..]);
+            Self::P2WPKH((prefix, rest.into()))
+        } else if script.is_p2wsh() {
+            let (prefix, rest) = Self::split_slice(&script.as_bytes()[2..]);
+            Self::P2WSH((prefix, rest.into()))
+        } else if script.is_p2tr() {
+            let (prefix, rest) = Self::split_slice(&script.as_bytes()[2..]);
+            Self::P2TR((prefix, rest.into()))
+        } else if script.is_empty() {
+            let index = empty_addresses.inner();
+
+            empty_addresses.increment();
+
+            Self::Empty(index)
+        } else if script.is_op_return() {
+            let index = op_return_addresses.inner();
+
+            op_return_addresses.increment();
+
+            Self::OpReturn(index)
+        } else if script.is_multisig() {
+            let vec = multisig_addresses(script);
+
+            if vec.is_empty() {
+                dbg!(txout);
+                panic!("Multisig addresses cannot be empty !");
             }
-            Err(_) => {
-                if script.is_p2pk() {
-                    let pk = match script.as_bytes().len() {
-                        67 => &script.as_bytes()[1..66],
-                        35 => &script.as_bytes()[1..34],
-                        _ => unreachable!(),
-                    };
 
-                    let hash = hash160::Hash::hash(pk);
+            let mut vec = vec.into_iter().sorted_unstable().concat();
 
-                    let (prefix, rest) = Self::split_slice(&hash[..]);
-
-                    Self::P2PK((prefix, rest.into()))
-                } else if script.is_empty() {
-                    let index = empty_addresses.inner();
-
-                    empty_addresses.increment();
-
-                    Self::Empty(index)
-                } else if script.is_op_return() {
-                    let index = op_return_addresses.inner();
-
-                    op_return_addresses.increment();
-
-                    Self::OpReturn(index)
-                // } else if script.is_provably_unspendable() {
-                //     panic!()
-                } else if script.is_multisig() {
-                    let vec = multisig_addresses(script);
-
-                    if vec.is_empty() {
-                        dbg!(txout);
-                        panic!("Multisig addresses cannot be empty !");
-                    }
-
-                    let mut vec = vec.into_iter().sorted_unstable().concat();
-
-                    // TODO: Terrible! Store everything instead of only the 510 first bytes but how
-                    // Sanakirja key limit is [u8; 510] and some multisig transactions have 999 keys
-                    if vec.len() > SANAKIRJA_MAX_KEY_SIZE {
-                        vec = vec.drain(..SANAKIRJA_MAX_KEY_SIZE).collect_vec();
-                    }
-
-                    Self::MultiSig(vec.into())
-                } else if script.is_push_only() {
-                    let index = push_only_addresses.inner();
-
-                    push_only_addresses.increment();
-
-                    Self::PushOnly(index)
-                } else {
-                    Self::new_unknown(unknown_addresses)
-                }
+            // TODO: Terrible! Store everything instead of only the 510 first bytes but how
+            // Sanakirja key limit is [u8; 510] and some multisig transactions have 999 keys
+            if vec.len() > SANAKIRJA_MAX_KEY_SIZE {
+                vec = vec.drain(..SANAKIRJA_MAX_KEY_SIZE).collect_vec();
             }
+
+            Self::MultiSig(vec.into())
+        } else if script.is_push_only() {
+            let index = push_only_addresses.inner();
+
+            push_only_addresses.increment();
+
+            Self::PushOnly(index)
+        } else {
+            Self::new_unknown(unknown_addresses)
         }
     }
 
@@ -138,14 +129,5 @@ impl Address {
         let prefix = ((slice[0] as u16) << 2) + ((slice[1] as u16) >> 6);
         let rest = &slice[1..];
         (prefix, rest)
-    }
-
-    fn payload_to_slice(payload: &Payload) -> &[u8] {
-        match payload {
-            Payload::PubkeyHash(hash) => &hash[..],
-            Payload::ScriptHash(hash) => &hash[..],
-            Payload::WitnessProgram(witness_program) => witness_program.program().as_bytes(),
-            _ => unreachable!(),
-        }
     }
 }

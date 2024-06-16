@@ -1,6 +1,6 @@
-use std::{collections::BTreeMap, fmt, io::Cursor, path::Path};
+use std::{collections::BTreeMap, fmt, path::Path};
 
-use bitcoin::{block::Header, BlockHash};
+use bitcoin::{block::Header, io::Cursor, BlockHash};
 use derive_deref::{Deref, DerefMut};
 use leveldb::{
     database::{iterator::LevelDBIterator, Database},
