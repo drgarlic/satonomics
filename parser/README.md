@@ -23,4 +23,5 @@ The backbone of the project, it does most of the work by parsing and then comput
 ## Guidelines
 
 - Avoid floats as much as possible
+  - Use structs like `WAmount` and `Price` for calculations
   - **Only** use `WAmount.to_btc()` when inserting or computing inside a dataset. It is **very** expensive.
