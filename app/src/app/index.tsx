@@ -3,12 +3,14 @@ import { useWindowSize } from "@solid-primitives/resize-observer";
 
 import { createRWS } from "/src/solid/rws";
 
+import { env } from "../env";
 import { createDatasets } from "../scripts/datasets";
 import { cleanChart } from "../scripts/lightweightCharts/chart/clean";
 import { renderChart } from "../scripts/lightweightCharts/chart/render";
 import { createPresets } from "../scripts/presets";
 import { createResources } from "../scripts/resources";
 import { sleep } from "../scripts/utils/sleep";
+import { classPropToString } from "../solid/classes";
 import { Background, LOCAL_STORAGE_MARQUEE_KEY } from "./components/background";
 import { ChartFrame } from "./components/frames/chart";
 import { FavoritesFrame } from "./components/frames/favorites";
@@ -163,7 +165,10 @@ export function App() {
 
         <div class="flex size-full flex-col md:flex-row md:p-3">
           <div
-            class="flex h-full flex-col overflow-hidden border-t border-white/10 bg-gradient-to-b from-orange-500/10 to-orange-950/10 md:flex-row md:rounded-2xl md:border"
+            class={classPropToString([
+              env.standalone && "border-t",
+              "flex h-full flex-col overflow-hidden border-white/10 bg-gradient-to-b from-orange-500/10 to-orange-950/10 md:flex-row md:rounded-2xl md:border",
+            ])}
             style={{
               display:
                 windowSizeIsAtLeastMedium() && fullscreen()
@@ -205,7 +210,12 @@ export function App() {
               <SettingsFrame marquee={marquee} selectedFrame={selectedFrame} />
             </div>
 
-            <div class="flex justify-between gap-3 border-t border-white/10 bg-black/30 p-2 backdrop-blur-sm md:hidden">
+            <div
+              class={classPropToString([
+                env.standalone && "pb-3",
+                "flex justify-between gap-3 border-t border-white/10 bg-black/30 p-2 backdrop-blur-sm md:hidden",
+              ])}
+            >
               <StripMobile
                 selected={selectedFrame}
                 setSelected={_selectedFrame.set}

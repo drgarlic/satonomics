@@ -2,7 +2,7 @@
 
 ## Description
 
-Satonomics is a suite of tools that compute, distribute and display on-chain data. The generated datasets are very heterogeneous and can be used for many different purposes. In a nutshell, it's the FOSS and self-hostable version of [Glassnode](https://glassnode.com) and thus be a complimentary tool to [mempool.space](https://mempool.space).
+Satonomics is a suite of tools that compute, distribute and display on-chain data. The generated datasets are very heterogeneous and can be used for many different purposes. In a nutshell, you can view this as the FOSS and self-hostable version of [glassnode](https://glassnode.com) and thus a complimentary tool to [mempool.space](https://mempool.space).
 
 - `parser`: The backbone of the project, it does most of the work by parsing and then computing datasets from the timechain.
 - `server`: A small server which automatically creates routes to access through an API all created datasets.
@@ -17,7 +17,7 @@ Satonomics is a suite of tools that compute, distribute and display on-chain dat
 - Be runnable on a machine with 8 GB RAM
   - 16 GB RAM is already possible right now
 - Still being runnable 10 years from now
-  - By not any external dependencies besides price APIs (which are and should be very common and easy to update)
+  - By not relying on any third-party dependencies besides price APIs (which are and should be very common and easy to update)
   - By **NOT** doing address labelling/tagging, for that please use [mempool.space](https://mempool.space)
 
 ## Proof of Work
