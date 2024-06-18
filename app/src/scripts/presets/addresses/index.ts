@@ -1,8 +1,8 @@
 import {
   addressCohortsBySize,
   addressCohortsByType,
-  liquidities,
-} from "../../datasets/cohorts/address";
+} from "../../datasets/consts/address";
+import { liquidities } from "../../datasets/consts/liquidities";
 import { colors } from "../../utils/colors";
 import { createCohortPresetList } from "../templates/cohort";
 import { applyMultipleSeries, SeriesType } from "../templates/multiple";

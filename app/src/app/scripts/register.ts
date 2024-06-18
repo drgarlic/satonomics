@@ -1,14 +1,14 @@
 import { useRegisterSW } from "virtual:pwa-register/solid";
 
-const intervalMS = 5 * 60 * 1000;
+import { FIVE_MINUTES_IN_MS } from "/src/scripts/utils/time";
 
 export function registerServiceWorker() {
   return useRegisterSW({
     onRegisteredSW(swUrl, registered) {
       console.log("sw: registered", registered);
 
-      registered &&
-        setInterval(async () => {
+      if (registered) {
+        const callback = async () => {
           if (!(!registered.installing && navigator)) return;
 
           if ("connection" in navigator && !navigator.onLine) return;
@@ -24,7 +24,12 @@ export function registerServiceWorker() {
           if (resp?.status === 200) {
             await registered.update();
           }
-        }, intervalMS);
+        };
+
+        callback();
+
+        setInterval(callback, FIVE_MINUTES_IN_MS);
+      }
     },
     onRegisterError(error) {
       console.log("sw: registration error", error);

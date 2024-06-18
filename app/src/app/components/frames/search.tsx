@@ -58,7 +58,7 @@ export function SearchFrame({
     if (!needle) return null;
 
     const outOfOrder = 5;
-    const infoThresh = 100_000;
+    const infoThresh = 5_000;
 
     let result = fuzzyMultiInsert.search(
       haystack,

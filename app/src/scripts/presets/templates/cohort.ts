@@ -1,6 +1,6 @@
 import { LineStyle } from "lightweight-charts";
 
-import { percentiles } from "../../datasets/cohorts/base";
+import { percentiles } from "../../datasets/consts/percentiles";
 import { colors } from "../../utils/colors";
 import { applyMultipleSeries, SeriesType } from "./multiple";
 
@@ -573,9 +573,6 @@ export function createCohortPresetList<Scale extends ResourceScale>({
                       title: "Total",
                       color: colors.white,
                       dataset: params.datasets[scale][`${datasetPrefix}supply`],
-                      options: {
-                        lastValueVisible: false,
-                      },
                     },
                     {
                       title: "Halved Total",
@@ -584,7 +581,6 @@ export function createCohortPresetList<Scale extends ResourceScale>({
                         params.datasets[scale][`${datasetPrefix}halved_supply`],
                       options: {
                         lineStyle: LineStyle.SparseDotted,
-                        lastValueVisible: false,
                       },
                     },
                   ],
@@ -707,9 +703,6 @@ export function createCohortPresetList<Scale extends ResourceScale>({
                         params.datasets[scale][
                           `${datasetPrefix}supply_to_circulating_supply_ratio`
                         ],
-                      options: {
-                        lastValueVisible: false,
-                      },
                     },
                     {
                       title: "50%",
@@ -720,7 +713,6 @@ export function createCohortPresetList<Scale extends ResourceScale>({
                         ],
                       options: {
                         lineStyle: LineStyle.SparseDotted,
-                        lastValueVisible: false,
                       },
                     },
                   ],

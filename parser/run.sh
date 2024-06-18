@@ -5,7 +5,7 @@
 # For Mac OS users
 if [ "$(uname)" == "Darwin" ]; then
     echo "Increasing limit of opened files..."
-    ulimit -n $(ulimit -Hn)
+    ulimit -n 1000000 # Can't be $(ulimit -Hn), bitcoind needs some too !
 
     # Needed because the datasets tree is too big lol
     echo "Increasing stack size..."

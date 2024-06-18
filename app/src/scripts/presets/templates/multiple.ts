@@ -28,11 +28,8 @@ export function applyMultipleSeries<Scale extends ResourceScale>({
   datasets,
   priceDataset,
   priceOptions,
-  presets,
   activeResources,
 }: {
-  // TODO: Fix types
-  // scale: Scale;
   chart: IChartApi;
   preset: Preset;
   priceDataset?: Dataset<Scale>;
@@ -42,7 +39,6 @@ export function applyMultipleSeries<Scale extends ResourceScale>({
   list?: (
     | {
         dataset: Dataset<ResourceScale>;
-        // dataset: Dataset<Scale>;
         color?: string;
         colors?: undefined;
         seriesType: SeriesType.Based;
@@ -54,24 +50,8 @@ export function applyMultipleSeries<Scale extends ResourceScale>({
           color: string;
         };
       }
-    // | {
-    //     dataset: Dataset<ResourceScale>;
-    //     // dataset: Dataset<Scale>;
-    //     color: string;
-    //     lineColor?: string;
-    //     areaColor?: string;
-    //     seriesType: SeriesType.Stacked;
-    //     title: string;
-    //     options?: BaselineSeriesOptions;
-    //     defaultVisible?: boolean;
-    //     priceLine?: {
-    //       value: number;
-    //       color: string;
-    //     };
-    //   }
     | {
         dataset: Dataset<ResourceScale>;
-        // dataset: Dataset<Scale>;
         color?: string;
         colors?: string[];
         seriesType: SeriesType.Histogram;
@@ -82,7 +62,6 @@ export function applyMultipleSeries<Scale extends ResourceScale>({
       }
     | {
         dataset: Dataset<ResourceScale>;
-        // dataset: Dataset<Scale>;
         color: string;
         colors?: undefined;
         seriesType?: SeriesType.Normal | SeriesType.Area;
@@ -96,7 +75,6 @@ export function applyMultipleSeries<Scale extends ResourceScale>({
       }
   )[];
   datasets: Datasets;
-  presets: Presets;
   activeResources: Accessor<Set<ResourceDataset<any, any>>>;
 }): PresetLegend {
   const { halved } = priceScaleOptions || {};
@@ -116,10 +94,6 @@ export function applyMultipleSeries<Scale extends ResourceScale>({
 
   const legendList: PresetLegend = [priceLegend];
 
-  // const isAnyBased = list.find(
-  //   (config) => config.seriesType === SeriesType.Based,
-  // );
-
   const isAnyArea = list.find(
     (config) => config.seriesType === SeriesType.Area,
   );
@@ -134,46 +108,6 @@ export function applyMultipleSeries<Scale extends ResourceScale>({
         }
       : {}),
   });
-
-  // const stacked = list.flatMap((config) =>
-  //   config.seriesType === SeriesType.Stacked ? [config] : [],
-  // );
-
-  // if (stacked.length) {
-  //   const series = chart.addCustomSeries(new StackedAreaSeries(), {
-  //     colors: stacked.map(({ color, lineColor, areaColor }) => ({
-  //       line: lineColor || color,
-  //       // area: `${color}11`,
-  //       area: areaColor || color,
-  //     })),
-  //     lineWidth: 1,
-  //     priceLineVisible: false,
-  //     lastValueVisible: false,
-  //   });
-
-  //   stacked.forEach(({ title, color }) => {
-  //     legend.push(
-  //       createSeriesLegend({
-  //         title,
-  //         presetId: preset.id,
-  //         color: () => color,
-  //         series,
-  //         id: stringToId(title),
-  //       }),
-  //     );
-  //   });
-
-  //   createEffect(() =>
-  //     series.setData(
-  //       (stacked.at(0)?.dataset.values() || []).map(({ time }, index) => ({
-  //         time,
-  //         values: stacked.map(
-  //           ({ dataset }) => dataset.values()?.at(index)?.value,
-  //         ),
-  //       })),
-  //     ),
-  //   );
-  // }
 
   [...list]
     .reverse()

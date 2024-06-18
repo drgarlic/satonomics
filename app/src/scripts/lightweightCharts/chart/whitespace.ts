@@ -43,57 +43,8 @@ export function setWhitespace(chart: IChartApi, scale: ResourceScale) {
   const whitespaceSeries = createLineSeries(chart);
 
   if (scale === "date") {
-    whitespaceSeries.setData(
-      whitespaceDateDataset,
-      // whitespaceDateDataset.map((data) => ({ ...data })),
-    );
-    //   // updateWhitespaceDataset(whitespaceDateDataset);
-
-    //   whitespaceSeries.setData(
-    //     whitespaceDateDataset,
-    //     // whitespaceDateDataset.map((data) => ({ ...data })),
-    //   );
+    whitespaceSeries.setData(whitespaceDateDataset);
   } else {
-    whitespaceSeries.setData(
-      whitespaceHeightDataset,
-      // whitespaceDateDataset.map((data) => ({ ...data })),
-    );
-    //   // console.log("scale,", scale, whitespaceHeightDataset);
-
-    //   whitespaceSeries.setData(
-    //     whitespaceHeightDataset,
-    //     // whitespaceHeightDataset.map((data) => ({ ...data })),
-    //   );
+    whitespaceSeries.setData(whitespaceHeightDataset);
   }
 }
-
-// function updateWhitespaceDataset(
-//   whitespaceDataset: (WhitespaceData & Numbered)[],
-// ) {
-//   const last = whitespaceDataset.at(-1);
-
-//   let date: Date;
-
-//   if (last) {
-//     date = new Date(last.number * ONE_DAY_IN_MS);
-//   } else {
-//     date = new Date(DAY_BEFORE_GENESIS_DAY);
-//   }
-
-//   const todayValueOf = new Date("2050-01-01").valueOf();
-
-//   const tickDate = () => date.setUTCDate(date.getUTCDate() + 1);
-
-//   tickDate();
-
-//   while (date.valueOf() <= todayValueOf) {
-//     const dateStr = dateToString(date);
-
-//     whitespaceDataset.push({
-//       number: date.valueOf() / ONE_DAY_IN_MS,
-//       time: dateStr,
-//     });
-
-//     tickDate();
-//   }
-// }

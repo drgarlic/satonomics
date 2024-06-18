@@ -4,7 +4,7 @@ import {
   upToCohorts,
   xthCohorts,
   yearCohorts,
-} from "../../datasets/cohorts/age";
+} from "../../datasets/consts/age";
 import { colors } from "../../utils/colors";
 import { createCohortPresetFolder } from "../templates/cohort";
 import { applyMultipleSeries } from "../templates/multiple";

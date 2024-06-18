@@ -1,5 +1,4 @@
 import { createResizeObserver } from "@solid-primitives/resize-observer";
-import { Transition } from "solid-transition-group";
 
 import { classPropToString } from "/src/solid/classes";
 import { createRWS } from "/src/solid/rws";
@@ -30,9 +29,9 @@ export function Box({
       }
 
       scrollable.set(() => el.scrollWidth > el.clientWidth);
-    });
 
-    checkArrows();
+      checkArrows();
+    });
   });
 
   function checkArrows() {
@@ -61,7 +60,14 @@ export function Box({
           : "relative",
       ])}
     >
-      <div class="pointer-events-auto relative overflow-hidden rounded-xl border border-orange-200/10 shadow-md">
+      <div
+        class={classPropToString([
+          "pointer-events-auto relative overflow-hidden rounded-xl border border-orange-200/10 shadow-md",
+          dark
+            ? "bg-orange-100/5 backdrop-blur-sm"
+            : "bg-orange-200/10 backdrop-blur-md",
+        ])}
+      >
         <For
           each={[
             {
@@ -87,53 +93,47 @@ export function Box({
           ]}
         >
           {(obj) => (
-            <Transition
-              enterClass="opacity-0"
-              enterToClass="opacity-100"
-              exitToClass="opacity-0"
-            >
-              {scrollable() && obj.showArrow() && (
+            <Show when={scrollable() && obj.showArrow()}>
+              <div
+                class={[
+                  obj.side,
+                  "pointer-events-none absolute bottom-0 top-0 z-20 flex transition-opacity duration-200 ease-in-out",
+                ].join(" ")}
+              >
                 <div
                   class={[
-                    obj.side,
-                    "pointer-events-none absolute bottom-0 top-0 z-20 flex transition-opacity duration-200 ease-in-out",
+                    obj.order,
+                    obj.buttonPadding,
+                    "pointer-events-auto flex h-full items-center bg-black/90",
                   ].join(" ")}
                 >
-                  <div
-                    class={[
-                      obj.order,
-                      obj.buttonPadding,
-                      "pointer-events-auto hidden h-full items-center bg-black/90 md:flex",
-                    ].join(" ")}
+                  <button
+                    onClick={() => {
+                      maybeScrollable()?.scrollBy({
+                        left: Math.floor(
+                          maybeScrollable()!.clientWidth *
+                            obj.scrollMultiplier *
+                            0.8,
+                        ),
+                        behavior: "smooth",
+                      });
+                    }}
+                    class="rounded-full border border-orange-200/20 bg-black p-0.5 transition hover:scale-110 active:scale-100"
                   >
-                    <button
-                      onClick={() => {
-                        maybeScrollable()?.scrollBy({
-                          left: Math.floor(
-                            maybeScrollable()!.clientWidth *
-                              obj.scrollMultiplier *
-                              0.8,
-                          ),
-                          behavior: "smooth",
-                        });
-                      }}
-                      class="rounded-full border border-orange-200/20 bg-black p-0.5 transition hover:scale-110 active:scale-100"
-                    >
-                      <Dynamic
-                        component={obj.chevronIcon}
-                        class={[`size-5 ${obj.iconPadding}`]}
-                      />
-                    </button>
-                  </div>
-                  <div
-                    class={[
-                      obj.gradientDirection,
-                      "h-full w-10 from-black/90 to-transparent",
-                    ].join(" ")}
-                  />
+                    <Dynamic
+                      component={obj.chevronIcon}
+                      class={[`size-5 ${obj.iconPadding}`]}
+                    />
+                  </button>
                 </div>
-              )}
-            </Transition>
+                <div
+                  class={[
+                    obj.gradientDirection,
+                    "h-full w-10 from-black/90 to-transparent",
+                  ].join(" ")}
+                />
+              </div>
+            </Show>
           )}
         </For>
 
@@ -142,10 +142,7 @@ export function Box({
           onScroll={checkArrows}
           class={classPropToString([
             flex && "flex w-full space-x-2",
-            overflowY ? "overflow-y-auto" : "overflow-hidden",
-            dark
-              ? "bg-orange-100/5 backdrop-blur-sm"
-              : "bg-orange-200/10 backdrop-blur-md",
+            overflowY && "overflow-y-auto",
             padded && "p-1.5",
           ])}
         >

@@ -702,23 +702,20 @@ pub fn parse(
     });
 
     if compute_addresses {
-        // Insert to update, they were pre-removed in the pre-process functions
-        if let Some(address_index_to_address_data) = address_index_to_address_data {
-            address_index_to_address_data
-                .into_iter()
-                .for_each(|(address_index, address_data)| {
-                    if address_data.is_empty() {
-                        databases.address_index_to_empty_address_data.unsafe_insert(
-                            address_index,
-                            EmptyAddressData::from_non_empty(&address_data),
-                        );
-                    } else {
-                        databases
-                            .address_index_to_address_data
-                            .unsafe_insert(address_index, address_data);
-                    }
-                })
-        }
+        address_index_to_address_data.unwrap().into_iter().for_each(
+            |(address_index, address_data)| {
+                if address_data.is_empty() {
+                    databases.address_index_to_empty_address_data.unsafe_insert(
+                        address_index,
+                        EmptyAddressData::from_non_empty(&address_data),
+                    );
+                } else {
+                    databases
+                        .address_index_to_address_data
+                        .unsafe_insert(address_index, address_data);
+                }
+            },
+        )
     }
 
     datasets.insert(InsertData {

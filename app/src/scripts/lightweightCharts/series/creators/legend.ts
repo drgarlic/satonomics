@@ -31,11 +31,14 @@ export function createSeriesLegend({
       defaultVisible,
   );
 
+  const disabled = createRWS(false);
+
   createEffect(() => {
     const v = visible();
+    const d = disabled();
 
     series.applyOptions({
-      visible: v,
+      visible: !d && v,
     });
 
     if (v !== defaultVisible) {
@@ -54,5 +57,6 @@ export function createSeriesLegend({
     color,
     hovering: createRWS(false),
     visible,
+    disabled,
   };
 }

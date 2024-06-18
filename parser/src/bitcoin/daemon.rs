@@ -2,7 +2,7 @@ use std::{process::Command, thread::sleep, time::Duration};
 
 use serde_json::Value;
 
-use crate::utils::log;
+use crate::utils::{log, log_output};
 
 struct BlockchainInfo {
     pub headers: u64,
@@ -23,59 +23,53 @@ impl<'a> BitcoinDaemon<'a> {
     pub fn start(&self) {
         sleep(Duration::from_secs(1));
 
-        log("Starting node...");
+        let mut command = Command::new("bitcoind");
 
-        // bitcoind -datadir=/Users/k/Developer/bitcoin -blocksonly -txindex=1 -v2transport -daemon
-        let _ = Command::new("bitcoind")
-            .arg(self.datadir())
+        command
+            .arg(self.datadir_arg())
             .arg("-blocksonly")
             .arg("-txindex=1")
-            .arg("-v2transport")
-            .arg("-daemon")
+            .arg("-daemon");
+
+        // bitcoind -datadir=/Users/k/Developer/bitcoin -blocksonly -txindex=1 -daemon
+        let output = command
             .output()
             .expect("bitcoind to be able to properly start");
 
-        sleep(Duration::from_secs(15));
-
-        log("Node started successfully !");
+        log_output(&output);
     }
 
     pub fn stop(&self) {
         // bitcoin-cli -datadir=/Users/k/Developer/bitcoin stop
-        let status = Command::new("bitcoin-cli")
-            .arg(self.datadir())
+        let output = Command::new("bitcoin-cli")
+            .arg(self.datadir_arg())
             .arg("stop")
             .output()
-            .unwrap()
-            .status;
+            .unwrap();
 
-        if status.success() {
-            log("Stopping node...");
+        if output.status.success() {
+            log_output(&output);
+
             sleep(Duration::from_secs(15));
-            log("bitcoind stopped successfully !");
         }
     }
 
-    pub fn wait_sync(&self) -> color_eyre::Result<()> {
-        while !self.check_if_fully_synced()? {
+    pub fn wait_sync(&self) {
+        while !self.check_if_fully_synced() {
             sleep(Duration::from_secs(5))
         }
-
-        Ok(())
     }
 
-    pub fn wait_for_new_block(&self, last_block_height: usize) -> color_eyre::Result<()> {
+    pub fn wait_for_new_block(&self, last_block_height: usize) {
         log("Waiting for new block...");
 
-        while self.get_blockchain_info()?.headers as usize == last_block_height {
+        while self.get_blockchain_info().headers as usize == last_block_height {
             sleep(Duration::from_secs(5))
         }
-
-        Ok(())
     }
 
-    pub fn check_if_fully_synced(&self) -> color_eyre::Result<bool> {
-        let BlockchainInfo { blocks, headers } = self.get_blockchain_info()?;
+    pub fn check_if_fully_synced(&self) -> bool {
+        let BlockchainInfo { blocks, headers } = self.get_blockchain_info();
 
         let synced = blocks == headers;
 
@@ -85,18 +79,31 @@ impl<'a> BitcoinDaemon<'a> {
             log(&format!("Syncing... ({} remaining)", headers - blocks));
         }
 
-        Ok(synced)
+        synced
     }
 
-    fn get_blockchain_info(&self) -> color_eyre::Result<BlockchainInfo> {
+    fn get_blockchain_info(&self) -> BlockchainInfo {
+        loop {
+            let res = self._get_blockchain_info();
+
+            if let Ok(blockchain_info) = res {
+                return blockchain_info;
+            } else {
+                sleep(Duration::from_secs(1));
+            }
+        }
+    }
+
+    fn _get_blockchain_info(&self) -> color_eyre::Result<BlockchainInfo> {
         // bitcoin-cli -datadir=/Users/k/Developer/bitcoin getblockchaininfo
         let output = Command::new("bitcoin-cli")
-            .arg(self.datadir())
+            .arg(self.datadir_arg())
             .arg("getblockchaininfo")
-            .output()
-            .unwrap();
+            .output()?;
 
-        let json: Value = serde_json::from_str(&String::from_utf8_lossy(&output.stdout))?;
+        let output = String::from_utf8_lossy(&output.stdout);
+
+        let json: Value = serde_json::from_str(&output)?;
         let json = json.as_object().unwrap();
 
         let blocks = json.get("blocks").unwrap().as_u64().unwrap();
@@ -105,7 +112,7 @@ impl<'a> BitcoinDaemon<'a> {
         Ok(BlockchainInfo { headers, blocks })
     }
 
-    fn datadir(&self) -> String {
+    fn datadir_arg(&self) -> String {
         format!("-datadir={}", self.path)
     }
 }

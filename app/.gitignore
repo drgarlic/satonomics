@@ -6,3 +6,4 @@ dev-dist
 visualizer
 # Local Netlify folder
 .netlify
+.wrangler

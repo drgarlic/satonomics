@@ -1,7 +1,7 @@
 import {
   compoundReturns,
   totalReturns,
-} from "/src/scripts/datasets/date/averages";
+} from "/src/scripts/datasets/consts/returns";
 
 import { applyMultipleSeries, SeriesType } from "../../templates/multiple";
 

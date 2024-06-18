@@ -152,7 +152,12 @@ function shuffle<T>([...arr]: T[]): T[] {
 
 function Noise() {
   return (
-    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      class="size-full"
+      viewBox="0 0 200 200"
+      preserveAspectRatio="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <filter id="noiseFilter">
         <feTurbulence
           type="fractalNoise"

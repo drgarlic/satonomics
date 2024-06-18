@@ -1,9 +1,16 @@
 # Satonomics - Parser
 
+## Description
+
+The backbone of the project, it does most of the work by parsing and then computing datasets from the timechain
+
+## Requirements
+
+- `rustup`
+
 ## Run
 
 ```bash
-# Install rustup
 # Update ./run.sh with the path to your bitcoin folder
 ./run.sh
 ```

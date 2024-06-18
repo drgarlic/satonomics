@@ -30,10 +30,10 @@ fn main() -> color_eyre::Result<()> {
 
         deamon.start();
 
-        if deamon.check_if_fully_synced()? {
-            deamon.wait_for_new_block(block_count - 1)?;
+        if deamon.check_if_fully_synced() {
+            deamon.wait_for_new_block(block_count - 1);
         } else {
-            deamon.wait_sync()?;
+            deamon.wait_sync();
         }
     }
 

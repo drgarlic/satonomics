@@ -57,7 +57,7 @@ impl Add for WAmount {
 
 impl AddAssign for WAmount {
     fn add_assign(&mut self, rhs: Self) {
-        **self = **self + *rhs;
+        *self = WAmount::from_sat(self.to_sat() + rhs.to_sat());
     }
 }
 
@@ -71,7 +71,7 @@ impl Sub for WAmount {
 
 impl SubAssign for WAmount {
     fn sub_assign(&mut self, rhs: Self) {
-        **self = **self - *rhs;
+        *self = WAmount::from_sat(self.to_sat() - rhs.to_sat());
     }
 }
 

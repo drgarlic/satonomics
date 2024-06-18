@@ -1,3 +1,10 @@
-### SATONOMICS
+# Satonomics - App
 
-https://satonomics.xyz
+## Description
+
+A web app to view the generated datasets in various charts.
+
+## Requirements
+
+- `node`
+- `pnpm`
