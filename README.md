@@ -1,1 +1,1 @@
-# [https://codeberg.org/satonomics/satonomics](https://codeberg.org/satonomics/satonomics)
+# [WARNING: Link to new repository](https://github.com/satonomics-org/satonomics)
